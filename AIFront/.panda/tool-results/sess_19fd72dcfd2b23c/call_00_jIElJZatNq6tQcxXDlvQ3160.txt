@@ -1,0 +1,594 @@
+220|      }
+221|    }
+222|  },
+223|  computed: {
+224|    allTags () {
+225|      const tagSet = new Set()
+226|      this.memoryList.forEach(item => {
+227|        ;(item.tags || []).forEach(tag => tagSet.add(tag))
+228|      })
+229|      return Array.from(tagSet)
+230|    },
+231|    tagCount () {
+232|      return this.allTags.length
+233|    },
+234|    importantCount () {
+235|      return this.memoryList.filter(item => item.important).length
+236|    },
+237|    lastUpdated () {
+238|      if (!this.memoryList.length) return '--'
+239|      return this.memoryList[0].updatedAt
+240|    },
+241|    filteredList () {
+242|      const kw = this.keyword.trim().toLowerCase()
+243|      return this.memoryList.filter(item => {
+244|        const matchKw = !kw ||
+245|          (item.title && item.title.toLowerCase().includes(kw)) ||
+246|          (item.content && item.content.toLowerCase().includes(kw))
+247|        const matchTag = !this.filterTag ||
+248|          (item.tags && item.tags.includes(this.filterTag))
+249|        return matchKw && matchTag
+250|      })
+251|    }
+252|  },
+253|  created () {
+254|    this.loadData()
+255|  },
+256|  methods: {
+257|    loadData () {
+258|      this.loading = true
+259|      // 模拟从后端读取长期记忆（MEMORY.md 渲染）
+260|      setTimeout(() => {
+261|        this.memoryList = [
+262|          {
+263|            id: 'mem-1',
+264|            title: '项目技术栈约定',
+265|            content: '本项目使用 Vue 2.7 + ElementUI + Vue Router + Express 技术栈。所有页面组件统一放在 src/views 目录下，路由在 src/router/index.js 中注册，左侧菜单在 src/App.vue 中维护。',
+266|            tags: ['技术栈', '约定'],
+267|            important: true,
+268|            author: 'Admin',
+269|            updatedAt: '2024-03-15 10:30:00'
+270|          },
+271|          {
+272|            id: 'mem-2',
+273|            title: '代码风格规范',
+274|            content: '默认使用简体中文回复用户；代码、路径、标识符、命令保持原文。改代码必须遵循 read_file → edit_file 流程，禁止用 bash/sed 直接修改业务文件。',
+275|            tags: ['规范', '编码'],
+276|            important: true,
+277|            author: 'Admin',
+278|            updatedAt: '2024-03-14 16:20:00'
+279|          },
+280|          {
+281|            id: 'mem-3',
+282|            title: '用户偏好',
+283|            content: '用户偏好深色侧边栏（#001529）与蓝色主题色（#409EFF）。页面卡片采用圆角 + 阴影风格，hover 时上浮并加深阴影。',
+284|            tags: ['偏好', 'UI'],
+285|            important: false,
+286|            author: 'Admin',
+287|            updatedAt: '2024-03-12 09:15:00'
+288|          },
+289|          {
+290|            id: 'mem-4',
+291|            title: '数据接口约定',
+292|            content: '列表接口统一返回 { records, total } 结构，分页参数为 pageNum / pageSize。新增、编辑、删除操作完成后需刷新列表。',
+293|            tags: ['接口', '约定'],
+294|            important: false,
+295|            author: 'Admin',
+296|            updatedAt: '2024-03-10 14:45:00'
+297|          },
+298|          {
+299|            id: 'mem-5',
+300|            title: '团队协作约定',
+301|            content: '涉及多文件关联改动时，优先使用 apply_patch 或 edit_lines 保证一致性。复杂未知需求先通过 agent_explore / agent_plan 摸清结构再动手。',
+302|            tags: ['协作', '流程'],
+303|            important: false,
+304|            author: 'Admin',
+305|            updatedAt: '2024-03-08 11:00:00'
+306|          }
+307|        ]
+308|        this.loading = false
+309|      }, 300)
+310|    },
+311|    handleSearch () {
+312|      // 计算属性自动过滤，无需额外逻辑
+313|    },
+314|    handleAdd () {
+315|      this.isEdit = false
+316|      this.currentEditId = null
+317|      this.resetForm()
+318|      this.dialogVisible = true
+319|    },
+320|    handleEdit (row) {
+321|      this.isEdit = true
+322|      this.currentEditId = row.id
+323|      this.form = {
+324|        title: row.title,
+325|        content: row.content,
+326|        tags: (row.tags && row.tags.slice()) || [],
+327|        important: !!row.important
+328|      }
+329|      this.dialogVisible = true
+330|    },
+331|    handleDelete (row) {
+332|      this.$confirm(`确定删除记忆「${row.title}」吗？`, '提示', {
+333|        confirmButtonText: '确定',
+334|        cancelButtonText: '取消',
+335|        type: 'warning'
+336|      }).then(() => {
+337|        this.memoryList = this.memoryList.filter(item => item.id !== row.id)
+338|        this.$message.success('删除成功')
+339|      }).catch(() => {})
+340|    },
+341|    handleExpand (item) {
+342|      // 预留：点击内容可展开详情
+343|    },
+344|    handleDialogClose () {
+345|      this.resetForm()
+346|    },
+347|    resetForm () {
+348|      this.$nextTick(() => {
+349|        if (this.$refs.memoryFormRef) {
+350|          this.$refs.memoryFormRef.resetFields()
+351|        }
+352|      })
+353|      this.form = {
+354|        title: '',
+355|        content: '',
+356|        tags: [],
+357|        important: false
+358|      }
+359|      this.submitLoading = false
+360|    },
+361|    handleSubmit () {
+362|      if (!this.$refs.memoryFormRef) return
+363|      this.$refs.memoryFormRef.validate(valid => {
+364|        if (!valid) return
+365|        this.submitLoading = true
+366|        setTimeout(() => {
+367|          if (this.isEdit && this.currentEditId) {
+368|            const idx = this.memoryList.findIndex(item => item.id === this.currentEditId)
+369|            if (idx > -1) {
+370|              this.memoryList.splice(idx, 1, {
+371|                ...this.memoryList[idx],
+372|                ...this.form,
+373|                updatedAt: this.getNow()
+374|              })
+375|            }
+376|            this.$message.success('更新成功')
+377|          } else {
+378|            this.memoryList.unshift({
+379|              id: 'mem-' + Date.now(),
+380|              ...this.form,
+381|              author: 'Admin',
+382|              updatedAt: this.getNow()
+383|            })
+384|            this.$message.success('创建成功')
+385|          }
+386|          this.dialogVisible = false
+387|          this.submitLoading = false
+388|        }, 300)
+389|      })
+390|    },
+391|    getNow () {
+392|      const d = new Date()
+393|      const pad = n => (n < 10 ? '0' + n : '' + n)
+394|      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+395|    },
+396|    getIcon (item) {
+397|      if (item.important) return 'el-icon-star-on'
+398|      if (item.tags && item.tags.includes('技术栈')) return 'el-icon-cpu'
+399|      if (item.tags && item.tags.includes('规范')) return 'el-icon-document-checked'
+400|      if (item.tags && item.tags.includes('偏好')) return 'el-icon-user'
+401|      if (item.tags && item.tags.includes('接口')) return 'el-icon-connection'
+402|      return 'el-icon-collection'
+403|    },
+404|    getIconClass (item) {
+405|      if (item.important) return 'icon-important'
+406|      if (item.tags && item.tags.includes('技术栈')) return 'icon-tech'
+407|      if (item.tags && item.tags.includes('规范')) return 'icon-rule'
+408|      if (item.tags && item.tags.includes('偏好')) return 'icon-pref'
+409|      if (item.tags && item.tags.includes('接口')) return 'icon-api'
+410|      return 'icon-default'
+411|    },
+412|    getTagType (tag) {
+413|      const map = {
+414|        '技术栈': 'primary',
+415|        '约定': 'success',
+416|        '规范': 'warning',
+417|        '编码': 'primary',
+418|        '偏好': 'info',
+419|        'UI': 'primary',
+420|        '接口': 'success',
+421|        '协作': 'warning',
+422|        '流程': 'info'
+423|      }
+424|      return map[tag] || ''
+425|    }
+426|  }
+427|}
+428|</script>
+429|
+430|<style scoped>
+431|.page-memory {
+432|  padding: 16px 20px;
+433|  background: linear-gradient(160deg, #f5f7fb 0%, #eef2f7 100%);
+434|  min-height: calc(100vh - 84px);
+435|  box-sizing: border-box;
+436|}
+437|
+438|/* ===== 顶部渐变 Banner ===== */
+439|.memory-banner {
+440|  display: flex;
+441|  align-items: center;
+442|  justify-content: space-between;
+443|  background: linear-gradient(120deg, #1f3a5f 0%, #2d5a8e 55%, #3a7bd5 100%);
+444|  border-radius: 14px;
+445|  padding: 22px 28px;
+446|  margin-bottom: 20px;
+447|  box-shadow: 0 8px 24px rgba(45, 90, 142, 0.25);
+448|  position: relative;
+449|  overflow: hidden;
+450|}
+451|
+452|.memory-banner::after {
+453|  content: '';
+454|  position: absolute;
+455|  right: -40px;
+456|  top: -60px;
+457|  width: 220px;
+458|  height: 220px;
+459|  border-radius: 50%;
+460|  background: rgba(255, 255, 255, 0.06);
+461|}
+462|
+463|.memory-banner::before {
+464|  content: '';
+465|  position: absolute;
+466|  right: 60px;
+467|  bottom: -80px;
+468|  width: 180px;
+469|  height: 180px;
+470|  border-radius: 50%;
+471|  background: rgba(255, 255, 255, 0.05);
+472|}
+473|
+474|.banner-left {
+475|  display: flex;
+476|  align-items: center;
+477|  gap: 16px;
+478|  position: relative;
+479|  z-index: 1;
+480|}
+481|
+482|.banner-icon {
+483|  width: 52px;
+484|  height: 52px;
+485|  border-radius: 14px;
+486|  background: rgba(255, 255, 255, 0.15);
+487|  display: flex;
+488|  align-items: center;
+489|  justify-content: center;
+490|  font-size: 26px;
+491|  color: #fff;
+492|  backdrop-filter: blur(4px);
+493|}
+494|
+495|.banner-title {
+496|  font-size: 22px;
+497|  font-weight: 700;
+498|  color: #fff;
+499|  letter-spacing: 1px;
+500|}
+501|
+502|.banner-subtitle {
+503|  margin-top: 4px;
+504|  font-size: 13px;
+505|  color: rgba(255, 255, 255, 0.75);
+506|}
+507|
+508|.banner-right {
+509|  position: relative;
+510|  z-index: 1;
+511|}
+512|
+513|.banner-add-btn {
+514|  border-radius: 8px;
+515|  font-weight: 600;
+516|  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+517|}
+518|
+519|/* ===== 统计卡片 ===== */
+520|.stat-grid {
+521|  display: grid;
+522|  grid-template-columns: repeat(4, 1fr);
+523|  gap: 16px;
+524|  margin-bottom: 20px;
+525|}
+526|
+527|.stat-card {
+528|  display: flex;
+529|  align-items: center;
+530|  gap: 14px;
+531|  padding: 18px 20px;
+532|  border-radius: 12px;
+533|  background: #fff;
+534|  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+535|  transition: all 0.3s ease;
+536|  border: 1px solid transparent;
+537|}
+538|
+539|.stat-card:hover {
+540|  transform: translateY(-4px);
+541|  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+542|}
+543|
+544|.stat-icon {
+545|  width: 46px;
+546|  height: 46px;
+547|  border-radius: 12px;
+548|  display: flex;
+549|  align-items: center;
+550|  justify-content: center;
+551|  font-size: 22px;
+552|  flex-shrink: 0;
+553|}
+554|
+555|.stat-card-blue .stat-icon { background: #e6f7ff; color: #1890ff; }
+556|.stat-card-green .stat-icon { background: #f6ffed; color: #52c41a; }
+557|.stat-card-red .stat-icon { background: #e6f7ff; color: #1890ff; }
+558|.stat-card-purple .stat-icon { background: #f9f0ff; color: #722ed1; }
+559|
+560|.stat-value {
+561|  font-size: 26px;
+562|  font-weight: 700;
+563|  color: #1a1a1a;
+564|  line-height: 1.1;
+565|}
+566|
+567|.stat-value-sm {
+568|  font-size: 15px;
+569|  font-weight: 600;
+570|  color: #722ed1;
+571|  line-height: 1.3;
+572|}
+573|
+574|.stat-label {
+575|  margin-top: 4px;
+576|  font-size: 13px;
+577|  color: #8c8c8c;
+578|}
+579|
+580|/* ===== 工具栏 ===== */
+581|.toolbar {
+582|  display: flex;
+583|  align-items: center;
+584|  justify-content: space-between;
+585|  margin-bottom: 16px;
+586|  flex-wrap: wrap;
+587|  gap: 12px;
+588|}
+589|
+590|.toolbar-left {
+591|  display: flex;
+592|  align-items: center;
+593|  gap: 12px;
+594|  flex-wrap: wrap;
+595|}
+596|
+597|.search-input {
+598|  width: 280px;
+599|}
+600|
+601|.tag-select {
+602|  width: 160px;
+603|}
+604|
+605|.result-count {
+606|  font-size: 13px;
+607|  color: #8c8c8c;
+608|}
+609|
+610|/* ===== 记忆列表 ===== */
+611|.memory-list {
+612|  min-height: 200px;
+613|}
+614|
+615|.memory-item {
+616|  border: 1px solid #eef0f4;
+617|  border-radius: 12px;
+618|  padding: 18px 20px;
+619|  margin-bottom: 14px;
+620|  transition: all 0.3s ease;
+621|  background: #fff;
+622|  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+623|}
+624|
+625|.memory-item:hover {
+626|  border-color: #d6e4ff;
+627|  box-shadow: 0 8px 24px rgba(24, 144, 255, 0.1);
+628|  transform: translateY(-3px);
+629|}
+630|
+631|.memory-item.is-important {
+632|  border-left: 4px solid #1890ff;
+633|  background: linear-gradient(90deg, #f0f7ff 0%, #ffffff 40%);
+634|}
+635|
+636|.memory-item-top {
+637|  display: flex;
+638|  align-items: center;
+639|  gap: 14px;
+640|}
+641|
+642|.memory-icon {
+643|  width: 44px;
+644|  height: 44px;
+645|  border-radius: 12px;
+646|  display: flex;
+647|  align-items: center;
+648|  justify-content: center;
+649|  font-size: 22px;
+650|  flex-shrink: 0;
+651|}
+652|
+653|.icon-important {
+654|  background: linear-gradient(135deg, #69c0ff, #1890ff);
+655|  color: #fff;
+656|  box-shadow: 0 4px 10px rgba(24, 144, 255, 0.3);
+657|}
+658|
+659|.icon-tech {
+660|  background: linear-gradient(135deg, #69c0ff, #1890ff);
+661|  color: #fff;
+662|  box-shadow: 0 4px 10px rgba(24, 144, 255, 0.3);
+663|}
+664|
+665|.icon-rule {
+666|  background: linear-gradient(135deg, #ffc069, #fa8c16);
+667|  color: #fff;
+668|  box-shadow: 0 4px 10px rgba(250, 140, 22, 0.3);
+669|}
+670|
+671|.icon-pref {
+672|  background: linear-gradient(135deg, #95de64, #52c41a);
+673|  color: #fff;
+674|  box-shadow: 0 4px 10px rgba(82, 196, 26, 0.3);
+675|}
+676|
+677|.icon-api {
+678|  background: linear-gradient(135deg, #85a5ff, #2f54eb);
+679|  color: #fff;
+680|  box-shadow: 0 4px 10px rgba(47, 84, 235, 0.3);
+681|}
+682|
+683|.icon-default {
+684|  background: linear-gradient(135deg, #bfbfbf, #8c8c8c);
+685|  color: #fff;
+686|  box-shadow: 0 4px 10px rgba(140, 140, 140, 0.3);
+687|}
+688|
+689|.memory-title-wrap {
+690|  flex: 1;
+691|  min-width: 0;
+692|}
+693|
+694|.memory-title {
+695|  font-size: 16px;
+696|  font-weight: 600;
+697|  color: #1a1a1a;
+698|  overflow: hidden;
+699|  text-overflow: ellipsis;
+700|  white-space: nowrap;
+701|}
+702|
+703|.memory-meta {
+704|  margin-top: 5px;
+705|  font-size: 12px;
+706|  color: #8c8c8c;
+707|  display: flex;
+708|  gap: 16px;
+709|}
+710|
+711|.memory-meta i {
+712|  margin-right: 3px;
+713|}
+714|
+715|.memory-actions {
+716|  display: flex;
+717|  align-items: center;
+718|  gap: 6px;
+719|  flex-shrink: 0;
+720|}
+721|
+722|.important-tag {
+723|  border-radius: 4px;
+724|}
+725|
+726|.action-btn {
+727|  padding: 4px 6px;
+728|  font-size: 16px;
+729|}
+730|
+731|.del-btn {
+732|  color: #1890ff;
+733|}
+734|
+735|.memory-content {
+736|  margin-top: 12px;
+737|  padding: 12px 14px;
+738|  background: #f8f9fc;
+739|  border-radius: 8px;
+740|  font-size: 13px;
+741|  line-height: 1.8;
+742|  color: #4a5568;
+743|  cursor: pointer;
+744|  border-left: 3px solid #e6e8ef;
+745|  transition: all 0.3s ease;
+746|}
+747|
+748|.memory-content:hover {
+749|  background: #f0f5ff;
+750|  border-left-color: #1890ff;
+751|}
+752|
+753|.memory-content p {
+754|  margin: 0;
+755|}
+756|
+757|.memory-tags {
+758|  margin-top: 12px;
+759|  display: flex;
+760|  flex-wrap: wrap;
+761|  gap: 6px;
+762|}
+763|
+764|.tag-item {
+765|  border-radius: 4px;
+766|}
+767|
+768|.empty-block {
+769|  padding: 40px 0;
+770|}
+771|
+772|/* ===== 弹窗 ===== */
+773|.memory-dialog .el-dialog__header {
+774|  border-bottom: 1px solid #f0f0f0;
+775|  padding-bottom: 14px;
+776|}
+777|
+778|/* ===== 响应式 ===== */
+779|@media (max-width: 992px) {
+780|  .stat-grid {
+781|    grid-template-columns: repeat(2, 1fr);
+782|  }
+783|}
+784|
+785|@media (max-width: 768px) {
+786|  .page-memory {
+787|    padding: 10px 12px;
+788|  }
+789|  .memory-banner {
+790|    padding: 16px 18px;
+791|    flex-direction: column;
+792|    align-items: flex-start;
+793|    gap: 14px;
+794|  }
+795|  .search-input {
+796|    width: 100%;
+797|  }
+798|  .toolbar-left {
+799|    width: 100%;
+800|  }
+801|  .stat-grid {
+802|    grid-template-columns: repeat(2, 1fr);
+803|    gap: 10px;
+804|  }
+805|  .stat-value {
+806|    font-size: 20px;
+807|  }
+808|  .stat-value-sm {
+809|    font-size: 13px;
+810|  }
+811|}
+812|</style>
+813|

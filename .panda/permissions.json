@@ -1,0 +1,8 @@
+{
+  "allow": [
+    "sleep(sleep)",
+    "bash(ls scripts/code.sh 2>/dev/null && echo \"code.sh exists\"; echo \"---\"; ls .build/electron/Code\\ -\\ OSS.app 2>/dev/null >/d)"
+  ],
+  "deny": [],
+  "ask": []
+}

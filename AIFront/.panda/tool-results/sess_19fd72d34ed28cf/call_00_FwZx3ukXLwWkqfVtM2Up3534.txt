@@ -1,0 +1,400 @@
+1|<template>
+2|  <div class="page-orchestration">
+3|    <!-- 顶部工具栏 -->
+4|    <div class="orch-toolbar">
+5|      <div class="toolbar-left">
+6|        <span class="toolbar-title">
+7|          <i class="el-icon-connection"></i>
+8|          编排设计器
+9|        </span>
+10|        <el-divider direction="vertical" />
+11|        <el-input
+12|          v-model="flowName"
+13|          size="small"
+14|          placeholder="编排名称"
+15|          class="flow-name-input"
+16|        />
+17|      </div>
+18|      <div class="toolbar-right">
+19|        <el-button size="small" icon="el-icon-refresh-left" :disabled="!undoStack.length" @click="undo">撤销</el-button>
+20|        <el-button size="small" icon="el-icon-refresh-right" :disabled="!redoStack.length" @click="redo">重做</el-button>
+21|        <el-divider direction="vertical" />
+22|        <el-button size="small" icon="el-icon-refresh" @click="resetCanvas">重置画布</el-button>
+23|        <el-button size="small" icon="el-icon-download" @click="exportJson">导出 JSON</el-button>
+24|        <el-button size="small" icon="el-icon-upload2" @click="importJson">导入 JSON</el-button>
+25|        <el-divider direction="vertical" />
+26|        <el-button size="small" icon="el-icon-video-play" type="success" @click="runFlow">运行</el-button>
+27|        <el-button size="small" icon="el-icon-check" type="primary" @click="saveFlow">保存</el-button>
+28|      </div>
+29|    </div>
+30|
+31|    <div class="orch-body">
+32|      <!-- 左侧节点面板 -->
+33|      <div class="node-palette">
+34|        <div class="palette-header">
+35|          <span>节点组件</span>
+36|        </div>
+37|        <div class="palette-search">
+38|          <el-input
+39|            v-model="paletteKeyword"
+40|            size="mini"
+41|            placeholder="搜索节点"
+42|            prefix-icon="el-icon-search"
+43|            clearable
+44|          />
+45|        </div>
+46|        <div class="palette-groups">
+47|          <div
+48|            v-for="group in filteredPaletteGroups"
+49|            :key="group.name"
+50|            class="palette-group"
+51|          >
+52|            <div class="group-title">{{ group.name }}</div>
+53|            <div
+54|              v-for="node in group.nodes"
+55|              :key="node.type"
+56|              class="palette-node"
+57|              draggable="true"
+58|              @dragstart="onDragStart($event, node)"
+59|              @click="addNodeFromPalette(node)"
+60|            >
+61|              <span :class="['node-dot', node.color]"></span>
+62|              <span class="node-label">{{ node.label }}</span>
+63|              <i class="el-icon-plus node-add-icon"></i>
+64|            </div>
+65|          </div>
+66|        </div>
+67|      </div>
+68|
+69|      <!-- 中间画布 -->
+70|      <div
+71|        class="canvas-wrap"
+72|        ref="canvasWrap"
+73|        @dragover.prevent
+74|        @drop="onDrop"
+75|        @mousedown="onCanvasMouseDown"
+76|        @mousemove="onCanvasMouseMove"
+77|        @mouseup="onCanvasMouseUp"
+78|        @click="onCanvasClick"
+79|      >
+80|        <!-- 网格背景 -->
+81|        <div class="grid-bg" :style="gridStyle"></div>
+82|
+83|        <!-- SVG 连线层 -->
+84|        <svg class="edge-layer" :width="canvasW" :height="canvasH">
+85|          <defs>
+86|            <marker
+87|              id="arrowhead"
+88|              markerWidth="10"
+89|              markerHeight="7"
+90|              refX="10"
+91|              refY="3.5"
+92|              orient="auto"
+93|            >
+94|              <polygon points="0 0, 10 3.5, 0 7" fill="#409EFF" />
+95|            </marker>
+96|          </defs>
+97|          <!-- 已保存的连线 -->
+98|          <g v-for="edge in edges" :key="edge.id">
+99|            <!-- 透明加宽命中层，便于点击/双击 -->
+100|            <path
+101|              :d="edgePath(edge)"
+102|              class="edge-path-hit"
+103|              @mousedown.stop="selectEdge(edge)"
+104|              @dblclick.stop="deleteEdge(edge)"
+105|            />
+106|            <!-- 可视连线 -->
+107|            <path
+108|              :d="edgePath(edge)"
+109|              class="edge-path"
+110|              :class="{ 'is-selected': selectedEdgeId === edge.id }"
+111|            />
+112|            <!-- 连线条件标签 -->
+113|            <text
+114|              v-if="edge.label"
+115|              :x="edgeLabelPos(edge).x"
+116|              :y="edgeLabelPos(edge).y"
+117|              class="edge-label"
+118|            >{{ edge.label }}</text>
+119|          </g>
+120|          <!-- 正在拖拽的连线 -->
+121|          <path
+122|            v-if="draggingEdge"
+123|            :d="draggingEdgePath"
+124|            class="edge-path is-dragging"
+125|          />
+126|        </svg>
+127|
+128|        <!-- 节点层 -->
+129|        <div
+130|          v-for="node in nodes"
+131|          :key="node.id"
+132|          class="flow-node"
+133|          :class="{
+134|            'is-selected': selectedNodeId === node.id,
+135|            'is-running': runningNodeId === node.id
+136|          }"
+137|          :style="nodeStyle(node)"
+138|          @mousedown.stop="onNodeMouseDown($event, node)"
+139|          @dblclick.stop="openNodeEditor(node)"
+140|          @click.stop="selectNode(node)"
+141|        >
+142|          <div class="node-header" :class="node.color">
+143|            <span class="node-icon"><i :class="node.icon"></i></span>
+144|            <span class="node-title">{{ node.label }}</span>
+145|            <span class="node-del" @click.stop="deleteNode(node)">
+146|              <i class="el-icon-close"></i>
+147|            </span>
+148|          </div>
+149|          <div class="node-body">
+150|            <div class="node-desc">{{ node.description || '双击编辑节点配置' }}</div>
+151|            <!-- 绑定能力徽章 -->
+152|            <div class="node-bind" v-if="node.bind && node.bind.resourceName">
+153|              <span class="bind-badge" :class="'bind-' + node.bind.kind">
+154|                <i :class="bindIcon(node.bind.kind)"></i>
+155|                <span class="bind-name">{{ node.bind.resourceName }}</span>
+156|                <span class="bind-ver" v-if="node.bind.resourceVersion">{{ node.bind.resourceVersion }}</span>
+157|              </span>
+158|            </div>
+159|            <div class="node-config" v-if="node.config && node.config.length">
+160|              <div
+161|                v-for="cfg in node.config"
+162|                :key="cfg.key"
+163|                class="config-item"
+164|              >
+165|                <span class="config-key">{{ cfg.label }}:</span>
+166|                <span class="config-val">{{ cfg.value }}</span>
+167|              </div>
+168|            </div>
+169|          </div>
+170|          <!-- 连接点 -->
+171|          <div
+172|            class="port port-in"
+173|            :data-node-id="node.id"
+174|            @mousedown.stop="startEdge($event, node, 'in')"
+175|          ></div>
+176|          <div
+177|            class="port port-out"
+178|            :data-node-id="node.id"
+179|            @mousedown.stop="startEdge($event, node, 'out')"
+180|          ></div>
+181|        </div>
+182|
+183|        <!-- 空状态 -->
+184|        <div v-if="!nodes.length" class="canvas-empty">
+185|          <i class="el-icon-connection"></i>
+186|          <p>从左侧拖拽节点到画布，或点击节点添加</p>
+187|          <p class="sub">拖动节点右下角连接点可建立连线</p>
+188|        </div>
+189|
+190|        <!-- 缩放控制 -->
+191|        <div class="zoom-controls">
+192|          <el-button-group size="mini">
+193|            <el-button icon="el-icon-zoom-out" @click.stop="zoomOut" />
+194|            <el-button class="zoom-percent" @click.stop="zoomReset">{{ Math.round(zoom * 100) }}%</el-button>
+195|            <el-button icon="el-icon-zoom-in" @click.stop="zoomIn" />
+196|          </el-button-group>
+197|          <el-button size="mini" icon="el-icon-full-screen" title="适应画布" @click.stop="fitCanvas" />
+198|        </div>
+199|
+200|        <!-- 小地图 -->
+201|        <div class="minimap" v-if="minimapVisible && nodes.length">
+202|          <div class="minimap-header">
+203|            <span>导航</span>
+204|            <i class="el-icon-close" @click.stop="minimapVisible = false"></i>
+205|          </div>
+206|          <div class="minimap-body" ref="minimapBody" @click.stop="onMinimapClick">
+207|            <svg :width="minimapW" :height="minimapH">
+208|              <rect
+209|                v-for="node in nodes"
+210|                :key="'mm-' + node.id"
+211|                :x="node.x * minimapScale"
+212|                :y="node.y * minimapScale"
+213|                :width="160 * minimapScale"
+214|                :height="60 * minimapScale"
+215|                :fill="NODE_COLORS[node.color] || '#409EFF'"
+216|                :opacity="selectedNodeId === node.id ? 1 : 0.7"
+217|                rx="2"
+218|              />
+219|              <line
+220|                v-for="edge in edges"
+221|                :key="'mme-' + edge.id"
+222|                :x1="(nodeById(edge.from).x + 160) * minimapScale"
+223|                :y1="(nodeById(edge.from).y + 30) * minimapScale"
+224|                :x2="nodeById(edge.to).x * minimapScale"
+225|                :y2="(nodeById(edge.to).y + 30) * minimapScale"
+226|                stroke="#409EFF"
+227|                stroke-width="1"
+228|                opacity="0.5"
+229|              />
+230|            </svg>
+231|            <!-- 视口框 -->
+232|            <div
+233|              class="minimap-viewport"
+234|              :style="minimapViewportStyle"
+235|            ></div>
+236|          </div>
+237|        </div>
+238|
+239|        <!-- 底部统计栏 -->
+240|        <div class="canvas-stats">
+241|          <span class="stat-chip"><i class="el-icon-s-grid"></i> 节点 {{ nodes.length }}</span>
+242|          <span class="stat-chip"><i class="el-icon-connection"></i> 连线 {{ edges.length }}</span>
+243|          <span class="stat-chip" :class="{ 'has-warn': orphanNodes.length }">
+244|            <i class="el-icon-warning-outline"></i>
+245|            {{ orphanNodes.length ? orphanNodes.length + ' 个未连接节点' : '拓扑完整' }}
+246|          </span>
+247|        </div>
+248|      </div>
+249|
+250|      <!-- 右侧属性面板 -->
+251|      <div class="property-panel">
+252|        <div class="panel-header">
+253|          <span>属性配置</span>
+254|        </div>
+255|        <div v-if="selectedNode" class="panel-body">
+256|          <div class="prop-section">
+257|            <div class="prop-title">节点信息</div>
+258|            <el-form label-width="70px" size="mini">
+259|              <el-form-item label="名称">
+260|                <el-input v-model="selectedNode.label" />
+261|              </el-form-item>
+262|              <el-form-item label="类型">
+263|                <el-input :value="selectedNode.type" disabled />
+264|              </el-form-item>
+265|              <el-form-item label="描述">
+266|                <el-input
+267|                  v-model="selectedNode.description"
+268|                  type="textarea"
+269|                  :rows="2"
+270|                />
+271|              </el-form-item>
+272|            </el-form>
+273|          </div>
+274|          <div class="prop-section" v-if="selectedNode.bind">
+275|            <div class="prop-title">能力绑定</div>
+276|            <el-form label-width="70px" size="mini">
+277|              <el-form-item :label="bindLabel(selectedNode)">
+278|                <el-select
+279|                  v-model="selectedNode.bind.resourceId"
+280|                  placeholder="请选择"
+281|                  style="width: 100%"
+282|                  @change="onBindChange(selectedNode, $event)"
+283|                >
+284|                  <el-option
+285|                    v-for="opt in bindOptions(selectedNode)"
+286|                    :key="opt.id"
+287|                    :label="opt.name"
+288|                    :value="opt.id"
+289|                  >
+290|                    <span>{{ opt.name }}</span>
+291|                    <span class="bind-opt-desc">{{ opt.desc }}</span>
+292|                  </el-option>
+293|                </el-select>
+294|              </el-form-item>
+295|              <div class="bind-detail" v-if="boundResource(selectedNode)">
+296|                <div class="bind-detail-row">
+297|                  <span class="bind-detail-label">版本</span>
+298|                  <span class="bind-detail-val">{{ boundResource(selectedNode).version }}</span>
+299|                </div>
+300|                <div class="bind-detail-row" v-if="boundResource(selectedNode).server">
+301|                  <span class="bind-detail-label">Server</span>
+302|                  <span class="bind-detail-val">{{ boundResource(selectedNode).server }}</span>
+303|                </div>
+304|                <div class="bind-detail-row">
+305|                  <span class="bind-detail-label">说明</span>
+306|                  <span class="bind-detail-val">{{ boundResource(selectedNode).desc }}</span>
+307|                </div>
+308|              </div>
+309|            </el-form>
+310|          </div>
+311|          <div class="prop-section" v-if="selectedNode.config && selectedNode.config.length">
+312|            <div class="prop-title">参数配置</div>
+313|            <el-form label-width="70px" size="mini">
+314|              <el-form-item
+315|                v-for="cfg in selectedNode.config"
+316|                :key="cfg.key"
+317|                :label="cfg.label"
+318|              >
+319|                <el-input v-model="cfg.value" />
+320|              </el-form-item>
+321|            </el-form>
+322|          </div>
+323|          <div class="prop-actions">
+324|            <el-button size="mini" type="danger" plain @click="deleteNode(selectedNode)">
+325|              删除节点
+326|            </el-button>
+327|          </div>
+328|        </div>
+329|        <div v-else-if="selectedEdge" class="panel-body">
+330|          <div class="prop-section">
+331|            <div class="prop-title">连线信息</div>
+332|            <el-form label-width="70px" size="mini">
+333|              <el-form-item label="来源">
+334|                <el-input :value="nodeName(selectedEdge.from)" disabled />
+335|              </el-form-item>
+336|              <el-form-item label="目标">
+337|                <el-input :value="nodeName(selectedEdge.to)" disabled />
+338|              </el-form-item>
+339|              <el-form-item label="条件">
+340|                <el-input v-model="selectedEdge.label" placeholder="连线条件（可选）" />
+341|              </el-form-item>
+342|            </el-form>
+343|          </div>
+344|          <div class="prop-actions">
+345|            <el-button size="mini" type="danger" plain @click="deleteEdge(selectedEdge)">
+346|              删除连线
+347|            </el-button>
+348|          </div>
+349|        </div>
+350|        <div v-else class="panel-body panel-empty">
+351|          <i class="el-icon-mouse"></i>
+352|          <p>选中节点或连线后<br />在此编辑属性</p>
+353|        </div>
+354|      </div>
+355|    </div>
+356|
+357|    <!-- 节点编辑弹窗 -->
+358|    <el-dialog
+359|      title="编辑节点"
+360|      :visible.sync="editorVisible"
+361|      width="480px"
+362|      custom-class="node-editor-dialog"
+363|    >
+364|      <el-form v-if="editingNode" label-width="80px" size="small">
+365|        <el-form-item label="节点名称">
+366|          <el-input v-model="editingNode.label" />
+367|        </el-form-item>
+368|        <el-form-item label="节点类型">
+369|          <el-input :value="editingNode.type" disabled />
+370|        </el-form-item>
+371|        <el-form-item label="描述">
+372|          <el-input v-model="editingNode.description" type="textarea" :rows="3" />
+373|        </el-form-item>
+374|        <el-form-item v-if="editingNode.bind" :label="bindLabel(editingNode)">
+375|          <el-select
+376|            v-model="editingNode.bind.resourceId"
+377|            placeholder="请选择"
+378|            style="width: 100%"
+379|            @change="onBindChange(editingNode, $event)"
+380|          >
+381|            <el-option
+382|              v-for="opt in bindOptions(editingNode)"
+383|              :key="opt.id"
+384|              :label="opt.name"
+385|              :value="opt.id"
+386|            >
+387|              <span>{{ opt.name }}</span>
+388|              <span class="bind-opt-desc">{{ opt.desc }}</span>
+389|            </el-option>
+390|          </el-select>
+391|        </el-form-item>
+392|        <template v-if="editingNode.config && editingNode.config.length">
+393|          <el-form-item
+394|            v-for="cfg in editingNode.config"
+395|            :key="cfg.key"
+396|            :label="cfg.label"
+397|          >
+398|            <el-input v-model="cfg.value" />
+399|          </el-form-item>
+400|        </template>

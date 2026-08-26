@@ -1,0 +1,717 @@
+1|1|<template>
+2|2|  <div class="page-memory">
+3|3|    <!-- 顶部渐变 Banner -->
+4|4|    <div class="memory-banner">
+5|5|      <div class="banner-left">
+6|6|        <div class="banner-icon">
+7|7|          <i class="el-icon-collection"></i>
+8|8|        </div>
+9|9|        <div class="banner-text">
+10|10|          <div class="banner-title">长期记忆</div>
+11|11|          <div class="banner-subtitle">跨会话持久化的项目记忆与团队约定</div>
+12|12|        </div>
+13|13|      </div>
+14|14|      <div class="banner-right">
+15|15|        <el-button type="primary" size="medium" icon="el-icon-plus" class="banner-add-btn" @click="handleAdd">
+16|16|          新增记忆
+17|17|        </el-button>
+18|18|      </div>
+19|19|    </div>
+20|20|
+21|21|    <!-- 统计概览 -->
+22|22|    <div class="stat-grid">
+23|23|      <div class="stat-card stat-card-blue">
+24|24|        <div class="stat-icon"><i class="el-icon-notebook-2"></i></div>
+25|25|        <div class="stat-info">
+26|26|          <div class="stat-value">{{ memoryList.length }}</div>
+27|27|          <div class="stat-label">记忆条目</div>
+28|28|        </div>
+29|29|      </div>
+30|30|      <div class="stat-card stat-card-green">
+31|31|        <div class="stat-icon"><i class="el-icon-price-tag"></i></div>
+32|32|        <div class="stat-info">
+33|33|          <div class="stat-value">{{ tagCount }}</div>
+34|34|          <div class="stat-label">标签分类</div>
+35|35|        </div>
+36|36|      </div>
+37|37|      <div class="stat-card stat-card-red">
+38|38|        <div class="stat-icon"><i class="el-icon-star-on"></i></div>
+39|39|        <div class="stat-info">
+40|40|          <div class="stat-value">{{ importantCount }}</div>
+41|41|          <div class="stat-label">重要记忆</div>
+42|42|        </div>
+43|43|      </div>
+44|44|      <div class="stat-card stat-card-purple">
+45|45|        <div class="stat-icon"><i class="el-icon-time"></i></div>
+46|46|        <div class="stat-info">
+47|47|          <div class="stat-value stat-value-sm">{{ lastUpdated }}</div>
+48|48|          <div class="stat-label">最近更新</div>
+49|49|        </div>
+50|50|      </div>
+51|51|    </div>
+52|52|
+53|53|    <!-- 工具栏 -->
+54|54|    <div class="toolbar">
+55|55|      <div class="toolbar-left">
+56|56|        <el-input
+57|57|          v-model="keyword"
+58|58|          size="medium"
+59|59|          placeholder="搜索记忆内容"
+60|60|          class="search-input"
+61|61|          clearable
+62|62|          prefix-icon="el-icon-search"
+63|63|          @keyup.enter.native="handleSearch"
+64|64|        />
+65|65|        <el-select v-model="filterTag" size="medium" placeholder="按标签筛选" clearable class="tag-select" @change="handleSearch">
+66|66|          <el-option
+67|67|            v-for="tag in allTags"
+68|68|            :key="tag"
+69|69|            :label="tag"
+70|70|            :value="tag"
+71|71|          />
+72|72|        </el-select>
+73|73|      </div>
+74|74|      <div class="toolbar-right">
+75|75|        <span class="result-count" v-if="filteredList.length">共 {{ filteredList.length }} 条记忆</span>
+76|76|      </div>
+77|77|    </div>
+78|78|
+79|79|    <!-- 记忆列表 -->
+80|80|    <div class="memory-list" v-loading="loading">
+81|81|      <div
+82|82|        v-for="item in filteredList"
+83|83|        :key="item.id"
+84|84|        class="memory-item"
+85|85|        :class="{ 'is-important': item.important }"
+86|86|      >
+87|87|        <div class="memory-item-main">
+88|88|          <div class="memory-item-top">
+89|89|            <span class="memory-icon" :class="getIconClass(item)">
+90|90|              <i :class="getIcon(item)"></i>
+91|91|            </span>
+92|92|            <div class="memory-title-wrap">
+93|93|              <div class="memory-title">{{ item.title }}</div>
+94|94|              <div class="memory-meta">
+95|95|                <span class="memory-author">
+96|96|                  <i class="el-icon-user"></i> {{ item.author }}
+97|97|                </span>
+98|98|                <span class="memory-time">
+99|99|                  <i class="el-icon-time"></i> {{ item.updatedAt }}
+100|100|                </span>
+101|101|              </div>
+102|102|            </div>
+103|103|            <div class="memory-actions">
+104|104|              <el-tag v-if="item.important" size="mini" type="primary" effect="dark" class="important-tag">
+105|105|                <i class="el-icon-star-on"></i> 重要
+106|106|              </el-tag>
+107|107|              <el-button type="text" icon="el-icon-edit-outline" class="action-btn" @click="handleEdit(item)" />
+108|108|              <el-button type="text" icon="el-icon-delete" class="action-btn del-btn" @click="handleDelete(item)" />
+109|109|            </div>
+110|110|          </div>
+111|111|          <div class="memory-content" @click="handleExpand(item)">
+112|112|            <p>{{ item.content }}</p>
+113|113|          </div>
+114|114|          <div class="memory-tags">
+115|115|            <el-tag
+116|116|              v-for="tag in item.tags"
+117|117|              :key="tag"
+118|118|              size="mini"
+119|119|              class="tag-item"
+120|120|              :type="getTagType(tag)"
+121|121|              effect="light"
+122|122|            >
+123|123|              {{ tag }}
+124|124|            </el-tag>
+125|125|          </div>
+126|126|        </div>
+127|127|      </div>
+128|128|
+129|129|      <div v-if="!filteredList.length" class="empty-block">
+130|130|        <el-empty description="暂无记忆条目，点击右上角“新增记忆”创建。" />
+131|131|      </div>
+132|132|    </div>
+133|133|
+134|134|    <!-- 新增 / 编辑弹窗 -->
+135|135|    <el-dialog
+136|136|      :title="isEdit ? '编辑记忆' : '新增记忆'"
+137|137|      :visible.sync="dialogVisible"
+138|138|      width="560px"
+139|139|      @close="handleDialogClose"
+140|140|      custom-class="memory-dialog"
+141|141|    >
+142|142|      <el-form
+143|143|        ref="memoryFormRef"
+144|144|        :model="form"
+145|145|        :rules="rules"
+146|146|        label-width="90px"
+147|147|        class="memory-form"
+148|148|      >
+149|149|        <el-form-item label="标题" prop="title">
+150|150|          <el-input v-model="form.title" placeholder="请输入记忆标题" prefix-icon="el-icon-edit" />
+151|151|        </el-form-item>
+152|152|        <el-form-item label="内容" prop="content">
+153|153|          <el-input
+154|154|            v-model="form.content"
+155|155|            type="textarea"
+156|156|            :rows="4"
+157|157|            maxlength="500"
+158|158|            show-word-limit
+159|159|            placeholder="请输入记忆内容"
+160|160|          />
+161|161|        </el-form-item>
+162|162|        <el-form-item label="标签" prop="tags">
+163|163|          <el-select
+164|164|            v-model="form.tags"
+165|165|            multiple
+166|166|            collapse-tags
+167|167|            :multiple-limit="5"
+168|168|            placeholder="请选择标签（最多 5 个）"
+169|169|          >
+170|170|            <el-option
+171|171|              v-for="tag in allTags"
+172|172|              :key="tag"
+173|173|              :label="tag"
+174|174|              :value="tag"
+175|175|            />
+176|176|          </el-select>
+177|177|        </el-form-item>
+178|178|        <el-form-item label="重要程度">
+179|179|          <el-switch
+180|180|            v-model="form.important"
+181|181|            active-text="重要"
+182|182|            inactive-text="普通"
+183|183|            active-color="#1890ff"
+184|184|          />
+185|185|        </el-form-item>
+186|186|      </el-form>
+187|187|
+188|188|      <div slot="footer" class="dialog-footer">
+189|189|        <el-button @click="dialogVisible = false">取 消</el-button>
+190|190|        <el-button type="primary" :loading="submitLoading" @click="handleSubmit">
+191|191|          保 存
+192|192|        </el-button>
+193|193|      </div>
+194|194|    </el-dialog>
+195|195|  </div>
+196|196|</template>
+197|197|
+198|198|<script>
+199|199|export default {
+200|200|  name: 'LongTermMemory',
+201|201|  data () {
+202|202|    return {
+203|203|      loading: false,
+204|204|      keyword: '',
+205|205|      filterTag: '',
+206|206|      memoryList: [],
+207|207|      dialogVisible: false,
+208|208|      isEdit: false,
+209|209|      currentEditId: null,
+210|210|      submitLoading: false,
+211|211|      form: {
+212|212|        title: '',
+213|213|        content: '',
+214|214|        tags: [],
+215|215|        important: false
+216|216|      },
+217|217|      rules: {
+218|218|        title: [{ required: true, message: '请输入记忆标题', trigger: 'blur' }],
+219|219|        content: [{ required: true, message: '请输入记忆内容', trigger: 'blur' }]
+220|220|      }
+221|221|    }
+222|222|  },
+223|223|  computed: {
+224|224|    allTags () {
+225|225|      const tagSet = new Set()
+226|226|      this.memoryList.forEach(item => {
+227|227|        ;(item.tags || []).forEach(tag => tagSet.add(tag))
+228|228|      })
+229|229|      return Array.from(tagSet)
+230|230|    },
+231|231|    tagCount () {
+232|232|      return this.allTags.length
+233|233|    },
+234|234|    importantCount () {
+235|235|      return this.memoryList.filter(item => item.important).length
+236|236|    },
+237|237|    lastUpdated () {
+238|238|      if (!this.memoryList.length) return '--'
+239|239|      return this.memoryList[0].updatedAt
+240|240|    },
+241|241|    filteredList () {
+242|242|      const kw = this.keyword.trim().toLowerCase()
+243|243|      return this.memoryList.filter(item => {
+244|244|        const matchKw = !kw ||
+245|245|          (item.title && item.title.toLowerCase().includes(kw)) ||
+246|246|          (item.content && item.content.toLowerCase().includes(kw))
+247|247|        const matchTag = !this.filterTag ||
+248|248|          (item.tags && item.tags.includes(this.filterTag))
+249|249|        return matchKw && matchTag
+250|250|      })
+251|251|    }
+252|252|  },
+253|253|  created () {
+254|254|    this.loadData()
+255|255|  },
+256|256|  methods: {
+257|257|    loadData () {
+258|258|      this.loading = true
+259|259|      // 模拟从后端读取长期记忆（MEMORY.md 渲染）
+260|260|      setTimeout(() => {
+261|261|        this.memoryList = [
+262|262|          {
+263|263|            id: 'mem-1',
+264|264|            title: '项目技术栈约定',
+265|265|            content: '本项目使用 Vue 2.7 + ElementUI + Vue Router + Express 技术栈。所有页面组件统一放在 src/views 目录下，路由在 src/router/index.js 中注册，左侧菜单在 src/App.vue 中维护。',
+266|266|            tags: ['技术栈', '约定'],
+267|267|            important: true,
+268|268|            author: 'Admin',
+269|269|            updatedAt: '2024-03-15 10:30:00'
+270|270|          },
+271|271|          {
+272|272|            id: 'mem-2',
+273|273|            title: '代码风格规范',
+274|274|            content: '默认使用简体中文回复用户；代码、路径、标识符、命令保持原文。改代码必须遵循 read_file → edit_file 流程，禁止用 bash/sed 直接修改业务文件。',
+275|275|            tags: ['规范', '编码'],
+276|276|            important: true,
+277|277|            author: 'Admin',
+278|278|            updatedAt: '2024-03-14 16:20:00'
+279|279|          },
+280|280|          {
+281|281|            id: 'mem-3',
+282|282|            title: '用户偏好',
+283|283|            content: '用户偏好深色侧边栏（#001529）与蓝色主题色（#409EFF）。页面卡片采用圆角 + 阴影风格，hover 时上浮并加深阴影。',
+284|284|            tags: ['偏好', 'UI'],
+285|285|            important: false,
+286|286|            author: 'Admin',
+287|287|            updatedAt: '2024-03-12 09:15:00'
+288|288|          },
+289|289|          {
+290|290|            id: 'mem-4',
+291|291|            title: '数据接口约定',
+292|292|            content: '列表接口统一返回 { records, total } 结构，分页参数为 pageNum / pageSize。新增、编辑、删除操作完成后需刷新列表。',
+293|293|            tags: ['接口', '约定'],
+294|294|            important: false,
+295|295|            author: 'Admin',
+296|296|            updatedAt: '2024-03-10 14:45:00'
+297|297|          },
+298|298|          {
+299|299|            id: 'mem-5',
+300|300|            title: '团队协作约定',
+301|301|            content: '涉及多文件关联改动时，优先使用 apply_patch 或 edit_lines 保证一致性。复杂未知需求先通过 agent_explore / agent_plan 摸清结构再动手。',
+302|302|            tags: ['协作', '流程'],
+303|303|            important: false,
+304|304|            author: 'Admin',
+305|305|            updatedAt: '2024-03-08 11:00:00'
+306|306|          }
+307|307|        ]
+308|308|        this.loading = false
+309|309|      }, 300)
+310|310|    },
+311|311|    handleSearch () {
+312|312|      // 计算属性自动过滤，无需额外逻辑
+313|313|    },
+314|314|    handleAdd () {
+315|315|      this.isEdit = false
+316|316|      this.currentEditId = null
+317|317|      this.resetForm()
+318|318|      this.dialogVisible = true
+319|319|    },
+320|320|    handleEdit (row) {
+321|321|      this.isEdit = true
+322|322|      this.currentEditId = row.id
+323|323|      this.form = {
+324|324|        title: row.title,
+325|325|        content: row.content,
+326|326|        tags: (row.tags && row.tags.slice()) || [],
+327|327|        important: !!row.important
+328|328|      }
+329|329|      this.dialogVisible = true
+330|330|    },
+331|331|    handleDelete (row) {
+332|332|      this.$confirm(`确定删除记忆「${row.title}」吗？`, '提示', {
+333|333|        confirmButtonText: '确定',
+334|334|        cancelButtonText: '取消',
+335|335|        type: 'warning'
+336|336|      }).then(() => {
+337|337|        this.memoryList = this.memoryList.filter(item => item.id !== row.id)
+338|338|        this.$message.success('删除成功')
+339|339|      }).catch(() => {})
+340|340|    },
+341|341|    handleExpand (item) {
+342|342|      // 预留：点击内容可展开详情
+343|343|    },
+344|344|    handleDialogClose () {
+345|345|      this.resetForm()
+346|346|    },
+347|347|    resetForm () {
+348|348|      this.$nextTick(() => {
+349|349|        if (this.$refs.memoryFormRef) {
+350|350|          this.$refs.memoryFormRef.resetFields()
+351|351|        }
+352|352|      })
+353|353|      this.form = {
+354|354|        title: '',
+355|355|        content: '',
+356|356|        tags: [],
+357|357|        important: false
+358|358|      }
+359|359|      this.submitLoading = false
+360|360|    },
+361|361|    handleSubmit () {
+362|362|      if (!this.$refs.memoryFormRef) return
+363|363|      this.$refs.memoryFormRef.validate(valid => {
+364|364|        if (!valid) return
+365|365|        this.submitLoading = true
+366|366|        setTimeout(() => {
+367|367|          if (this.isEdit && this.currentEditId) {
+368|368|            const idx = this.memoryList.findIndex(item => item.id === this.currentEditId)
+369|369|            if (idx > -1) {
+370|370|              this.memoryList.splice(idx, 1, {
+371|371|                ...this.memoryList[idx],
+372|372|                ...this.form,
+373|373|                updatedAt: this.getNow()
+374|374|              })
+375|375|            }
+376|376|            this.$message.success('更新成功')
+377|377|          } else {
+378|378|            this.memoryList.unshift({
+379|379|              id: 'mem-' + Date.now(),
+380|380|              ...this.form,
+381|381|              author: 'Admin',
+382|382|              updatedAt: this.getNow()
+383|383|            })
+384|384|            this.$message.success('创建成功')
+385|385|          }
+386|386|          this.dialogVisible = false
+387|387|          this.submitLoading = false
+388|388|        }, 300)
+389|389|      })
+390|390|    },
+391|391|    getNow () {
+392|392|      const d = new Date()
+393|393|      const pad = n => (n < 10 ? '0' + n : '' + n)
+394|394|      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+395|395|    },
+396|396|    getIcon (item) {
+397|397|      if (item.important) return 'el-icon-star-on'
+398|398|      if (item.tags && item.tags.includes('技术栈')) return 'el-icon-cpu'
+399|399|      if (item.tags && item.tags.includes('规范')) return 'el-icon-document-checked'
+400|400|      if (item.tags && item.tags.includes('偏好')) return 'el-icon-user'
+401|401|      if (item.tags && item.tags.includes('接口')) return 'el-icon-connection'
+402|402|      return 'el-icon-collection'
+403|403|    },
+404|404|    getIconClass (item) {
+405|405|      if (item.important) return 'icon-important'
+406|406|      if (item.tags && item.tags.includes('技术栈')) return 'icon-tech'
+407|407|      if (item.tags && item.tags.includes('规范')) return 'icon-rule'
+408|408|      if (item.tags && item.tags.includes('偏好')) return 'icon-pref'
+409|409|      if (item.tags && item.tags.includes('接口')) return 'icon-api'
+410|410|      return 'icon-default'
+411|411|    },
+412|412|    getTagType (tag) {
+413|413|      const map = {
+414|414|        '技术栈': 'primary',
+415|415|        '约定': 'success',
+416|416|        '规范': 'warning',
+417|417|        '编码': 'primary',
+418|418|        '偏好': 'info',
+419|419|        'UI': 'primary',
+420|420|        '接口': 'success',
+421|421|        '协作': 'warning',
+422|422|        '流程': 'info'
+423|423|      }
+424|424|      return map[tag] || ''
+425|425|    }
+426|426|  }
+427|427|}
+428|428|</script>
+429|429|
+430|430|<style scoped>
+431|431|.page-memory {
+432|432|  padding: 16px 20px;
+433|433|  background: linear-gradient(160deg, #f5f7fb 0%, #eef2f7 100%);
+434|434|  min-height: calc(100vh - 84px);
+435|435|  box-sizing: border-box;
+436|436|}
+437|437|
+438|438|/* ===== 顶部渐变 Banner ===== */
+439|439|.memory-banner {
+440|440|  display: flex;
+441|441|  align-items: center;
+442|442|  justify-content: space-between;
+443|443|  background: linear-gradient(120deg, #1f3a5f 0%, #2d5a8e 55%, #3a7bd5 100%);
+444|444|  border-radius: 14px;
+445|445|  padding: 22px 28px;
+446|446|  margin-bottom: 20px;
+447|447|  box-shadow: 0 8px 24px rgba(45, 90, 142, 0.25);
+448|448|  position: relative;
+449|449|  overflow: hidden;
+450|450|}
+451|451|
+452|452|.memory-banner::after {
+453|453|  content: '';
+454|454|  position: absolute;
+455|455|  right: -40px;
+456|456|  top: -60px;
+457|457|  width: 220px;
+458|458|  height: 220px;
+459|459|  border-radius: 50%;
+460|460|  background: rgba(255, 255, 255, 0.06);
+461|461|}
+462|462|
+463|463|.memory-banner::before {
+464|464|  content: '';
+465|465|  position: absolute;
+466|466|  right: 60px;
+467|467|  bottom: -80px;
+468|468|  width: 180px;
+469|469|  height: 180px;
+470|470|  border-radius: 50%;
+471|471|  background: rgba(255, 255, 255, 0.05);
+472|472|}
+473|473|
+474|474|.banner-left {
+475|475|  display: flex;
+476|476|  align-items: center;
+477|477|  gap: 16px;
+478|478|  position: relative;
+479|479|  z-index: 1;
+480|480|}
+481|481|
+482|482|.banner-icon {
+483|483|  width: 52px;
+484|484|  height: 52px;
+485|485|  border-radius: 14px;
+486|486|  background: rgba(255, 255, 255, 0.15);
+487|487|  display: flex;
+488|488|  align-items: center;
+489|489|  justify-content: center;
+490|490|  font-size: 26px;
+491|491|  color: #fff;
+492|492|  backdrop-filter: blur(4px);
+493|493|}
+494|494|
+495|495|.banner-title {
+496|496|  font-size: 22px;
+497|497|  font-weight: 700;
+498|498|  color: #fff;
+499|499|  letter-spacing: 1px;
+500|500|}
+501|501|
+502|502|.banner-subtitle {
+503|503|  margin-top: 4px;
+504|504|  font-size: 13px;
+505|505|  color: rgba(255, 255, 255, 0.75);
+506|506|}
+507|507|
+508|508|.banner-right {
+509|509|  position: relative;
+510|510|  z-index: 1;
+511|511|}
+512|512|
+513|513|.banner-add-btn {
+514|514|  border-radius: 8px;
+515|515|  font-weight: 600;
+516|516|  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+517|517|}
+518|518|
+519|519|/* ===== 统计卡片 ===== */
+520|520|.stat-grid {
+521|521|  display: grid;
+522|522|  grid-template-columns: repeat(4, 1fr);
+523|523|  gap: 16px;
+524|524|  margin-bottom: 20px;
+525|525|}
+526|526|
+527|527|.stat-card {
+528|528|  display: flex;
+529|529|  align-items: center;
+530|530|  gap: 14px;
+531|531|  padding: 18px 20px;
+532|532|  border-radius: 12px;
+533|533|  background: #fff;
+534|534|  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+535|535|  transition: all 0.3s ease;
+536|536|  border: 1px solid transparent;
+537|537|}
+538|538|
+539|539|.stat-card:hover {
+540|540|  transform: translateY(-4px);
+541|541|  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+542|542|}
+543|543|
+544|544|.stat-icon {
+545|545|  width: 46px;
+546|546|  height: 46px;
+547|547|  border-radius: 12px;
+548|548|  display: flex;
+549|549|  align-items: center;
+550|550|  justify-content: center;
+551|551|  font-size: 22px;
+552|552|  flex-shrink: 0;
+553|553|}
+554|554|
+555|555|.stat-card-blue .stat-icon { background: #e6f7ff; color: #1890ff; }
+556|556|.stat-card-green .stat-icon { background: #f6ffed; color: #52c41a; }
+557|557|.stat-card-red .stat-icon { background: #e6f7ff; color: #1890ff; }
+558|558|.stat-card-purple .stat-icon { background: #f9f0ff; color: #722ed1; }
+559|559|
+560|560|.stat-value {
+561|561|  font-size: 26px;
+562|562|  font-weight: 700;
+563|563|  color: #1a1a1a;
+564|564|  line-height: 1.1;
+565|565|}
+566|566|
+567|567|.stat-value-sm {
+568|568|  font-size: 15px;
+569|569|  font-weight: 600;
+570|570|  color: #722ed1;
+571|571|  line-height: 1.3;
+572|572|}
+573|573|
+574|574|.stat-label {
+575|575|  margin-top: 4px;
+576|576|  font-size: 13px;
+577|577|  color: #8c8c8c;
+578|578|}
+579|579|
+580|580|/* ===== 工具栏 ===== */
+581|581|.toolbar {
+582|582|  display: flex;
+583|583|  align-items: center;
+584|584|  justify-content: space-between;
+585|585|  margin-bottom: 16px;
+586|586|  flex-wrap: wrap;
+587|587|  gap: 12px;
+588|588|}
+589|589|
+590|590|.toolbar-left {
+591|591|  display: flex;
+592|592|  align-items: center;
+593|593|  gap: 12px;
+594|594|  flex-wrap: wrap;
+595|595|}
+596|596|
+597|597|.search-input {
+598|598|  width: 280px;
+599|599|}
+600|600|
+601|601|.tag-select {
+602|602|  width: 160px;
+603|603|}
+604|604|
+605|605|.result-count {
+606|606|  font-size: 13px;
+607|607|  color: #8c8c8c;
+608|608|}
+609|609|
+610|610|/* ===== 记忆列表 ===== */
+611|611|.memory-list {
+612|612|  min-height: 200px;
+613|613|}
+614|614|
+615|615|.memory-item {
+616|616|  border: 1px solid #eef0f4;
+617|617|  border-radius: 12px;
+618|618|  padding: 18px 20px;
+619|619|  margin-bottom: 14px;
+620|620|  transition: all 0.3s ease;
+621|621|  background: #fff;
+622|622|  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+623|623|}
+624|624|
+625|625|.memory-item:hover {
+626|626|  border-color: #d6e4ff;
+627|627|  box-shadow: 0 8px 24px rgba(24, 144, 255, 0.1);
+628|628|  transform: translateY(-3px);
+629|629|}
+630|630|
+631|631|.memory-item.is-important {
+632|632|  border-left: 4px solid #1890ff;
+633|633|  background: linear-gradient(90deg, #f0f7ff 0%, #ffffff 40%);
+634|634|}
+635|635|
+636|636|.memory-item-top {
+637|637|  display: flex;
+638|638|  align-items: center;
+639|639|  gap: 14px;
+640|640|}
+641|641|
+642|642|.memory-icon {
+643|643|  width: 44px;
+644|644|  height: 44px;
+645|645|  border-radius: 12px;
+646|646|  display: flex;
+647|647|  align-items: center;
+648|648|  justify-content: center;
+649|649|  font-size: 22px;
+650|650|  flex-shrink: 0;
+651|651|}
+652|652|
+653|653|.icon-important {
+654|654|  background: linear-gradient(135deg, #69c0ff, #1890ff);
+655|655|  color: #fff;
+656|656|  box-shadow: 0 4px 10px rgba(24, 144, 255, 0.3);
+657|657|}
+658|658|
+659|659|.icon-tech {
+660|660|  background: linear-gradient(135deg, #69c0ff, #1890ff);
+661|661|  color: #fff;
+662|662|  box-shadow: 0 4px 10px rgba(24, 144, 255, 0.3);
+663|663|}
+664|664|
+665|665|.icon-rule {
+666|666|  background: linear-gradient(135deg, #ffc069, #fa8c16);
+667|667|  color: #fff;
+668|668|  box-shadow: 0 4px 10px rgba(250, 140, 22, 0.3);
+669|669|}
+670|670|
+671|671|.icon-pref {
+672|672|  background: linear-gradient(135deg, #95de64, #52c41a);
+673|673|  color: #fff;
+674|674|  box-shadow: 0 4px 10px rgba(82, 196, 26, 0.3);
+675|675|}
+676|676|
+677|677|.icon-api {
+678|678|  background: linear-gradient(135deg, #85a5ff, #2f54eb);
+679|679|  color: #fff;
+680|680|  box-shadow: 0 4px 10px rgba(47, 84, 235, 0.3);
+681|681|}
+682|682|
+683|683|.icon-default {
+684|684|  background: linear-gradient(135deg, #bfbfbf, #8c8c8c);
+685|685|  color: #fff;
+686|686|  box-shadow: 0 4px 10px rgba(140, 140, 140, 0.3);
+687|687|}
+688|688|
+689|689|.memory-title-wrap {
+690|690|  flex: 1;
+691|691|  min-width: 0;
+692|692|}
+693|693|
+694|694|.memory-title {
+695|695|  font-size: 16px;
+696|696|  font-weight: 600;
+697|697|  color: #1a1a1a;
+698|698|  overflow: hidden;
+699|699|  text-overflow: ellipsis;
+700|700|  white-space: nowrap;
+701|701|}
+702|702|
+703|703|.memory-meta {
+704|704|  margin-top: 5px;
+705|705|  font-size: 12px;
+706|706|  color: #8c8c8c;
+707|707|  display: flex;
+708|708|  gap: 16px;
+709|709|}
+710|710|
+711|711|.memory-meta i {
+712|712|  margin-right: 3px;
+713|713|}
+714|714|
+715|715|.memory-actions {
+716|716|  display: flex;
+717|717|  align-i

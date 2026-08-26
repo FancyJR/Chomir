@@ -1,0 +1,279 @@
+/* 共享的 DeepSeek JSON 调用封装，用于 planner / codegen 等模块 */
+
+const path = require('path')
+const envPath = path.resolve(__dirname, '..', '.env.local')
+require('dotenv').config({ path: envPath })
+
+const DEEPSEEK_BASE = (process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com').replace(/\/$/, '')
+const DEEPSEEK_TIMEOUT_MS = parseInt(process.env.DEEPSEEK_TIMEOUT_MS, 10) || 120000
+
+// 简单 JSON 安全解析：去掉 ``` 包裹 + 截断情况下尽量返回 null
+function safeJsonParse (text) {
+  if (!text) return null
+  let s = String(text || '').trim()
+  s = s.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim()
+  try {
+    return JSON.parse(s)
+  } catch (e) {
+    return null
+  }
+}
+
+async function callDeepseekJson (systemPrompt, userPrompt) {
+  const apiKey = process.env.DEEPSEEK_API_KEY
+  if (!apiKey) {
+    throw new Error('NO_MODEL_CONFIG')
+  }
+
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), DEEPSEEK_TIMEOUT_MS)
+
+  const body = {
+    model: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ],
+    stream: false,
+    // 请求 JSON 输出，降低解析出错概率
+    response_format: { type: 'json_object' }
+  }
+
+  const url = `${DEEPSEEK_BASE}/chat/completions`
+  let res
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal
+    })
+    clearTimeout(timeoutId)
+  } catch (e) {
+    clearTimeout(timeoutId)
+    if (e.name === 'AbortError') {
+      throw new Error('大模型请求超时，请稍后重试')
+    }
+    throw e
+  }
+
+  const text = await res.text()
+  if (!res.ok) {
+    let msg = `HTTP ${res.status}`
+    try {
+      const errRoot = text ? JSON.parse(text) : null
+      if (errRoot && errRoot.error && errRoot.error.message) {
+        msg = errRoot.error.message
+      }
+    } catch (e) {
+      // ignore
+    }
+    throw new Error(msg)
+  }
+
+  if (!text) return null
+
+  // DeepSeek / OpenAI 风格：先解析顶层 JSON，再从 choices[0].message.content 中取出模型输出
+  let root = null
+  try {
+    root = JSON.parse(text)
+  } catch (e) {
+    // 顶层不是 JSON，尝试直接解析为 { "answer": ... } 这类 JSON 文本
+    return safeJsonParse(text)
+  }
+
+  const choices = Array.isArray(root.choices) ? root.choices : []
+  const first = choices[0]
+  const message = first && first.message
+  const content = message && message.content
+
+  // response_format 为 json_object 时，content 可能已经是对象
+  if (content && typeof content === 'object') {
+    return content
+  }
+  if (typeof content === 'string') {
+    return safeJsonParse(content)
+  }
+
+  // 兜底：再尝试直接解析顶层
+  return safeJsonParse(text)
+}
+
+module.exports = {
+  callDeepseekJson
+}
+
+// 纯文本模式：直接拿模型输出的 content 字符串；options 可传 { max_tokens } 避免大文件被截断
+async function callDeepseekText (systemPrompt, userPrompt, options) {
+  const apiKey = process.env.DEEPSEEK_API_KEY
+  if (!apiKey) {
+    throw new Error('NO_MODEL_CONFIG')
+  }
+
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), DEEPSEEK_TIMEOUT_MS)
+
+  const body = {
+    model: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ],
+    stream: false
+  }
+  if (options && typeof options.max_tokens === 'number' && options.max_tokens > 0) {
+    body.max_tokens = options.max_tokens
+  }
+
+  const url = `${DEEPSEEK_BASE}/chat/completions`
+  let res
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal
+    })
+    clearTimeout(timeoutId)
+  } catch (e) {
+    clearTimeout(timeoutId)
+    if (e.name === 'AbortError') {
+      throw new Error('大模型请求超时，请稍后重试')
+    }
+    throw e
+  }
+
+  const text = await res.text()
+  if (!res.ok) {
+    let msg = `HTTP ${res.status}`
+    try {
+      const errRoot = text ? JSON.parse(text) : null
+      if (errRoot && errRoot.error && errRoot.error.message) {
+        msg = errRoot.error.message
+      }
+    } catch (e) {
+      // ignore
+    }
+    throw new Error(msg)
+  }
+
+  if (!text) return ''
+  let root = null
+  try {
+    root = JSON.parse(text)
+  } catch (e) {
+    // 顶层不是 JSON，则整个当作文本返回
+    return text
+  }
+  const choices = Array.isArray(root.choices) ? root.choices : []
+  const first = choices[0]
+  const message = first && first.message
+  const content = message && message.content
+  if (typeof content === 'string') return content
+  return JSON.stringify(content || {})
+}
+
+module.exports.callDeepseekText = callDeepseekText
+
+/**
+ * 流式调用 DeepSeek，逐块返回 content（用于问答等需实时展示的场景）
+ * @param {string} systemPrompt
+ * @param {string} userPrompt
+ * @yields {string} 每块文本
+ */
+async function * callDeepseekStream (systemPrompt, userPrompt) {
+  const apiKey = process.env.DEEPSEEK_API_KEY
+  if (!apiKey) {
+    throw new Error('NO_MODEL_CONFIG')
+  }
+
+  const body = {
+    model: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ],
+    stream: true
+  }
+
+  const url = `${DEEPSEEK_BASE}/chat/completions`
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`
+    },
+    body: JSON.stringify(body)
+  })
+
+  if (!res.ok) {
+    const text = await res.text()
+    let msg = `HTTP ${res.status}`
+    try {
+      const errRoot = text ? JSON.parse(text) : null
+      if (errRoot && errRoot.error && errRoot.error.message) {
+        msg = errRoot.error.message
+      }
+    } catch (e) {
+      // ignore
+    }
+    throw new Error(msg)
+  }
+
+  const reader = res.body && res.body.getReader()
+  if (!reader) {
+    throw new Error('Stream not available')
+  }
+
+  const decoder = new TextDecoder('utf-8')
+  let buffer = ''
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split(/\r?\n/)
+      buffer = lines.pop() || ''
+      for (const line of lines) {
+        const trimmed = line.trim()
+        if (!trimmed || trimmed === 'data: [DONE]') continue
+        if (trimmed.startsWith('data: ')) {
+          try {
+            const json = JSON.parse(trimmed.slice(6))
+            const content = json.choices && json.choices[0] && json.choices[0].delta && json.choices[0].delta.content
+            if (typeof content === 'string' && content) {
+              yield content
+            }
+          } catch (e) {
+            // ignore parse error for single chunk
+          }
+        }
+      }
+    }
+    if (buffer.trim()) {
+      const trimmed = buffer.trim()
+      if (trimmed.startsWith('data: ') && trimmed !== 'data: [DONE]') {
+        try {
+          const json = JSON.parse(trimmed.slice(6))
+          const content = json.choices && json.choices[0] && json.choices[0].delta && json.choices[0].delta.content
+          if (typeof content === 'string' && content) {
+            yield content
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock()
+  }
+}
+
+module.exports.callDeepseekStream = callDeepseekStream
+

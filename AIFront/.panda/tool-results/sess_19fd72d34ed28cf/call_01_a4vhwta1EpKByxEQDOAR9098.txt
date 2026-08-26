@@ -1,0 +1,633 @@
+1|<template>
+2|  <div class="page-dashboard">
+3|    <!-- 欢迎横幅 -->
+4|    <div class="welcome-banner">
+5|      <div class="banner-content">
+6|        <div class="banner-text">
+7|          <div class="banner-greeting">{{ greeting }}，欢迎回来 👋</div>
+8|          <div class="banner-title">后台管理系统</div>
+9|          <div class="banner-subtitle">这里是你的数据总览，实时掌握系统运行状态与业务动态</div>
+10|        </div>
+11|        <div class="banner-date">
+12|          <div class="date-day">{{ today.day }}</div>
+13|          <div class="date-info">
+14|            <div class="date-week">{{ today.week }}</div>
+15|            <div class="date-full">{{ today.full }}</div>
+16|          </div>
+17|        </div>
+18|      </div>
+19|      <div class="banner-decoration"></div>
+20|    </div>
+21|
+22|    <!-- KPI 统计卡片 -->
+23|    <el-row :gutter="16" class="kpi-row">
+24|      <el-col :xs="12" :sm="12" :md="6" v-for="item in kpiCards" :key="item.label">
+25|        <div class="kpi-card" :style="{ background: item.bg }">
+26|          <div class="kpi-icon" :style="{ background: item.iconBg, color: item.color }">
+27|            <i :class="item.icon"></i>
+28|          </div>
+29|          <div class="kpi-info">
+30|            <div class="kpi-value">{{ item.value }}</div>
+31|            <div class="kpi-label">{{ item.label }}</div>
+32|            <div class="kpi-trend" :class="item.trend > 0 ? 'trend-up' : 'trend-down'">
+33|              <i :class="item.trend > 0 ? 'el-icon-top' : 'el-icon-bottom'"></i>
+34|              {{ Math.abs(item.trend) }}% 较上周
+35|            </div>
+36|          </div>
+37|        </div>
+38|      </el-col>
+39|    </el-row>
+40|
+41|    <!-- 图表区 -->
+42|    <el-row :gutter="16" class="chart-row">
+43|      <el-col :xs="24" :sm="24" :md="14">
+44|        <div class="panel-card">
+45|          <div class="panel-header">
+46|            <div class="panel-title">
+47|              <i class="el-icon-data-line panel-title-icon"></i>
+48|              访问量趋势
+49|            </div>
+50|            <div class="panel-actions">
+51|              <el-radio-group v-model="visitRange" size="mini">
+52|                <el-radio-button label="week">本周</el-radio-button>
+53|                <el-radio-button label="month">本月</el-radio-button>
+54|              </el-radio-group>
+55|            </div>
+56|          </div>
+57|          <div class="chart-container" ref="visitChart"></div>
+58|        </div>
+59|      </el-col>
+60|      <el-col :xs="24" :sm="24" :md="10">
+61|        <div class="panel-card">
+62|          <div class="panel-header">
+63|            <div class="panel-title">
+64|              <i class="el-icon-pie-chart panel-title-icon"></i>
+65|              功能使用占比
+66|            </div>
+67|          </div>
+68|          <div class="chart-container" ref="pieChart"></div>
+69|        </div>
+70|      </el-col>
+71|    </el-row>
+72|
+73|    <!-- 快捷入口 -->
+74|    <div class="panel-card quick-panel">
+75|      <div class="panel-header">
+76|        <div class="panel-title">
+77|          <i class="el-icon-magic-stick panel-title-icon"></i>
+78|          快捷入口
+79|        </div>
+80|      </div>
+81|      <div class="quick-grid">
+82|        <div
+83|          v-for="item in quickLinks"
+84|          :key="item.path"
+85|          class="quick-item"
+86|          @click="$router.push(item.path)"
+87|        >
+88|          <div class="quick-icon" :style="{ background: item.bg, color: item.color }">
+89|            <i :class="item.icon"></i>
+90|          </div>
+91|          <div class="quick-name">{{ item.name }}</div>
+92|          <div class="quick-desc">{{ item.desc }}</div>
+93|        </div>
+94|      </div>
+95|    </div>
+96|  </div>
+97|</template>
+98|
+99|<script>
+100|import * as echarts from 'echarts'
+101|
+102|export default {
+103|  name: 'Dashboard',
+104|  data () {
+105|    return {
+106|      visitChart: null,
+107|      pieChart: null,
+108|      visitRange: 'week',
+109|      today: {
+110|        day: '',
+111|        week: '',
+112|        full: ''
+113|      },
+114|      kpiCards: [
+115|        {
+116|          label: '总用户数',
+117|          value: '8,846',
+118|          trend: 12.5,
+119|          icon: 'el-icon-user',
+120|          color: '#3b82f6',
+121|          iconBg: 'rgba(59, 130, 246, 0.12)',
+122|          bg: 'linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%)'
+123|        },
+124|        {
+125|          label: '今日访问量',
+126|          value: '1,286',
+127|          trend: 8.2,
+128|          icon: 'el-icon-view',
+129|          color: '#10b981',
+130|          iconBg: 'rgba(16, 185, 129, 0.12)',
+131|          bg: 'linear-gradient(135deg, #ffffff 0%, #ecfdf5 100%)'
+132|        },
+133|        {
+134|          label: '订单数量',
+135|          value: '3,420',
+136|          trend: -3.1,
+137|          icon: 'el-icon-shopping-cart-2',
+138|          color: '#f59e0b',
+139|          iconBg: 'rgba(245, 158, 11, 0.12)',
+140|          bg: 'linear-gradient(135deg, #ffffff 0%, #fffbeb 100%)'
+141|        },
+142|        {
+143|          label: '系统消息',
+144|          value: '128',
+145|          trend: 5.4,
+146|          icon: 'el-icon-message',
+147|          color: '#8b5cf6',
+148|          iconBg: 'rgba(139, 92, 246, 0.12)',
+149|          bg: 'linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%)'
+150|        }
+151|      ],
+152|      quickLinks: [
+153|        { name: 'Panda 工作台', desc: '智能体编排与执行', icon: 'el-icon-cpu', path: '/panda', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.12)' },
+154|        { name: '编排', desc: '可视化流程编排', icon: 'el-icon-connection', path: '/orchestration', color: '#10b981', bg: 'rgba(16, 185, 129, 0.12)' },
+155|        { name: '指令市场', desc: '浏览与发布指令', icon: 'el-icon-s-operation', path: '/command-market', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.12)' },
+156|        { name: '今日股票推荐', desc: '涨停潜力个股', icon: 'el-icon-star-on', path: '/today-stock-recommendation', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.12)' },
+157|        { name: '无代码开发', desc: '拖拽式应用构建', icon: 'el-icon-magic-stick', path: '/no-code', color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.12)' },
+158|        { name: '足球数据统计', desc: '进球数据分析', icon: 'el-icon-data-analysis', path: '/football-goals-chart', color: '#06b6d4', bg: 'rgba(6, 182, 212, 0.12)' },
+159|        { name: '篮球数据统计', desc: '篮球赛事数据', icon: 'el-icon-data-analysis', path: '/basketball-chart', color: '#f97316', bg: 'rgba(249, 115, 22, 0.12)' },
+160|        { name: '期货预测', desc: '期货行情预测', icon: 'el-icon-trend-charts', path: '/futures-prediction', color: '#14b8a6', bg: 'rgba(20, 184, 166, 0.12)' }
+161|      ]
+162|    }
+163|  },
+164|  computed: {
+165|    greeting () {
+166|      const h = new Date().getHours()
+167|      if (h < 6) return '夜深了'
+168|      if (h < 12) return '早上好'
+169|      if (h < 14) return '中午好'
+170|      if (h < 18) return '下午好'
+171|      return '晚上好'
+172|    }
+173|  },
+174|  mounted () {
+175|    this.initDate()
+176|    this.$nextTick(() => {
+177|      this.initVisitChart()
+178|      this.initPieChart()
+179|    })
+180|    window.addEventListener('resize', this.handleResize)
+181|  },
+182|  beforeDestroy () {
+183|    window.removeEventListener('resize', this.handleResize)
+184|    if (this.visitChart) this.visitChart.dispose()
+185|    if (this.pieChart) this.pieChart.dispose()
+186|  },
+187|  methods: {
+188|    initDate () {
+189|      const now = new Date()
+190|      const weeks = ['日', '一', '二', '三', '四', '五', '六']
+191|      this.today = {
+192|        day: String(now.getDate()).padStart(2, '0'),
+193|        week: '星期' + weeks[now.getDay()],
+194|        full: `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`
+195|      }
+196|    },
+197|    initVisitChart () {
+198|      const chartDom = this.$refs.visitChart
+199|      if (!chartDom) return
+200|      this.visitChart = echarts.init(chartDom)
+201|      const option = {
+202|        tooltip: {
+203|          trigger: 'axis',
+204|          backgroundColor: 'rgba(255,255,255,0.95)',
+205|          borderColor: '#e2e8f0',
+206|          textStyle: { color: '#334155' }
+207|        },
+208|        grid: {
+209|          left: '3%',
+210|          right: '4%',
+211|          bottom: '3%',
+212|          top: '12%',
+213|          containLabel: true
+214|        },
+215|        xAxis: {
+216|          type: 'category',
+217|          boundaryGap: false,
+218|          data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+219|          axisLine: { lineStyle: { color: '#e2e8f0' } },
+220|          axisLabel: { color: '#64748b' }
+221|        },
+222|        yAxis: {
+223|          type: 'value',
+224|          splitLine: { lineStyle: { color: '#f1f5f9' } },
+225|          axisLabel: { color: '#64748b' }
+226|        },
+227|        series: [
+228|          {
+229|            name: '访问量',
+230|            type: 'line',
+231|            smooth: true,
+232|            symbol: 'circle',
+233|            symbolSize: 6,
+234|            data: [120, 200, 150, 80, 70, 110, 130],
+235|            lineStyle: {
+236|              color: '#3b82f6',
+237|              width: 3
+238|            },
+239|            itemStyle: {
+240|              color: '#3b82f6',
+241|              borderColor: '#fff',
+242|              borderWidth: 2
+243|            },
+244|            areaStyle: {
+245|              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+246|                { offset: 0, color: 'rgba(59, 130, 246, 0.35)' },
+247|                { offset: 1, color: 'rgba(59, 130, 246, 0.02)' }
+248|              ])
+249|            }
+250|          }
+251|        ]
+252|      }
+253|      this.visitChart.setOption(option)
+254|    },
+255|    initPieChart () {
+256|      const chartDom = this.$refs.pieChart
+257|      if (!chartDom) return
+258|      this.pieChart = echarts.init(chartDom)
+259|      const option = {
+260|        tooltip: {
+261|          trigger: 'item',
+262|          backgroundColor: 'rgba(255,255,255,0.95)',
+263|          borderColor: '#e2e8f0',
+264|          textStyle: { color: '#334155' }
+265|        },
+266|        legend: {
+267|          bottom: '0%',
+268|          left: 'center',
+269|          icon: 'circle',
+270|          itemWidth: 10,
+271|          itemHeight: 10,
+272|          textStyle: { color: '#64748b' }
+273|        },
+274|        series: [
+275|          {
+276|            name: '功能使用',
+277|            type: 'pie',
+278|            radius: ['45%', '72%'],
+279|            center: ['50%', '45%'],
+280|            avoidLabelOverlap: false,
+281|            itemStyle: {
+282|              borderRadius: 8,
+283|              borderColor: '#fff',
+284|              borderWidth: 3
+285|            },
+286|            label: {
+287|              show: false,
+288|              position: 'center'
+289|            },
+290|            emphasis: {
+291|              label: {
+292|                show: true,
+293|                fontSize: '18',
+294|                fontWeight: 'bold',
+295|                color: '#0f172a'
+296|              }
+297|            },
+298|            labelLine: {
+299|              show: false
+300|            },
+301|            data: [
+302|              { value: 335, name: '用户管理' },
+303|              { value: 310, name: '订单管理' },
+304|              { value: 234, name: '数据分析' },
+305|              { value: 135, name: '系统设置' },
+306|              { value: 154, name: '消息中心' }
+307|            ],
+308|            color: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444']
+309|          }
+310|        ]
+311|      }
+312|      this.pieChart.setOption(option)
+313|    },
+314|    handleResize () {
+315|      if (this.visitChart) this.visitChart.resize()
+316|      if (this.pieChart) this.pieChart.resize()
+317|    }
+318|  }
+319|}
+320|</script>
+321|
+322|<style scoped>
+323|.page-dashboard {
+324|  padding: 24px 28px;
+325|  background:
+326|    radial-gradient(1200px 400px at 10% -10%, rgba(59, 130, 246, 0.12), transparent 60%),
+327|    radial-gradient(1000px 400px at 90% 0%, rgba(99, 102, 241, 0.1), transparent 60%),
+328|    linear-gradient(160deg, #eef4ff 0%, #e0ecff 40%, #d6e6ff 100%);
+329|  min-height: calc(100vh - 84px);
+330|  box-sizing: border-box;
+331|}
+332|
+333|/* 欢迎横幅 */
+334|.welcome-banner {
+335|  position: relative;
+336|  overflow: hidden;
+337|  border-radius: 20px;
+338|  padding: 32px 36px;
+339|  margin-bottom: 20px;
+340|  background: linear-gradient(120deg, #3b82f6 0%, #6366f1 55%, #8b5cf6 100%);
+341|  box-shadow: 0 12px 32px rgba(59, 130, 246, 0.25);
+342|  color: #fff;
+343|}
+344|
+345|.banner-content {
+346|  position: relative;
+347|  z-index: 2;
+348|  display: flex;
+349|  align-items: center;
+350|  justify-content: space-between;
+351|}
+352|
+353|.banner-greeting {
+354|  font-size: 15px;
+355|  opacity: 0.9;
+356|  margin-bottom: 8px;
+357|}
+358|
+359|.banner-title {
+360|  font-size: 30px;
+361|  font-weight: 800;
+362|  letter-spacing: 1px;
+363|  margin-bottom: 10px;
+364|}
+365|
+366|.banner-subtitle {
+367|  font-size: 14px;
+368|  opacity: 0.85;
+369|  max-width: 560px;
+370|  line-height: 1.6;
+371|}
+372|
+373|.banner-date {
+374|  display: flex;
+375|  align-items: center;
+376|  gap: 16px;
+377|  background: rgba(255, 255, 255, 0.15);
+378|  border: 1px solid rgba(255, 255, 255, 0.25);
+379|  border-radius: 16px;
+380|  padding: 14px 22px;
+381|  backdrop-filter: blur(4px);
+382|}
+383|
+384|.date-day {
+385|  font-size: 44px;
+386|  font-weight: 800;
+387|  line-height: 1;
+388|}
+389|
+390|.date-info {
+391|  display: flex;
+392|  flex-direction: column;
+393|  gap: 4px;
+394|}
+395|
+396|.date-week {
+397|  font-size: 16px;
+398|  font-weight: 600;
+399|}
+400|
+401|.date-full {
+402|  font-size: 13px;
+403|  opacity: 0.85;
+404|}
+405|
+406|.banner-decoration {
+407|  position: absolute;
+408|  right: -60px;
+409|  top: -60px;
+410|  width: 220px;
+411|  height: 220px;
+412|  border-radius: 50%;
+413|  background: rgba(255, 255, 255, 0.08);
+414|}
+415|
+416|.banner-decoration::after {
+417|  content: '';
+418|  position: absolute;
+419|  right: 40px;
+420|  top: 40px;
+421|  width: 140px;
+422|  height: 140px;
+423|  border-radius: 50%;
+424|  background: rgba(255, 255, 255, 0.06);
+425|}
+426|
+427|/* KPI 卡片 */
+428|.kpi-row {
+429|  margin-bottom: 20px;
+430|}
+431|
+432|.kpi-card {
+433|  display: flex;
+434|  align-items: center;
+435|  gap: 16px;
+436|  padding: 22px 20px;
+437|  border-radius: 16px;
+438|  border: 1px solid rgba(226, 232, 240, 0.8);
+439|  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+440|  transition: transform 0.3s ease, box-shadow 0.3s ease;
+441|  margin-bottom: 16px;
+442|  height: 100%;
+443|  box-sizing: border-box;
+444|}
+445|
+446|.kpi-card:hover {
+447|  transform: translateY(-4px);
+448|  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.1);
+449|}
+450|
+451|.kpi-icon {
+452|  width: 52px;
+453|  height: 52px;
+454|  border-radius: 14px;
+455|  display: flex;
+456|  align-items: center;
+457|  justify-content: center;
+458|  font-size: 24px;
+459|  flex-shrink: 0;
+460|}
+461|
+462|.kpi-info {
+463|  display: flex;
+464|  flex-direction: column;
+465|  gap: 2px;
+466|}
+467|
+468|.kpi-value {
+469|  font-size: 26px;
+470|  font-weight: 800;
+471|  color: #0f172a;
+472|  line-height: 1.2;
+473|}
+474|
+475|.kpi-label {
+476|  font-size: 13px;
+477|  color: #64748b;
+478|}
+479|
+480|.kpi-trend {
+481|  font-size: 12px;
+482|  margin-top: 4px;
+483|  display: flex;
+484|  align-items: center;
+485|  gap: 2px;
+486|}
+487|
+488|.trend-up {
+489|  color: #10b981;
+490|}
+491|
+492|.trend-down {
+493|  color: #ef4444;
+494|}
+495|
+496|/* 面板卡片 */
+497|.panel-card {
+498|  background: #ffffff;
+499|  border-radius: 16px;
+500|  border: 1px solid rgba(226, 232, 240, 0.8);
+501|  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+502|  padding: 20px 20px 16px;
+503|  margin-bottom: 20px;
+504|  transition: transform 0.3s ease, box-shadow 0.3s ease;
+505|}
+506|
+507|.panel-card:hover {
+508|  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.1);
+509|}
+510|
+511|.panel-header {
+512|  display: flex;
+513|  align-items: center;
+514|  justify-content: space-between;
+515|  margin-bottom: 16px;
+516|}
+517|
+518|.panel-title {
+519|  font-size: 16px;
+520|  font-weight: 700;
+521|  color: #0f172a;
+522|  display: flex;
+523|  align-items: center;
+524|  gap: 8px;
+525|}
+526|
+527|.panel-title-icon {
+528|  color: #3b82f6;
+529|  font-size: 18px;
+530|}
+531|
+532|.chart-row .el-col {
+533|  display: flex;
+534|  flex-direction: column;
+535|}
+536|
+537|.chart-row .panel-card {
+538|  flex: 1;
+539|  display: flex;
+540|  flex-direction: column;
+541|}
+542|
+543|.chart-container {
+544|  flex: 1;
+545|  height: 300px;
+546|  min-height: 300px;
+547|}
+548|
+549|/* 快捷入口 */
+550|.quick-panel {
+551|  padding-bottom: 24px;
+552|}
+553|
+554|.quick-grid {
+555|  display: grid;
+556|  grid-template-columns: repeat(4, 1fr);
+557|  gap: 16px;
+558|}
+559|
+560|.quick-item {
+561|  display: flex;
+562|  flex-direction: column;
+563|  align-items: center;
+564|  text-align: center;
+565|  padding: 20px 12px;
+566|  border-radius: 14px;
+567|  border: 1px solid #f1f5f9;
+568|  background: #fafbfc;
+569|  cursor: pointer;
+570|  transition: all 0.3s ease;
+571|}
+572|
+573|.quick-item:hover {
+574|  transform: translateY(-4px);
+575|  border-color: #3b82f6;
+576|  background: #f0f7ff;
+577|  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.12);
+578|}
+579|
+580|.quick-icon {
+581|  width: 48px;
+582|  height: 48px;
+583|  border-radius: 12px;
+584|  display: flex;
+585|  align-items: center;
+586|  justify-content: center;
+587|  font-size: 22px;
+588|  margin-bottom: 12px;
+589|}
+590|
+591|.quick-name {
+592|  font-size: 14px;
+593|  font-weight: 600;
+594|  color: #0f172a;
+595|  margin-bottom: 4px;
+596|}
+597|
+598|.quick-desc {
+599|  font-size: 12px;
+600|  color: #94a3b8;
+601|}
+602|
+603|@media (max-width: 992px) {
+604|  .quick-grid {
+605|    grid-template-columns: repeat(2, 1fr);
+606|  }
+607|}
+608|
+609|@media (max-width: 768px) {
+610|  .page-dashboard {
+611|    padding: 16px;
+612|  }
+613|  .welcome-banner {
+614|    padding: 24px;
+615|  }
+616|  .banner-content {
+617|    flex-direction: column;
+618|    align-items: flex-start;
+619|    gap: 16px;
+620|  }
+621|  .banner-title {
+622|    font-size: 24px;
+623|  }
+624|  .quick-grid {
+625|    grid-template-columns: repeat(2, 1fr);
+626|  }
+627|  .chart-container {
+628|    height: 240px;
+629|    min-height: 240px;
+630|  }
+631|}
+632|</style>
+633|

@@ -1,0 +1,27 @@
+{
+  "allow": [
+    "read_file",
+    "glob",
+    "grep",
+    "Bash(git status:*)",
+    "Bash(git diff:*)",
+    "Bash(git log:*)",
+    "Bash(npm run build)",
+    "Bash(npm run serve:*)",
+    "Bash(node -v)",
+    "Bash(ls:*)"
+  ],
+  "deny": [
+    "Bash(rm -rf:*)",
+    "Bash(sudo:*)",
+    "Bash(git push --force:*)",
+    "Bash(git push -f:*)",
+    "write_file(.env*)",
+    "edit_file(.env*)"
+  ],
+  "ask": [
+    "Bash(git push:*)",
+    "Bash(git commit:*)",
+    "Bash(npm publish:*)"
+  ]
+}

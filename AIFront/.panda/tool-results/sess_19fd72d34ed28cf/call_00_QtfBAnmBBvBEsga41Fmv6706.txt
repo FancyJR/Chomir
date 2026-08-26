@@ -1,0 +1,400 @@
+<template>
+  <div class="tank-battle">
+    <div class="game-header">
+      <div class="game-title">
+        <i class="el-icon-video-game"></i>
+        <span>坦克大战</span>
+      </div>
+      <div class="game-stats">
+        <div class="stat">
+          <span class="stat-label">得分</span>
+          <span class="stat-value score">{{ score }}</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">生命</span>
+          <span class="stat-value lives">{{ lives }}</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">关卡</span>
+          <span class="stat-value level">{{ level }}</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">剩余敌人</span>
+          <span class="stat-value enemies">{{ remainingEnemies }}</span>
+        </div>
+      </div>
+      <div class="game-controls">
+        <el-button size="small" type="primary" @click="startGame">开始</el-button>
+        <el-button size="small" @click="togglePause">{{ paused ? '继续' : '暂停' }}</el-button>
+        <el-button size="small" type="danger" plain @click="resetGame">重置</el-button>
+      </div>
+    </div>
+
+    <div class="game-body">
+      <div class="canvas-wrap">
+        <canvas
+          ref="gameCanvas"
+          :width="canvasW"
+          :height="canvasH"
+          @mousemove="onMouseMove"
+          @mousedown="onMouseDown"
+        ></canvas>
+        <div v-if="!started" class="overlay">
+          <div class="overlay-box">
+            <h2>坦克大战</h2>
+            <p>方向键 ↑↓←→ 控制移动</p>
+            <p>鼠标左键 朝鼠标方向发射炮弹</p>
+            <el-button type="primary" @click="startGame">开始游戏</el-button>
+          </div>
+        </div>
+        <div v-else-if="gameOver" class="overlay">
+          <div class="overlay-box">
+            <h2>游戏结束</h2>
+            <p class="result-lose">你输了</p>
+            <el-button type="primary" @click="startGame">再来一局</el-button>
+          </div>
+        </div>
+        <div v-else-if="paused" class="overlay">
+          <div class="overlay-box">
+            <h2>已暂停</h2>
+            <el-button type="primary" @click="togglePause">继续</el-button>
+          </div>
+        </div>
+      </div>
+
+      <div class="side-panel">
+        <div class="panel-section">
+          <div class="panel-title">操作说明</div>
+          <ul class="help-list">
+            <li><b>↑ ↓ ← →</b> 移动坦克</li>
+            <li><b>鼠标左键</b> 发射炮弹</li>
+            <li><b>空格</b> 暂停/继续</li>
+          </ul>
+        </div>
+        <div class="panel-section">
+          <div class="panel-title">图例</div>
+          <div class="legend">
+            <div class="legend-item"><span class="legend-box player"></span> 玩家坦克</div>
+            <div class="legend-item"><span class="legend-box enemy"></span> 敌方坦克</div>
+            <div class="legend-item"><span class="legend-box brick"></span> 砖墙（可摧毁）</div>
+            <div class="legend-item"><span class="legend-box steel"></span> 钢墙（不可摧毁）</div>
+            <div class="legend-item"><span class="legend-box bullet"></span> 炮弹</div>
+          </div>
+        </div>
+        <div class="panel-section">
+          <div class="panel-title">战绩</div>
+          <div class="record">
+            <div>击杀数：<b>{{ kills }}</b></div>
+            <div>最高分：<b>{{ bestScore }}</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+const TILE = 40
+const COLS = 13
+const ROWS = 13
+
+// 地图：0=空地 1=砖墙 2=钢墙
+const MAP = [
+  [0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,1,0,1,0,1,0,1,0,1,0,1,0],
+  [0,1,0,1,0,1,0,1,0,1,0,1,0],
+  [0,1,0,1,0,1,2,1,0,1,0,1,0],
+  [0,1,0,1,0,0,0,0,0,1,0,1,0],
+  [0,0,0,0,0,1,0,1,0,0,0,0,0],
+  [0,0,0,1,0,1,0,1,0,1,0,0,0],
+  [1,1,0,1,0,0,0,0,0,1,0,1,1],
+  [0,0,0,1,0,1,0,1,0,1,0,0,0],
+  [0,1,0,1,0,1,0,1,0,1,0,1,0],
+  [0,1,0,1,0,1,0,1,0,1,0,1,0],
+  [0,1,0,1,0,1,0,1,0,1,0,1,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0]
+]
+
+export default {
+  name: 'TankBattle',
+  data () {
+    return {
+      canvasW: COLS * TILE,
+      canvasH: ROWS * TILE,
+      started: false,
+      paused: false,
+      gameOver: false,
+      score: 0,
+      lives: 3,
+      level: 1,
+      kills: 0,
+      bestScore: 0,
+      enemiesLeft: 0,
+      // 游戏内部状态
+      player: null,
+      enemies: [],
+      bullets: [],
+      walls: [],
+      keys: {},
+      mouse: { x: 0, y: 0 },
+      rafId: null,
+      lastTime: 0,
+      spawnTimer: 0,
+      enemyTotal: 0
+    }
+  },
+  computed: {
+    // 剩余敌人总数 = 场上敌人 + 待生成敌人
+    remainingEnemies () {
+      return this.enemiesLeft + (this.enemies ? this.enemies.length : 0)
+    }
+  },
+  mounted () {
+    this.initWalls()
+    this.bindKeys()
+    this.bestScore = parseInt(localStorage.getItem('tank_battle_best') || '0', 10)
+  },
+  beforeDestroy () {
+    this.stopLoop()
+    this.unbindKeys()
+  },
+  methods: {
+    initWalls () {
+      this.walls = []
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const t = MAP[r][c]
+          if (t > 0) {
+            this.walls.push({
+              x: c * TILE,
+              y: r * TILE,
+              w: TILE,
+              h: TILE,
+              type: t,
+              alive: true
+            })
+          }
+        }
+      }
+    },
+    bindKeys () {
+      this._keydown = (e) => {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+          e.preventDefault()
+        }
+        if (e.key === ' ') {
+          this.togglePause()
+          return
+        }
+        this.keys[e.key] = true
+      }
+      this._keyup = (e) => {
+        this.keys[e.key] = false
+      }
+      window.addEventListener('keydown', this._keydown)
+      window.addEventListener('keyup', this._keyup)
+    },
+    unbindKeys () {
+      window.removeEventListener('keydown', this._keydown)
+      window.removeEventListener('keyup', this._keyup)
+    },
+    startGame () {
+      this.score = 0
+      this.lives = 3
+      this.level = 1
+      this.kills = 0
+      this.started = true
+      this.paused = false
+      this.gameOver = false
+      this.initLevel()
+      this.startLoop()
+    },
+    resetGame () {
+      this.stopLoop()
+      this.started = false
+      this.paused = false
+      this.gameOver = false
+      this.score = 0
+      this.lives = 3
+      this.level = 1
+      this.kills = 0
+      this.enemies = []
+      this.bullets = []
+      this.initWalls()
+      this.draw()
+    },
+    initLevel () {
+      this.initWalls()
+      this.enemies = []
+      this.bullets = []
+      this.enemyTotal = 4 + this.level * 2
+      this.enemiesLeft = this.enemyTotal
+      this.spawnTimer = 0
+      // 玩家初始位置：底部中央
+      this.player = {
+        x: Math.floor(COLS / 2) * TILE + TILE / 2,
+        y: (ROWS - 1) * TILE + TILE / 2,
+        w: TILE - 8,
+        h: TILE - 8,
+        dir: 'up',
+        speed: 3,
+        cooldown: 0,
+        alive: true
+      }
+      // 初始生成 2 个敌人
+      this.spawnEnemy()
+      this.spawnEnemy()
+    },
+    spawnEnemy () {
+      if (this.enemiesLeft <= 0) return
+      const spots = [
+        { x: TILE / 2, y: TILE / 2 },
+        { x: (COLS - 1) * TILE + TILE / 2, y: TILE / 2 },
+        { x: Math.floor(COLS / 2) * TILE + TILE / 2, y: TILE / 2 }
+      ]
+      const free = spots.find(s => !this.enemies.some(e => Math.abs(e.x - s.x) < TILE && Math.abs(e.y - s.y) < TILE))
+      if (!free) return
+      this.enemies.push({
+        x: free.x,
+        y: free.y,
+        w: TILE - 8,
+        h: TILE - 8,
+        dir: 'down',
+        speed: 1.5,
+        cooldown: 0,
+        alive: true,
+        moveTimer: 0
+      })
+      this.enemiesLeft--
+    },
+    startLoop () {
+      this.stopLoop()
+      this.lastTime = performance.now()
+      const loop = (t) => {
+        const dt = Math.min((t - this.lastTime) / 16.67, 3)
+        this.lastTime = t
+        if (!this.paused && !this.gameOver) {
+          this.update(dt)
+        }
+        this.draw()
+        this.rafId = requestAnimationFrame(loop)
+      }
+      this.rafId = requestAnimationFrame(loop)
+    },
+    stopLoop () {
+      if (this.rafId) {
+        cancelAnimationFrame(this.rafId)
+        this.rafId = null
+      }
+    },
+    togglePause () {
+      if (!this.started || this.gameOver) return
+      this.paused = !this.paused
+    },
+    onMouseMove (e) {
+      const rect = this.$refs.gameCanvas.getBoundingClientRect()
+      this.mouse.x = e.clientX - rect.left
+      this.mouse.y = e.clientY - rect.top
+    },
+    onMouseDown (e) {
+      if (e.button !== 0) return
+      if (!this.started || this.paused || this.gameOver) return
+      this.firePlayer()
+    },
+    firePlayer () {
+      if (!this.player || !this.player.alive || this.player.cooldown > 0) return
+      const angle = Math.atan2(this.mouse.y - this.player.y, this.mouse.x - this.player.x)
+      // 根据角度决定坦克朝向
+      const deg = angle * 180 / Math.PI
+      if (deg > -45 && deg <= 45) this.player.dir = 'right'
+      else if (deg > 45 && deg <= 135) this.player.dir = 'down'
+      else if (deg > 135 || deg <= -135) this.player.dir = 'left'
+      else this.player.dir = 'up'
+      this.bullets.push({
+        x: this.player.x,
+        y: this.player.y,
+        vx: Math.cos(angle) * 6,
+        vy: Math.sin(angle) * 6,
+        owner: 'player',
+        alive: true
+      })
+      this.player.cooldown = 18
+    },
+    update (dt) {
+      // 玩家移动
+      if (this.player && this.player.alive) {
+        let dx = 0
+        let dy = 0
+        if (this.keys['ArrowUp'] || this.keys['w'] || this.keys['W']) { dy = -1; this.player.dir = 'up' }
+        else if (this.keys['ArrowDown'] || this.keys['s'] || this.keys['S']) { dy = 1; this.player.dir = 'down' }
+        else if (this.keys['ArrowLeft'] || this.keys['a'] || this.keys['A']) { dx = -1; this.player.dir = 'left' }
+        else if (this.keys['ArrowRight'] || this.keys['d'] || this.keys['D']) { dx = 1; this.player.dir = 'right' }
+        this.moveTank(this.player, dx * this.player.speed * dt, dy * this.player.speed * dt)
+        if (this.player.cooldown > 0) this.player.cooldown -= dt
+      }
+
+      // 敌人 AI
+      for (const e of this.enemies) {
+        if (!e.alive) continue
+        e.moveTimer -= dt
+        if (e.moveTimer <= 0) {
+          const dirs = ['up', 'down', 'left', 'right']
+          e.dir = dirs[Math.floor(Math.random() * 4)]
+          e.moveTimer = 40 + Math.random() * 60
+        }
+        const d = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[e.dir]
+        this.moveTank(e, d[0] * e.speed * dt, d[1] * e.speed * dt)
+        if (e.cooldown > 0) e.cooldown -= dt
+        // 敌人射击
+        if (e.cooldown <= 0 && Math.random() < 0.02 * dt) {
+          const angle = Math.atan2(this.player.y - e.y, this.player.x - e.x)
+          this.bullets.push({
+            x: e.x,
+            y: e.y,
+            vx: Math.cos(angle) * 4,
+            vy: Math.sin(angle) * 4,
+            owner: 'enemy',
+            alive: true
+          })
+          e.cooldown = 60
+        }
+      }
+
+      // 子弹移动
+      for (const b of this.bullets) {
+        if (!b.alive) continue
+        b.x += b.vx * dt
+        b.y += b.vy * dt
+        // 边界
+        if (b.x < 0 || b.x > this.canvasW || b.y < 0 || b.y > this.canvasH) {
+          b.alive = false
+          continue
+        }
+        // 撞墙
+        for (const w of this.walls) {
+          if (!w.alive) continue
+          if (this.rectHit(b.x, b.y, 4, 4, w.x, w.y, w.w, w.h)) {
+            if (w.type === 1) w.alive = false // 砖墙被摧毁
+            b.alive = false
+            break
+          }
+        }
+        if (!b.alive) continue
+        // 子弹命中坦克
+        if (b.owner === 'player') {
+          for (const e of this.enemies) {
+            if (!e.alive) continue
+            if (this.rectHit(b.x, b.y, 4, 4, e.x - e.w / 2, e.y - e.h / 2, e.w, e.h)) {
+              e.alive = false
+              b.alive = false
+              this.kills++
+              this.score += 100
+              this.spawnTimer = 0
+              break
+            }
+          }
+        } else {
+          if (this.player && this.player.alive && this.rectHit(b.x, b.y, 4, 4, this.player.x - this.player.w / 2, this.player.y - this.player.h / 2, this.player.w, this.player.h)) {
+            b.alive = false
+            this.player.alive = false
+400

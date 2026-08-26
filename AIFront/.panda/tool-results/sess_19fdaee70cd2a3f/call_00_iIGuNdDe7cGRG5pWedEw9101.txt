@@ -1,0 +1,622 @@
+<template>
+  <div class="page-no-code">
+    <el-card class="page-card">
+      <div slot="header" class="card-header">
+        <div class="header-left">
+          <div class="title">无代码开发</div>
+          <div class="sub">
+            像聊天一样描述页面需求并上传图片，点击发送后由大模型生成页面，左侧实时预览最新结果。
+          </div>
+        </div>
+      </div>
+
+      <el-row :gutter="16">
+        <!-- 左侧：仅预览（类似「实时预览画布」） -->
+        <el-col :span="15">
+          <div class="block preview-block">
+            <div class="block-title">页面实时预览</div>
+
+            <div v-if="latestId" class="inline-preview">
+              <div class="inline-preview-title">
+                当前版本（内嵌预览）
+                <div class="preview-actions">
+                  <el-button
+                    type="text"
+                    size="mini"
+                    :disabled="!latestId"
+                    @click="handleOpenPreview"
+                  >
+                    新窗口
+                  </el-button>
+                  <el-button
+                    type="text"
+                    size="mini"
+                    :disabled="!latestId"
+                    @click="handleCopyLink"
+                  >
+                    复制链接
+                  </el-button>
+                </div>
+              </div>
+              <iframe
+                v-if="inlineSrcdoc"
+                class="inline-preview-iframe"
+                :srcdoc="inlineSrcdoc"
+                frameborder="0"
+                title="预览"
+              />
+              <div v-else class="inline-preview-placeholder">
+                生成中…
+              </div>
+              <div v-if="generating" class="preview-loading">
+                <i class="el-icon-loading" />
+                <span>生成中，请稍候...</span>
+              </div>
+            </div>
+
+            <div v-else class="inline-preview inline-preview-empty">
+              <div class="inline-preview-title">页面预览</div>
+              <div class="inline-preview-placeholder">
+                右侧通过聊天描述需求并点击发送，生成的页面会在这里实时预览。
+              </div>
+              <div v-if="generating" class="preview-loading">
+                <i class="el-icon-loading" />
+                <span>生成中，请稍候...</span>
+              </div>
+            </div>
+
+            <div v-if="latestVueCode" class="vue-code-block">
+              <div class="vue-code-header">
+                <span>Vue 2.0 代码</span>
+                <div>
+                  <el-button type="text" size="small" @click="handleCopyVueCode">复制代码</el-button>
+                  <el-button type="text" size="small" @click="openApplyDialog">应用到工程</el-button>
+                </div>
+              </div>
+              <pre class="vue-code-content">{{ latestVueCode }}</pre>
+            </div>
+
+            <div class="history">
+              <div class="history-title">
+                最近生成
+                <el-button type="text" @click="refreshHistory">刷新</el-button>
+              </div>
+              <div v-if="!history.length" class="history-empty">
+                暂无记录，通过右侧对话描述需求并发送，生成的页面会出现在这里。
+              </div>
+              <div v-else class="history-list">
+                <div
+                  v-for="item in history"
+                  :key="item.id"
+                  class="history-item"
+                  @click="openPreview(item.id)"
+                >
+                  <div class="h-left">
+                    <div class="h-name">{{ item.name }}</div>
+                    <div class="h-time">{{ formatTime(item.createdAt) }}</div>
+                  </div>
+                  <div class="h-right">
+                    <i class="el-icon-right" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </el-col>
+
+        <!-- 右侧：仿百度风格聊天窗口（描述 + 上传） -->
+        <el-col :span="9">
+          <div class="block chat-block">
+            <div class="chat-header">
+              <div class="chat-title">需求对话</div>
+              <div class="chat-subtitle">
+                像和助手聊天一样描述页面需求，左侧实时预览生成结果。
+              </div>
+            </div>
+
+            <div class="chat-window">
+              <el-scrollbar class="chat-messages">
+                <div
+                  v-for="msg in chatMessages"
+                  :key="msg.id"
+                  :class="['chat-message', msg.role]"
+                >
+                  <div class="chat-bubble">
+                    <div class="chat-sender">
+                      {{ msg.role === 'user' ? '我' : '助手' }}
+                    </div>
+                    <div class="chat-text">
+                      <template v-if="msg.text && msg.text.length > 60">
+                        <span>
+                          {{ msg.collapsed ? (msg.text.slice(0, 60) + '...') : msg.text }}
+                        </span>
+                        <el-button
+                          type="text"
+                          size="mini"
+                          class="chat-toggle"
+                          @click="toggleMessage(msg)"
+                        >
+                          {{ msg.collapsed ? '展开' : '收起' }}
+                        </el-button>
+                      </template>
+                      <template v-else>
+                        {{ msg.text }}
+                      </template>
+                    </div>
+                  </div>
+                </div>
+              </el-scrollbar>
+
+              <div class="chat-input-bar">
+                <el-input
+                  v-model="chatInput"
+                  type="textarea"
+                  :autosize="{ minRows: 1, maxRows: 4 }"
+                  class="chat-input"
+                  placeholder="像和助手聊天一样描述页面需求，回车或点击发送将立即生成预览页面"
+                  @keyup.enter.native.prevent="handleSendChat"
+                />
+                <div class="chat-tools">
+                  <el-upload
+                    class="chat-upload"
+                    action="#"
+                    :auto-upload="false"
+                    multiple
+                    :limit="10"
+                    :file-list="fileList"
+                    :on-change="handleFileChange"
+                    :on-remove="handleFileRemove"
+                    :before-upload="() => false"
+                    :show-file-list="false"
+                    accept="image/*"
+                  >
+                    <i class="el-icon-picture-outline chat-tool-icon" />
+                  </el-upload>
+                  <el-button
+                    class="chat-send-btn"
+                    type="primary"
+                    circle
+                    @click="handleSendChat"
+                  >
+                    <i class="el-icon-arrow-up" />
+                  </el-button>
+                </div>
+              </div>
+
+              <div class="chat-tip">
+                可以多轮输入补充需求（模块、字段、交互、风格等），并上传设计图，然后点击左侧「生成页面」实时预览效果。
+              </div>
+            </div>
+          </div>
+        </el-col>
+      </el-row>
+    </el-card>
+
+    <!-- 应用到工程弹窗 -->
+    <el-dialog
+      title="应用到工程"
+      :visible.sync="applyDialogVisible"
+      width="480px"
+    >
+      <el-form :model="applyForm" label-width="100px">
+        <el-form-item label="视图文件名">
+          <el-input v-model="applyForm.viewName" placeholder="例如：GeneratedCommandDetail（无需 .vue 后缀）" />
+        </el-form-item>
+        <el-form-item label="路由路径">
+          <el-input v-model="applyForm.routePath" placeholder="例如：/generated/command-detail" />
+        </el-form-item>
+        <el-form-item label="菜单标题">
+          <el-input v-model="applyForm.routeTitle" placeholder="例如：自定义指令详情页" />
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="applyDialogVisible = false">取 消</el-button>
+        <el-button type="primary" :loading="applyLoading" @click="handleApplyToProject">
+          确 定
+        </el-button>
+      </span>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+import { generateNoCodePage } from '@/api/nocode'
+import { saveNoCodePage, listNoCodePages } from '@/utils/nocodeStorage'
+
+function readAsDataUrl (file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
+export default {
+  name: 'NoCodeBuilder',
+  data () {
+    return {
+      generating: false,
+      latestId: '',
+      fileList: [],
+      images: [],
+      form: {
+        description: ''
+      },
+      chatMessages: [
+        {
+          id: 'sys-1',
+          role: 'system',
+          text: '通过右侧对话逐步描述页面需求，并可上传原型图 / 设计图。每次发送后都会根据当前对话生成最新预览。',
+          collapsed: false
+        }
+      ],
+      chatInput: '',
+      history: [],
+      inlineSrcdoc: '',
+      latestVueCode: '',
+      applyDialogVisible: false,
+      applyLoading: false,
+      applyForm: {
+        viewName: '',
+        routePath: '',
+        routeTitle: ''
+      },
+      // 自动应用目标：始终覆盖同一个工程视图和路由，保证每次生成都有真实落盘页面
+      autoApplyTarget: {
+        viewName: 'GeneratedPage',
+        routePath: '/generated/latest',
+        routeTitle: 'AI 生成页面'
+      }
+    }
+  },
+  created () {
+    this.refreshHistory()
+  },
+  methods: {
+    async handleFileChange (file, fileList) {
+      this.fileList = fileList
+      // 转为 base64（用于预览和生成）
+      try {
+        const raw = file.raw || file
+        const dataUrl = await readAsDataUrl(raw)
+        const idx = this.images.findIndex(i => i.uid === file.uid)
+        const item = { uid: file.uid, name: file.name, dataUrl }
+        if (idx >= 0) this.images.splice(idx, 1, item)
+        else this.images.push(item)
+      } catch (e) {
+        this.$message.error('读取图片失败，请重试')
+      }
+    },
+    handleFileRemove (file, fileList) {
+      this.fileList = fileList
+      this.images = this.images.filter(i => i.uid !== file.uid)
+    },
+    async generateFromCurrentInput () {
+      if (!this.form.description && !this.images.length) {
+        this.$message.warning('请先通过对话描述需求或上传至少一张图片')
+        return
+      }
+      this.generating = true
+      try {
+        const title = this.deriveTitleFromDescription()
+        const payload = {
+          title,
+          description: this.form.description || '',
+          images: this.images.map(i => ({ name: i.name, dataUrl: i.dataUrl }))
+        }
+        const res = await generateNoCodePage(payload)
+        const saved = saveNoCodePage({
+          name: payload.title,
+          input: payload,
+          html: res.html,
+          css: res.css,
+          vueCode: res.vueCode || '',
+          meta: res.meta
+        })
+        this.latestId = saved.id
+        this.latestVueCode = saved.vueCode || ''
+        this.inlineSrcdoc = this.buildSrcdoc(saved)
+        // 1）自动写入工程一个固定的生成页面视图，保证每次生成都有真实代码文件
+        await this.autoApplyLatestSilently()
+        // 2）尝试自动将新生成的页面与现有列表页（例如 CommandMarket）关联起来
+        await this.autoAssociateLatestDetail()
+        if (res.meta && res.meta.provider === 'deepseek-chat') {
+          this.chatMessages.push({
+            id: `sys-${Date.now()}`,
+            role: 'system',
+            text: '已根据当前对话内容生成最新预览页面。'
+          })
+        } else if (res._error) {
+          this.$message.warning('大模型未返回数据：' + res._error + '。当前为本地模板预览。')
+        } else {
+          this.$message.warning('未配置大模型 Key，当前为本地模板预览。请在项目根目录创建 .env.local，设置 DEEPSEEK_API_KEY=你的key，重启 npm run server 后再试')
+        }
+        this.refreshHistory()
+      } catch (e) {
+        this.$message.error('生成失败，请稍后重试')
+      } finally {
+        this.generating = false
+      }
+    },
+    async handleSendChat () {
+      const text = (this.chatInput || '').trim()
+      if (!text) return
+      if (this.generating) {
+        this.$message.warning('正在生成页面，请稍候再发送')
+        return
+      }
+      const id = `u-${Date.now()}_${Math.random().toString(16).slice(2)}`
+      this.chatMessages.push({
+        id,
+        role: 'user',
+        text,
+        collapsed: true
+      })
+      this.form.description = this.form.description
+        ? `${this.form.description}\n${text}`
+        : text
+      this.chatInput = ''
+      // 先让后端引擎判断这条输入是生成新页面、修改已有代码还是仅对话
+      try {
+        const res = await fetch('/api/engine/route-message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: text,
+            context: {
+              hasGeneratedPage: !!this.latestVueCode
+            }
+          })
+        })
+        const data = await res.json()
+        const kind = data && data.route && data.route.kind
+        const engineInstruction = data && data.route && data.route.engineInstruction
+        const qaHint = data && data.route && data.route.qaHint
+
+        if (kind === 'generate_page' || !kind) {
+          // 默认行为：按当前描述生成/更新页面
+          await this.generateFromCurrentInput()
+        } else if (kind === 'modify_existing' && engineInstruction) {
+          // 用户在说「和已有页面关联 / 修改行为」，走指令引擎修改现有代码
+          await fetch('/api/engine/apply-instruction', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ instruction: engineInstruction })
+          })
+        } else if (kind === 'qa') {
+          // 纯问答：调用后端 QA 接口，返回答案作为助手消息
+          const qaRes = await fetch('/api/engine/answer-question', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              question: text,
+              context: {
+                hasGeneratedPage: !!this.latestVueCode
+              },
+              qaHint
+            })
+          })
+          const qaData = await qaRes.json()
+          if (qaRes.ok && qaData && qaData.answer) {
+            this.chatMessages.push({
+              id: `a-${Date.now()}_${Math.random().toString(16).slice(2)}`,
+              role: 'system',
+              text: qaData.answer,
+              collapsed: false
+            })
+          }
+        }
+      } catch (e) {
+        // 路由失败时回退到生成页面逻辑，保证基本功能可用
+        await this.generateFromCurrentInput()
+      }
+    },
+    async handleGenerate () {
+      if (!this.form.description && !this.images.length) {
+        this.$message.warning('请至少上传一张图片或填写需求描述')
+        return
+      }
+      this.generating = true
+      try {
+        const title = this.deriveTitleFromDescription()
+        const payload = {
+          title,
+          description: this.form.description || '',
+          images: this.images.map(i => ({ name: i.name, dataUrl: i.dataUrl }))
+        }
+        const res = await generateNoCodePage(payload)
+        const saved = saveNoCodePage({
+          name: payload.title,
+          input: payload,
+          html: res.html,
+          css: res.css,
+          vueCode: res.vueCode || '',
+          meta: res.meta
+        })
+        this.latestId = saved.id
+        this.latestVueCode = saved.vueCode || ''
+        this.inlineSrcdoc = this.buildSrcdoc(saved)
+        // 按按钮生成时同样自动写入工程固定视图并做关联
+        await this.autoApplyLatestSilently()
+        await this.autoAssociateLatestDetail()
+        if (res.meta && res.meta.provider === 'deepseek-chat') {
+          this.$message.success('已根据您提交的内容调用大模型生成 Vue 2.0 代码与预览')
+        } else if (res._error) {
+          this.$message.warning('大模型未返回数据：' + res._error + '。当前为本地模板预览。')
+        } else {
+          this.$message.warning('未配置大模型 Key，当前为本地模板预览。请在项目根目录创建 .env.local，设置 DEEPSEEK_API_KEY=你的key，重启 npm run server 后再试')
+        }
+        this.refreshHistory()
+      } catch (e) {
+        this.$message.error('生成失败，请稍后重试')
+      } finally {
+        this.generating = false
+      }
+    },
+    openPreview (id) {
+      const url = `${window.location.origin}/no-code/preview/${id}`
+      window.open(url, '_blank')
+    },
+    handleOpenPreview () {
+      if (!this.latestId) return
+      this.openPreview(this.latestId)
+    },
+    handleCopyVueCode () {
+      if (!this.latestVueCode) return
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(this.latestVueCode).then(() => {
+          this.$message.success('已复制 Vue 代码')
+        })
+      } else {
+        const input = document.createElement('textarea')
+        input.value = this.latestVueCode
+        document.body.appendChild(input)
+        input.select()
+        document.execCommand('copy')
+        document.body.removeChild(input)
+        this.$message.success('已复制 Vue 代码')
+      }
+    },
+    handleCopyLink () {
+      if (!this.latestId) return
+      const url = `${window.location.origin}/no-code/preview/${this.latestId}`
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => {
+          this.$message.success('已复制预览链接')
+        })
+      } else {
+        // 兼容兜底
+        const input = document.createElement('input')
+        input.value = url
+        document.body.appendChild(input)
+        input.select()
+        document.execCommand('copy')
+        document.body.removeChild(input)
+        this.$message.success('已复制预览链接')
+      }
+    },
+    refreshHistory () {
+      this.history = listNoCodePages().slice(0, 10)
+    },
+    toggleMessage (msg) {
+      this.$set(msg, 'collapsed', !msg.collapsed)
+    },
+    deriveTitleFromDescription () {
+      const desc = (this.form.description || '').trim()
+      if (!desc) return '生成页面'
+      const lines = desc.split('\n').map(l => l.trim()).filter(Boolean)
+      const first = lines[0] || '生成页面'
+      return first.length > 20 ? first.slice(0, 20) : first
+    },
+    async autoApplyLatestSilently () {
+      if (!this.latestVueCode) return
+      try {
+        const title = this.deriveTitleFromDescription() || this.autoApplyTarget.routeTitle
+        await fetch('/api/nocode/apply', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            vueCode: this.latestVueCode,
+            viewName: this.autoApplyTarget.viewName,
+            routePath: this.autoApplyTarget.routePath,
+            routeTitle: title
+          })
+        })
+        // 为避免打扰，不在这里弹 toast，失败情况让用户看 server 日志即可
+      } catch (e) {
+        // 静默失败
+        // console.warn('[nocode] auto apply failed', e)
+      }
+    },
+    async autoAssociateLatestDetail () {
+      // 基于当前工程结构和固定路由 /generated/latest，尝试自动将其视为「详情页」
+      // 并让指令列表等页面在合适位置跳转到此详情页
+      try {
+        const desc = (this.form.description || '').trim()
+        const hint = desc ? `当前对话描述的大致内容：${desc.slice(0, 200)}` : ''
+        const instruction = [
+          '把最新生成并自动挂到 /generated/latest 的页面，视为本项目中的一个详情页（例如自定义指令详情）。',
+          '请分析当前工程的路由与视图结构（尤其是 src/views/CommandMarket.vue 自定义指令列表页等），',
+          '在不破坏现有逻辑的前提下，选择一个最合适的列表/卡片点击入口，添加跳转逻辑到 this.$router.push("/generated/latest")。',
+          '若已有类似详情跳转逻辑，请尽量复用或微调，而不要重复新增多个入口。',
+          hint
+        ].filter(Boolean).join('\n')
+
+        await fetch('/api/engine/apply-instruction', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ instruction })
+        })
+      } catch (e) {
+        // 静默失败，必要时查看 server 日志
+      }
+    },
+    openApplyDialog () {
+      if (!this.latestVueCode) {
+        this.$message.warning('当前没有可应用的 Vue 代码')
+        return
+      }
+      const baseTitle = this.deriveTitleFromDescription()
+      const slug = baseTitle.replace(/\s+/g, '').replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '')
+      const safeName = slug || 'GeneratedPage'
+      this.applyForm.viewName = `Generated${safeName}`
+      this.applyForm.routePath = `/generated/${Date.now()}`
+      this.applyForm.routeTitle = baseTitle
+      this.applyDialogVisible = true
+    },
+    async handleApplyToProject () {
+      if (!this.latestVueCode) {
+        this.$message.warning('当前没有可应用的 Vue 代码')
+        return
+      }
+      const viewName = (this.applyForm.viewName || '').trim()
+      const routePath = (this.applyForm.routePath || '').trim()
+      const routeTitle = (this.applyForm.routeTitle || '').trim()
+      if (!viewName) {
+        this.$message.warning('请填写视图文件名')
+        return
+      }
+      this.applyLoading = true
+      try {
+        const res = await fetch('/api/nocode/apply', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            vueCode: this.latestVueCode,
+            viewName,
+            routePath,
+            routeTitle
+          })
+        })
+        const data = await res.json()
+        if (!res.ok || !data || data.error) {
+          this.$message.error(data && data.message ? data.message : '应用失败，请稍后重试')
+          return
+        }
+        this.$message.success('已写入工程文件' + (data.routePath ? `，并注册路由 ${data.routePath}` : ''))
+        this.applyDialogVisible = false
+      } catch (e) {
+        this.$message.error('应用失败，请检查本地服务日志')
+      } finally {
+        this.applyLoading = false
+      }
+    },
+    buildSrcdoc (page) {
+      const css = (page.css || '').trim()
+      const html = (page.html || '').trim()
+      const vueCode = (page.vueCode || '').trim()
+      const title = page.name || '生成页面预览'
+      const scriptEnd = '</' + 'script>'
+      const hasVueCode = vueCode && vueCode.includes('<template>') && vueCode.includes(scriptEnd)
+      const htmlIsPlaceholder = !html || html.length < 120 || /^<div\s+id=["']?app["']?\s*>\s*<\/div>\s*$/i.test(html.replace(/\s+/g, ' '))
+      if (hasVueCode && (!html || htmlIsPlaceholder)) {
+        return this.buildSrcdocFromVueCode(title, vueCode, css)
+      }
+      if (html && !htmlIsPlaceholder) {
+        return this.buildSrcdocHtmlOnly(title, html, css)
+      }
+      if (hasVueCode) {
+        return this.buildSrcdocFromVueCode(title, vueCode, css)
+      }
+      return this.buildSrcdocHtmlOnly(title, '<div style="padding:24px;color:#666;font-size:14px;">本次生成未包含可

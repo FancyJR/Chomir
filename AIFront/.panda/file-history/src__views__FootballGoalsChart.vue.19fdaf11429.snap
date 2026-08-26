@@ -1,0 +1,452 @@
+<template>
+  <div class="football-goals-chart-container">
+    <div class="page-hero">
+      <div class="hero-badge"><i class="el-icon-soccer"></i> 数据看板</div>
+      <h1 class="hero-title">足球进球统计</h1>
+      <p class="hero-subtitle">中国足球各队月度进球数据可视化分析</p>
+    </div>
+
+    <el-card class="main-card">
+      <div slot="header" class="card-header">
+        <span class="card-title"><i class="el-icon-data-analysis"></i> 进球数据分析</span>
+        <div class="header-actions">
+          <el-button type="primary" icon="el-icon-refresh" @click="refreshChart">刷新数据</el-button>
+          <el-button type="primary" plain icon="el-icon-download" @click="downloadChart">导出图表</el-button>
+        </div>
+      </div>
+      <div class="chart-content">
+        <div class="filter-section">
+          <el-row :gutter="20">
+            <el-col :span="8">
+              <div class="filter-item">
+                <span class="filter-label"><i class="el-icon-date"></i> 年份</span>
+                <el-select v-model="selectedYear" placeholder="请选择年份" @change="handleYearChange">
+                  <el-option v-for="year in yearOptions" :key="year" :label="year + '年'" :value="year"></el-option>
+                </el-select>
+              </div>
+            </el-col>
+            <el-col :span="8">
+              <div class="filter-item">
+                <span class="filter-label"><i class="el-icon-user"></i> 球队</span>
+                <el-select v-model="selectedTeam" placeholder="请选择球队" @change="handleTeamChange">
+                  <el-option v-for="team in teamOptions" :key="team.value" :label="team.label" :value="team.value"></el-option>
+                </el-select>
+              </div>
+            </el-col>
+            <el-col :span="8">
+              <div class="filter-item">
+                <span class="filter-label"><i class="el-icon-pie-chart"></i> 图表类型</span>
+                <el-select v-model="chartType" placeholder="请选择图表类型" @change="handleChartTypeChange">
+                  <el-option label="柱状图" value="bar"></el-option>
+                  <el-option label="折线图" value="line"></el-option>
+                  <el-option label="饼图" value="pie"></el-option>
+                </el-select>
+              </div>
+            </el-col>
+          </el-row>
+        </div>
+        <div class="chart-wrapper">
+          <div id="goalsChart" ref="goalsChart" style="width: 100%; height: 500px;"></div>
+        </div>
+        <div class="data-summary">
+          <el-row :gutter="20">
+            <el-col :span="6">
+              <div class="summary-card">
+                <div class="summary-icon icon-blue"><i class="el-icon-soccer"></i></div>
+                <div class="summary-body">
+                  <div class="summary-title">总进球数</div>
+                  <div class="summary-value">{{ totalGoals }}</div>
+                  <div class="summary-trend">
+                    <span :class="trendClass">{{ trendText }}</span>
+                  </div>
+                </div>
+              </div>
+            </el-col>
+            <el-col :span="6">
+              <div class="summary-card">
+                <div class="summary-icon icon-green"><i class="el-icon-data-line"></i></div>
+                <div class="summary-body">
+                  <div class="summary-title">平均每月进球</div>
+                  <div class="summary-value">{{ averageGoals }}</div>
+                  <div class="summary-subtitle">进球/月</div>
+                </div>
+              </div>
+            </el-col>
+            <el-col :span="6">
+              <div class="summary-card">
+                <div class="summary-icon icon-orange"><i class="el-icon-top"></i></div>
+                <div class="summary-body">
+                  <div class="summary-title">最高进球月份</div>
+                  <div class="summary-value">{{ maxMonth }}</div>
+                  <div class="summary-subtitle">进球数: {{ maxGoals }}</div>
+                </div>
+              </div>
+            </el-col>
+            <el-col :span="6">
+              <div class="summary-card">
+                <div class="summary-icon icon-purple"><i class="el-icon-bottom"></i></div>
+                <div class="summary-body">
+                  <div class="summary-title">最低进球月份</div>
+                  <div class="summary-value">{{ minMonth }}</div>
+                  <div class="summary-subtitle">进球数: {{ minGoals }}</div>
+                </div>
+              </div>
+            </el-col>
+          </el-row>
+        </div>
+      </div>
+    </el-card>
+  </div>
+</template>
+
+<script>
+import * as echarts from 'echarts';
+
+export default {
+  name: 'FootballGoalsChart',
+  data() {
+    return {
+      selectedYear: 2024,
+      selectedTeam: 'china',
+      chartType: 'bar',
+      yearOptions: [2022, 2023, 2024],
+      teamOptions: [
+        { label: '中国国家队', value: 'china' },
+        { label: '中国U23', value: 'china_u23' },
+        { label: '中国女足', value: 'china_women' }
+      ],
+      goalsData: [],
+      chartInstance: null,
+      totalGoals: 0,
+      averageGoals: 0,
+      maxMonth: '',
+      maxGoals: 0,
+      minMonth: '',
+      minGoals: 0,
+      trendText: '较去年上升',
+      trendClass: 'trend-up'
+    };
+  },
+  mounted() {
+    this.initChart();
+    this.loadMockData();
+  },
+  beforeDestroy() {
+    if (this.chartInstance) {
+      this.chartInstance.dispose();
+    }
+  },
+  methods: {
+    initChart() {
+      this.chartInstance = echarts.init(this.$refs.goalsChart);
+      window.addEventListener('resize', this.handleResize);
+    },
+    loadMockData() {
+      // Mock 数据：2024年中国国家队每月进球数
+      this.goalsData = [
+        { month: '1月', goals: 5 },
+        { month: '2月', goals: 8 },
+        { month: '3月', goals: 12 },
+        { month: '4月', goals: 7 },
+        { month: '5月', goals: 15 },
+        { month: '6月', goals: 10 },
+        { month: '7月', goals: 9 },
+        { month: '8月', goals: 14 },
+        { month: '9月', goals: 11 },
+        { month: '10月', goals: 13 },
+        { month: '11月', goals: 6 },
+        { month: '12月', goals: 8 }
+      ];
+      this.calculateSummary();
+      this.renderChart();
+    },
+    calculateSummary() {
+      // 计算总进球数
+      this.totalGoals = this.goalsData.reduce((sum, item) => sum + item.goals, 0);
+      
+      // 计算平均每月进球
+      this.averageGoals = (this.totalGoals / this.goalsData.length).toFixed(1);
+      
+      // 找出最高和最低进球月份
+      let maxItem = this.goalsData[0];
+      let minItem = this.goalsData[0];
+      
+      this.goalsData.forEach(item => {
+        if (item.goals > maxItem.goals) {
+          maxItem = item;
+        }
+        if (item.goals < minItem.goals) {
+          minItem = item;
+        }
+      });
+      
+      this.maxMonth = maxItem.month;
+      this.maxGoals = maxItem.goals;
+      this.minMonth = minItem.month;
+      this.minGoals = minItem.goals;
+      
+      // 模拟趋势数据
+      this.trendText = this.totalGoals > 100 ? '较去年上升' : '较去年下降';
+      this.trendClass = this.totalGoals > 100 ? 'trend-up' : 'trend-down';
+    },
+    renderChart() {
+      if (!this.chartInstance) return;
+      
+      const months = this.goalsData.map(item => item.month);
+      const goals = this.goalsData.map(item => item.goals);
+      
+      let seriesConfig = {};
+      
+      if (this.chartType === 'pie') {
+        seriesConfig = {
+          type: 'pie',
+          radius: '50%',
+          data: this.goalsData.map(item => ({
+            name: item.month,
+            value: item.goals
+          })),
+          emphasis: {
+            itemStyle: {
+              shadowBlur: 10,
+              shadowOffsetX: 0,
+              shadowColor: 'rgba(0, 0, 0, 0.5)'
+            }
+          }
+        };
+      } else {
+        seriesConfig = {
+          type: this.chartType,
+          data: goals,
+          itemStyle: {
+            color: '#409EFF'
+          },
+          barWidth: '60%',
+          lineStyle: {
+            width: 3
+          }
+        };
+      }
+      
+      const option = {
+        title: {
+          text: `${this.selectedYear}年中国足球每月进球统计`,
+          left: 'center',
+          textStyle: {
+            fontSize: 18,
+            fontWeight: 'bold'
+          }
+        },
+        tooltip: {
+          trigger: 'axis',
+          formatter: this.chartType === 'pie' ? '{b}: {c}球 ({d}%)' : '{b}<br/>{a}: {c}球'
+        },
+        legend: {
+          show: this.chartType === 'pie',
+          orient: 'vertical',
+          left: 'left'
+        },
+        grid: {
+          left: '3%',
+          right: '4%',
+          bottom: '3%',
+          containLabel: true
+        },
+        xAxis: {
+          type: 'category',
+          data: months,
+          axisLabel: {
+            rotate: 45
+          }
+        },
+        yAxis: {
+          type: 'value',
+          name: '进球数',
+          nameTextStyle: {
+            padding: [0, 0, 0, 10]
+          }
+        },
+        series: [{
+          name: '进球数',
+          ...seriesConfig
+        }]
+      };
+      
+      if (this.chartType === 'pie') {
+        delete option.xAxis;
+        delete option.yAxis;
+        delete option.grid;
+      }
+      
+      this.chartInstance.setOption(option);
+      this.chartInstance.resize();
+    },
+    handleYearChange() {
+      // 模拟不同年份数据加载
+      this.loadMockData();
+    },
+    handleTeamChange() {
+      // 模拟不同球队数据加载
+      this.loadMockData();
+    },
+    handleChartTypeChange() {
+      this.renderChart();
+    },
+    refreshChart() {
+      this.$message({
+        message: '数据已刷新',
+        type: 'success',
+        duration: 1500
+      });
+      this.loadMockData();
+    },
+    downloadChart() {
+      if (this.chartInstance) {
+        const chartData = this.chartInstance.getDataURL({
+          type: 'png',
+          pixelRatio: 2,
+          backgroundColor: '#fff'
+        });
+        
+        const link = document.createElement('a');
+        link.href = chartData;
+        link.download = `足球进球统计_${this.selectedYear}_${this.selectedTeam}.png`;
+        link.click();
+        
+        this.$message({
+          message: '图表已导出',
+          type: 'success',
+          duration: 1500
+        });
+      }
+    },
+    handleResize() {
+      if (this.chartInstance) {
+        this.chartInstance.resize();
+      }
+    }
+  }
+};
+</script>
+
+<style scoped>
+.football-goals-chart-container {
+  padding: 20px;
+  background:
+    radial-gradient(1200px 400px at 10% -10%, rgba(59, 130, 246, 0.15), transparent 60%),
+    radial-gradient(1000px 400px at 90% 0%, rgba(99, 102, 241, 0.12), transparent 60%),
+    linear-gradient(160deg, #eef4ff 0%, #e0ecff 40%, #d6e6ff 100%);
+  min-height: 100vh;
+}
+
+.main-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-title {
+  font-size: 20px;
+  font-weight: bold;
+  color: #303133;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.chart-content {
+  margin-top: 20px;
+}
+
+.filter-section {
+  margin-bottom: 30px;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.filter-item {
+  display: flex;
+  align-items: center;
+}
+
+.filter-label {
+  font-size: 14px;
+  color: #606266;
+  margin-right: 10px;
+  min-width: 70px;
+}
+
+.chart-wrapper {
+  margin: 30px 0;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.data-summary {
+  margin-top: 30px;
+}
+
+.summary-card {
+  text-align: center;
+  border: none;
+  border-radius: 8px;
+}
+
+.summary-title {
+  font-size: 14px;
+  color: #909399;
+  margin-bottom: 10px;
+}
+
+.summary-value {
+  font-size: 28px;
+  font-weight: bold;
+  color: #409EFF;
+  margin: 10px 0;
+}
+
+.summary-subtitle {
+  font-size: 12px;
+  color: #C0C4CC;
+  margin-top: 5px;
+}
+
+.summary-trend {
+  margin-top: 10px;
+}
+
+.trend-up {
+  color: #67C23A;
+  font-size: 12px;
+}
+
+.trend-down {
+  color: #F56C6C;
+  font-size: 12px;
+}
+
+@media (max-width: 768px) {
+  .filter-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .filter-label {
+    margin-bottom: 5px;
+  }
+  
+  .header-actions {
+    flex-direction: column;
+    gap: 5px;
+  }
+}
+</style>

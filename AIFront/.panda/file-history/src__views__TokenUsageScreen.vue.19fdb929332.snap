@@ -1,0 +1,794 @@
+<template>
+  <div class="token-screen">
+    <!-- 背景粒子画布 -->
+    <canvas ref="bgCanvas" class="bg-canvas"></canvas>
+
+    <!-- 顶部标题栏 -->
+    <header class="screen-header">
+      <div class="header-side left">
+        <div class="deco-line"></div>
+        <span class="header-sub">AI CODING TOKEN ANALYTICS</span>
+      </div>
+      <h1 class="screen-title">
+        <span class="title-glow">AI 编码 Token 使用量统计</span>
+      </h1>
+      <div class="header-side right">
+        <div class="time-switch">
+          <button
+            v-for="t in timeOptions"
+            :key="t.value"
+            :class="['time-btn', { active: timeRange === t.value }]"
+            @click="switchTime(t.value)"
+          >{{ t.label }}</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 顶部指标卡 -->
+    <section class="metric-row">
+      <div class="metric-card" v-for="m in metrics" :key="m.label">
+        <div class="metric-icon" :style="{ background: m.color }">
+          <i :class="m.icon"></i>
+        </div>
+        <div class="metric-body">
+          <div class="metric-label">{{ m.label }}</div>
+          <div class="metric-value">
+            <span class="num">{{ m.value }}</span>
+            <span class="unit">{{ m.unit }}</span>
+          </div>
+          <div class="metric-trend" :style="{ color: m.trendColor }">
+            <i :class="m.trendIcon"></i> {{ m.trend }}
+          </div>
+        </div>
+        <div class="metric-glow" :style="{ background: m.color }"></div>
+      </div>
+    </section>
+
+    <!-- 主体三栏 -->
+    <section class="main-grid">
+      <!-- 左：机构维度 -->
+      <div class="panel panel-left">
+        <div class="panel-header">
+          <span class="panel-title"><i class="el-icon-office-building"></i> 机构维度</span>
+          <span class="panel-tag">ORG</span>
+        </div>
+        <div class="panel-body">
+          <div ref="orgChart" class="d3-chart"></div>
+          <div class="rank-list" id="orgRank"></div>
+        </div>
+      </div>
+
+      <!-- 中：核心趋势图 -->
+      <div class="panel panel-center">
+        <div class="panel-header">
+          <span class="panel-title"><i class="el-icon-data-line"></i> Token 使用趋势</span>
+          <span class="panel-tag">TREND</span>
+        </div>
+        <div class="panel-body">
+          <div ref="trendChart" class="d3-chart trend-chart"></div>
+          <div class="legend-row" id="trendLegend"></div>
+        </div>
+      </div>
+
+      <!-- 右：团队维度 -->
+      <div class="panel panel-right">
+        <div class="panel-header">
+          <span class="panel-title"><i class="el-icon-user"></i> 团队维度</span>
+          <span class="panel-tag">TEAM</span>
+        </div>
+        <div class="panel-body">
+          <div ref="teamChart" class="d3-chart"></div>
+          <div class="rank-list" id="teamRank"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 底部：个人维度 -->
+    <section class="bottom-panel">
+      <div class="panel-header">
+        <span class="panel-title"><i class="el-icon-user-solid"></i> 个人维度 TOP 排行</span>
+        <span class="panel-tag">PERSON</span>
+      </div>
+      <div class="bottom-body">
+        <div ref="personChart" class="d3-chart person-chart"></div>
+      </div>
+    </section>
+  </div>
+</template>
+
+<script>
+import * as d3 from 'd3'
+
+export default {
+  name: 'TokenUsageScreen',
+  data () {
+    return {
+      timeRange: 'month',
+      timeOptions: [
+        { label: '年', value: 'year' },
+        { label: '月', value: 'month' },
+        { label: '天', value: 'day' }
+      ],
+      metrics: [],
+      // 模拟数据
+      orgData: [],
+      teamData: [],
+      personData: [],
+      trendData: [],
+      bgCtx: null,
+      bgAnim: null,
+      resizeHandler: null
+    }
+  },
+  mounted () {
+    this.initBackground()
+    this.generateData()
+    this.renderAll()
+    this.resizeHandler = () => this.renderAll()
+    window.addEventListener('resize', this.resizeHandler)
+  },
+  beforeDestroy () {
+    window.removeEventListener('resize', this.resizeHandler)
+    if (this.bgAnim) cancelAnimationFrame(this.bgAnim)
+  },
+  methods: {
+    // ---------- 背景粒子 ----------
+    initBackground () {
+      const canvas = this.$refs.bgCanvas
+      const ctx = canvas.getContext('2d')
+      this.bgCtx = ctx
+      const resize = () => {
+        canvas.width = window.innerWidth
+        canvas.height = window.innerHeight
+      }
+      resize()
+      window.addEventListener('resize', resize)
+      const particles = []
+      const count = 60
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          r: Math.random() * 2 + 0.5,
+          vx: (Math.random() - 0.5) * 0.4,
+          vy: (Math.random() - 0.5) * 0.4,
+          a: Math.random() * 0.5 + 0.2
+        })
+      }
+      const draw = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        particles.forEach(p => {
+          p.x += p.vx
+          p.y += p.vy
+          if (p.x < 0 || p.x > canvas.width) p.vx *= -1
+          if (p.y < 0 || p.y > canvas.height) p.vy *= -1
+          ctx.beginPath()
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
+          ctx.fillStyle = `rgba(56, 189, 248, ${p.a})`
+          ctx.fill()
+        })
+        // 连线
+        for (let i = 0; i < particles.length; i++) {
+          for (let j = i + 1; j < particles.length; j++) {
+            const dx = particles[i].x - particles[j].x
+            const dy = particles[i].y - particles[j].y
+            const dist = Math.sqrt(dx * dx + dy * dy)
+            if (dist < 120) {
+              ctx.beginPath()
+              ctx.moveTo(particles[i].x, particles[i].y)
+              ctx.lineTo(particles[j].x, particles[j].y)
+              ctx.strokeStyle = `rgba(56, 189, 248, ${0.15 * (1 - dist / 120)})`
+              ctx.lineWidth = 0.6
+              ctx.stroke()
+            }
+          }
+        }
+        this.bgAnim = requestAnimationFrame(draw)
+      }
+      draw()
+    },
+
+    // ---------- 数据生成 ----------
+    generateData () {
+      const orgs = ['星辰科技', '云启集团', '蓝海网络', '极光数据', '天穹智能']
+      const teams = ['前端组', '后端组', '算法组', '测试组', '运维组', '数据组']
+      const persons = ['张伟', '李娜', '王强', '刘洋', '陈静', '杨帆', '赵磊', '孙悦', '周杰', '吴敏']
+
+      this.orgData = orgs.map((name, i) => ({
+        name,
+        value: Math.round(1200000 + Math.random() * 3800000),
+        color: d3.interpolateTurbo(0.15 + i * 0.15)
+      }))
+      this.teamData = teams.map((name, i) => ({
+        name,
+        value: Math.round(400000 + Math.random() * 1600000),
+        color: d3.interpolateCool(0.2 + i * 0.12)
+      }))
+      this.personData = persons.map((name, i) => ({
+        name,
+        value: Math.round(80000 + Math.random() * 420000),
+        color: d3.interpolateRainbow(i / persons.length)
+      })).sort((a, b) => b.value - a.value)
+
+      // 趋势数据（按时间维度生成不同粒度）
+      const points = this.timeRange === 'year' ? 12 : this.timeRange === 'month' ? 30 : 24
+      this.trendData = Array.from({ length: points }, (_, i) => ({
+        label: this.timeRange === 'year' ? `${i + 1}月` : this.timeRange === 'month' ? `${i + 1}日` : `${i}时`,
+        value: Math.round(300000 + Math.random() * 900000 + Math.sin(i / 3) * 200000)
+      }))
+
+      // 指标
+      const total = this.orgData.reduce((s, d) => s + d.value, 0)
+      this.metrics = [
+        { label: '总 Token 消耗', value: this.fmt(total), unit: '', icon: 'el-icon-data-analysis', color: '#3b82f6', trend: '↑ 12.5%', trendColor: '#34d399', trendIcon: 'el-icon-top' },
+        { label: '输入 Token', value: this.fmt(Math.round(total * 0.62)), unit: '', icon: 'el-icon-upload2', color: '#06b6d4', trend: '↑ 8.3%', trendColor: '#34d399', trendIcon: 'el-icon-top' },
+        { label: '输出 Token', value: this.fmt(Math.round(total * 0.38)), unit: '', icon: 'el-icon-download', color: '#8b5cf6', trend: '↓ 3.1%', trendColor: '#f87171', trendIcon: 'el-icon-bottom' },
+        { label: '活跃用户', value: '1,286', unit: '人', icon: 'el-icon-user', color: '#f59e0b', trend: '↑ 5.7%', trendColor: '#34d399', trendIcon: 'el-icon-top' }
+      ]
+    },
+
+    fmt (n) {
+      return Number(n).toLocaleString('en-US')
+    },
+    renderAll () {
+      this.$nextTick(() => {
+        this.renderOrg()
+        this.renderTrend()
+        this.renderTeam()
+        this.renderPerson()
+      })
+    },
+
+    renderOrg () {
+      const el = this.$refs.orgChart
+      if (!el) return
+      el.innerHTML = ''
+      const w = el.clientWidth || 300
+      const h = el.clientHeight || 220
+      const svg = d3.select(el).append('svg').attr('width', w).attr('height', h)
+      const g = svg.append('g').attr('transform', `translate(${w / 2},${h / 2})`)
+      const radius = Math.min(w, h) / 2 - 20
+      const pie = d3.pie().value(d => d.value).sort(null)
+      const arc = d3.arc().innerRadius(radius * 0.55).outerRadius(radius)
+      const arcHover = d3.arc().innerRadius(radius * 0.55).outerRadius(radius + 8)
+
+      const defs = svg.append('defs')
+      this.orgData.forEach((d, i) => {
+        const grad = defs.append('linearGradient').attr('id', `orgGrad${i}`)
+        grad.append('stop').attr('offset', '0%').attr('stop-color', d.color).attr('stop-opacity', 0.9)
+        grad.append('stop').attr('offset', '100%').attr('stop-color', d.color).attr('stop-opacity', 0.4)
+      })
+
+      const arcs = g.selectAll('.arc').data(pie(this.orgData)).enter().append('g').attr('class', 'arc')
+      arcs.append('path')
+        .attr('d', arc)
+        .attr('fill', (d, i) => `url(#orgGrad${i})`)
+        .attr('stroke', '#0b1e3a')
+        .attr('stroke-width', 2)
+        .on('mouseover', function (event, d) {
+          d3.select(this).transition().duration(200).attr('d', arcHover(d))
+        })
+        .on('mouseout', function (event, d) {
+          d3.select(this).transition().duration(200).attr('d', arc(d))
+        })
+
+      // 中心文字
+      const total = d3.sum(this.orgData, d => d.value)
+      g.append('text').attr('text-anchor', 'middle').attr('y', -8).attr('class', 'center-label').text('机构总数')
+      g.append('text').attr('text-anchor', 'middle').attr('y', 18).attr('class', 'center-value').text(this.fmt(total))
+
+      // 排名列表
+      const rankEl = document.getElementById('orgRank')
+      if (rankEl) {
+        rankEl.innerHTML = this.orgData.slice(0, 5).map((d, i) => `
+          <div class="rank-item">
+            <span class="rank-num" style="color:${d.color}">${i + 1}</span>
+            <span class="rank-name">${d.name}</span>
+            <div class="rank-bar"><div class="rank-bar-fill" style="width:${(d.value / this.orgData[0].value) * 100}%;background:${d.color}"></div></div>
+            <span class="rank-value">${this.fmt(d.value)}</span>
+          </div>`).join('')
+      }
+    },
+
+    renderTrend () {
+      const el = this.$refs.trendChart
+      if (!el) return
+      el.innerHTML = ''
+      const w = el.clientWidth || 500
+      const h = el.clientHeight || 260
+      const margin = { top: 20, right: 20, bottom: 30, left: 50 }
+      const innerW = w - margin.left - margin.right
+      const innerH = h - margin.top - margin.bottom
+
+      const svg = d3.select(el).append('svg').attr('width', w).attr('height', h)
+      const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`)
+
+      const x = d3.scaleBand().domain(this.trendData.map(d => d.label)).range([0, innerW]).padding(0.3)
+      const y = d3.scaleLinear().domain([0, d3.max(this.trendData, d => d.value) * 1.1]).range([innerH, 0])
+
+      // 渐变
+      const defs = svg.append('defs')
+      const grad = defs.append('linearGradient').attr('id', 'trendGrad')
+      grad.append('stop').attr('offset', '0%').attr('stop-color', '#38bdf8').attr('stop-opacity', 0.9)
+      grad.append('stop').attr('offset', '100%').attr('stop-color', '#3b82f6').attr('stop-opacity', 0.3)
+
+      // 网格
+      g.append('g').attr('class', 'grid')
+        .call(d3.axisLeft(y).ticks(5).tickSize(-innerW).tickFormat(d => this.fmt(d)))
+        .selectAll('line').attr('stroke', 'rgba(56,189,248,0.15)')
+      g.selectAll('.domain').attr('stroke', 'rgba(56,189,248,0.3)')
+      g.selectAll('text').attr('fill', '#7dd3fc').attr('font-size', '10px')
+
+      // 柱
+      g.selectAll('.bar').data(this.trendData).enter().append('rect')
+        .attr('class', 'bar')
+        .attr('x', d => x(d.label))
+        .attr('width', x.bandwidth())
+        .attr('y', innerH)
+        .attr('height', 0)
+        .attr('fill', 'url(#trendGrad)')
+        .attr('rx', 3)
+        .transition().duration(800).delay((d, i) => i * 30)
+        .attr('y', d => y(d.value))
+        .attr('height', d => innerH - y(d.value))
+
+      // 流动折线
+      const line = d3.line()
+        .x((d, i) => x(d.label) + x.bandwidth() / 2)
+        .y(d => y(d.value))
+        .curve(d3.curveMonotoneX)
+      const path = g.append('path').datum(this.trendData)
+        .attr('d', line)
+        .attr('fill', 'none')
+        .attr('stroke', '#22d3ee')
+        .attr('stroke-width', 2.5)
+        .attr('stroke-linecap', 'round')
+      const totalLen = path.node().getTotalLength()
+      path.attr('stroke-dasharray', totalLen + ' ' + totalLen)
+        .attr('stroke-dashoffset', totalLen)
+        .transition().duration(1500).ease(d3.easeLinear)
+        .attr('stroke-dashoffset', 0)
+
+      // 面积渐变
+      const area = d3.area()
+        .x((d, i) => x(d.label) + x.bandwidth() / 2)
+        .y0(innerH)
+        .y1(d => y(d.value))
+        .curve(d3.curveMonotoneX)
+      g.append('path').datum(this.trendData)
+        .attr('d', area)
+        .attr('fill', 'url(#trendGrad)')
+        .attr('opacity', 0.25)
+
+      // 流动光点
+      const dot = g.append('circle').attr('r', 4).attr('fill', '#a5f3fc').attr('opacity', 0)
+      let idx = 0
+      const animateDot = () => {
+        const d = this.trendData[idx % this.trendData.length]
+        dot.attr('cx', x(d.label) + x.bandwidth() / 2)
+          .attr('cy', y(d.value))
+          .attr('opacity', 1)
+        idx++
+        setTimeout(animateDot, 120)
+      }
+      animateDot()
+
+      // X 轴
+      g.append('g').attr('transform', `translate(0,${innerH})`)
+        .call(d3.axisBottom(x).tickValues(x.domain().filter((d, i) => i % Math.ceil(this.trendData.length / 8) === 0)))
+        .selectAll('text').attr('fill', '#7dd3fc').attr('font-size', '10px')
+      g.selectAll('.domain').attr('stroke', 'rgba(56,189,248,0.3)')
+    },
+
+    renderTeam () {
+      const el = this.$refs.teamChart
+      if (!el) return
+      el.innerHTML = ''
+      const w = el.clientWidth || 300
+      const h = el.clientHeight || 220
+      const svg = d3.select(el).append('svg').attr('width', w).attr('height', h)
+      const g = svg.append('g').attr('transform', `translate(${w / 2},${h / 2})`)
+      const radius = Math.min(w, h) / 2 - 20
+      const pie = d3.pie().value(d => d.value).sort(null)
+      const arc = d3.arc().innerRadius(0).outerRadius(radius)
+
+      const defs = svg.append('defs')
+      this.teamData.forEach((d, i) => {
+        const grad = defs.append('linearGradient').attr('id', `teamGrad${i}`)
+        grad.append('stop').attr('offset', '0%').attr('stop-color', d.color).attr('stop-opacity', 0.95)
+        grad.append('stop').attr('offset', '100%').attr('stop-color', d.color).attr('stop-opacity', 0.5)
+      })
+
+      g.selectAll('.arc').data(pie(this.teamData)).enter().append('path')
+        .attr('d', arc)
+        .attr('fill', (d, i) => `url(#teamGrad${i})`)
+        .attr('stroke', '#0b1e3a')
+        .attr('stroke-width', 2)
+        .attr('opacity', 0)
+        .transition().duration(800).delay((d, i) => i * 60).attr('opacity', 1)
+
+      // 排名
+      const rankEl = document.getElementById('teamRank')
+      if (rankEl) {
+        rankEl.innerHTML = this.teamData.slice(0, 5).map((d, i) => `
+          <div class="rank-item">
+            <span class="rank-num" style="color:${d.color}">${i + 1}</span>
+            <span class="rank-name">${d.name}</span>
+            <div class="rank-bar"><div class="rank-bar-fill" style="width:${(d.value / this.teamData[0].value) * 100}%;background:${d.color}"></div></div>
+            <span class="rank-value">${this.fmt(d.value)}</span>
+          </div>`).join('')
+      }
+    },
+
+    renderPerson () {
+      const el = this.$refs.personChart
+      if (!el) return
+      el.innerHTML = ''
+      const w = el.clientWidth || 900
+      const h = el.clientHeight || 180
+      const margin = { top: 20, right: 20, bottom: 30, left: 60 }
+      const innerW = w - margin.left - margin.right
+      const innerH = h - margin.top - margin.bottom
+
+      const svg = d3.select(el).append('svg').attr('width', w).attr('height', h)
+      const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`)
+
+      const x = d3.scaleBand().domain(this.personData.map(d => d.name)).range([0, innerW]).padding(0.25)
+      const y = d3.scaleLinear().domain([0, d3.max(this.personData, d => d.value) * 1.1]).range([innerH, 0])
+
+      const defs = svg.append('defs')
+      this.personData.forEach((d, i) => {
+        const grad = defs.append('linearGradient').attr('id', `personGrad${i}`)
+        grad.append('stop').attr('offset', '0%').attr('stop-color', d.color).attr('stop-opacity', 0.95)
+        grad.append('stop').attr('offset', '100%').attr('stop-color', d.color).attr('stop-opacity', 0.3)
+      })
+
+      g.append('g').attr('class', 'grid')
+        .call(d3.axisLeft(y).ticks(4).tickSize(-innerW).tickFormat(d => this.fmt(d)))
+        .selectAll('line').attr('stroke', 'rgba(56,189,248,0.12)')
+      g.selectAll('.domain').attr('stroke', 'rgba(56,189,248,0.3)')
+      g.selectAll('text').attr('fill', '#7dd3fc').attr('font-size', '10px')
+
+      g.selectAll('.bar').data(this.personData).enter().append('rect')
+        .attr('x', d => x(d.name))
+        .attr('width', x.bandwidth())
+        .attr('y', innerH)
+        .attr('height', 0)
+        .attr('fill', (d, i) => `url(#personGrad${i})`)
+        .attr('rx', 4)
+        .transition().duration(700).delay((d, i) => i * 40)
+        .attr('y', d => y(d.value))
+        .attr('height', d => innerH - y(d.value))
+
+      g.append('g').attr('transform', `translate(0,${innerH})`)
+        .call(d3.axisBottom(x))
+        .selectAll('text').attr('fill', '#7dd3fc').attr('font-size', '10px')
+      g.selectAll('.domain').attr('stroke', 'rgba(56,189,248,0.3)')
+    },
+
+    switchTime (v) {
+      this.timeRange = v
+      this.generateData()
+      this.renderAll()
+    }
+  }
+}
+</script>
+
+<style scoped>
+.token-screen {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  background: radial-gradient(ellipse at 20% 20%, #0a1f44 0%, #071530 45%, #040d22 100%);
+  color: #e0f2fe;
+  padding: 20px 24px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+.bg-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* 顶部 */
+.screen-header {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px 16px;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+  margin-bottom: 16px;
+}
+
+.screen-title {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  margin: 0;
+  text-align: center;
+  background: linear-gradient(90deg, #38bdf8, #818cf8, #38bdf8);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: titleFlow 4s linear infinite;
+}
+
+@keyframes titleFlow {
+  0% { background-position: 0% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.header-side {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 220px;
+}
+
+.header-side.left .deco-line {
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #38bdf8);
+}
+
+.header-sub {
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #38bdf8;
+  opacity: 0.8;
+}
+
+.header-side.right {
+  justify-content: flex-end;
+}
+
+.time-switch {
+  display: flex;
+  background: rgba(15, 40, 80, 0.6);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.time-btn {
+  padding: 6px 18px;
+  background: transparent;
+  border: none;
+  color: #7dd3fc;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.time-btn.active {
+  background: linear-gradient(135deg, #3b82f6, #06b6d4);
+  color: #fff;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+}
+
+/* 指标卡 */
+.metric-row {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.metric-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  background: linear-gradient(135deg, rgba(15, 40, 80, 0.7), rgba(10, 30, 65, 0.5));
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.metric-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(56, 189, 248, 0.25);
+}
+
+.metric-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: #fff;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.4);
+}
+
+.metric-body {
+  flex: 1;
+}
+
+.metric-label {
+  font-size: 13px;
+  color: #7dd3fc;
+  margin-bottom: 4px;
+}
+
+.metric-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+}
+
+.metric-value .unit {
+  font-size: 13px;
+  color: #7dd3fc;
+  margin-left: 4px;
+}
+
+.metric-trend {
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.metric-glow {
+  position: absolute;
+  right: -20px;
+  top: -20px;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  filter: blur(30px);
+  opacity: 0.3;
+}
+
+/* 主体网格 */
+.main-grid {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr 1.6fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.panel {
+  background: linear-gradient(180deg, rgba(15, 40, 80, 0.6), rgba(8, 25, 55, 0.5));
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+  background: linear-gradient(90deg, rgba(56, 189, 248, 0.12), transparent);
+}
+
+.panel-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #bae6fd;
+}
+
+.panel-title i {
+  color: #38bdf8;
+  margin-right: 6px;
+}
+
+.panel-tag {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.panel-body {
+  padding: 12px;
+}
+
+.d3-chart {
+  width: 100%;
+  height: 220px;
+}
+
+.trend-chart {
+  height: 260px;
+}
+
+.person-chart {
+  height: 180px;
+}
+
+/* 排名列表 */
+.rank-list {
+  margin-top: 10px;
+}
+
+.rank-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  font-size: 12px;
+}
+
+.rank-num {
+  width: 20px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.rank-name {
+  width: 70px;
+  color: #bae6fd;
+  white-space: nowrap;
+}
+
+.rank-bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(56, 189, 248, 0.12);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.rank-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.8s;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+}
+
+.rank-value {
+  width: 60px;
+  text-align: right;
+  color: #7dd3fc;
+  font-weight: 600;
+}
+
+/* 底部 */
+.bottom-panel {
+  position: relative;
+  z-index: 2;
+  background: linear-gradient(180deg, rgba(15, 40, 80, 0.6), rgba(8, 25, 55, 0.5));
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.bottom-body {
+  padding: 12px;
+}
+
+/* D3 中心文字 */
+.center-label {
+  fill: #7dd3fc;
+  font-size: 12px;
+}
+
+.center-value {
+  fill: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+}
+</style>

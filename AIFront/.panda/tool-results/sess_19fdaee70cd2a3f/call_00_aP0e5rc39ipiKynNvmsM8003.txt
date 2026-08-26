@@ -1,0 +1,426 @@
+浏览器控制台最近 40 条：
+1. [error/console.error] 2026-08-07T07:14:31.839Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_PqhQ6TfVcpa4ykztgzWt4358'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+2. [error/console.error] 2026-08-07T07:14:32.990Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_BN9uL1w1nhPV6oePcEvW3611'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+3. [error/console.error] 2026-08-07T07:14:32.990Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_fcYkgwU99HJltnjRzJ4u7463'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+4. [error/console.error] 2026-08-07T07:14:32.990Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_HqhZlmZN45mxe7KbQlTA6424'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+5. [error/console.error] 2026-08-07T07:14:32.990Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_cQ9oJFbsGDKk5lOOIY4h9294'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+6. [error/console.error] 2026-08-07T07:14:32.990Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_dVoD5V783CO3P2ZX6d2P3635'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+7. [error/console.error] 2026-08-07T07:14:32.990Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_AfyywkLlN1hOY7zZZ8Ou4150'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+8. [error/console.error] 2026-08-07T07:14:32.990Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_R0OueQinH7V2tIM6XpaA4999'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+9. [error/console.error] 2026-08-07T07:14:32.990Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_BEIJc2KVOBElsxEcmkIV1099'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+10. [error/console.error] 2026-08-07T07:14:32.991Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_WzML4DQyv7EzEVFVep0x7279'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+11. [error/console.error] 2026-08-07T07:14:32.991Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_FjuJd6tXy7poF0vB2wx12119'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+12. [error/console.error] 2026-08-07T07:14:32.991Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_J5sOAzDM3subcmsGRdx08434'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+13. [error/console.error] 2026-08-07T07:14:32.992Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_WMq16XdAI3cxlZ2MAhlE3462'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+14. [error/console.error] 2026-08-07T07:14:32.992Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_fYQRldqBqbMvth7aQZN33968'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+15. [error/console.error] 2026-08-07T07:14:32.992Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_Wdj46D6J9WD47bwg2KPh9290'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+16. [error/console.error] 2026-08-07T07:14:32.992Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_QhXVoMLj7KZMVchCRVv84309'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+17. [error/console.error] 2026-08-07T07:14:32.993Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_YMYOqDlsj8ojUCfng3dQ2164'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+18. [error/console.error] 2026-08-07T07:14:32.993Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_D2QT33LEOU4ymq1DODDd3720'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+19. [error/console.error] 2026-08-07T07:14:32.993Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_DsTPD23ZLH8117mzHvld6423'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+20. [error/console.error] 2026-08-07T07:14:32.993Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_j6sJeyrYVoWUDoM6l9tJ4987'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+21. [error/console.error] 2026-08-07T07:14:32.994Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_DM1TXHT6YSPQfjppVbHl9589'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+22. [error/console.error] 2026-08-07T07:14:32.994Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_iejBY5tPB91t1phIlQdn3800'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+23. [error/console.error] 2026-08-07T07:14:32.994Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_iS3yQ549iwB5ppjuah8z7902'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+24. [error/console.error] 2026-08-07T07:14:32.994Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_rD1dyxJEwCi1GhoT9z4m8159'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+25. [error/console.error] 2026-08-07T07:14:32.994Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_fVCK5Nl0VkZ2H3FdMS6t4613'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+26. [error/console.error] 2026-08-07T07:14:33.027Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_gK50Ot4bNacgGgh5NPVv3831'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+27. [error/console.error] 2026-08-07T07:14:33.028Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_WlQaJiL6hLLV0UFZ7qvR8692'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+28. [error/console.error] 2026-08-07T07:14:33.028Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_XUIsZafxxF6deEV5Z7Qs0617'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+29. [error/console.error] 2026-08-07T07:14:33.028Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_4HiLqO0q44Yk9pSWOBxr3446'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+30. [error/console.error] 2026-08-07T07:14:33.028Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_3FhNshUyFUDsuE1e5nHi2341'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+31. [error/console.error] 2026-08-07T07:14:33.028Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_HErlB2W0OeEIBwYk09VK7061'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+32. [error/console.error] 2026-08-07T07:14:33.028Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_ef9GpoHXXn4x3dYeEDjG7504'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App>
+             <Root>
+   url=http://localhost:8081/panda
+33. [error/vue.errorHandler] 2026-08-07T07:15:37.529Z route=/river-city
+   cam is not defined
+   url=http://localhost:8080/river-city
+   stack:
+   ReferenceError: cam is not defined
+       at VueComponent.drawCharacter (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:494:26)
+       at eval (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:462:14)
+       at Array.forEach (<anonymous>)
+       at VueComponent.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:460:20)
+       at VueComponent.loop (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:157:12)
+       at VueComponent.startGame (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:72:12)
+       at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+       at VueComponent.invoker (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:1884:20)
+       at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+34. [error/console.error] 2026-08-07T07:15:37.529Z route=/river-city
+   ReferenceError: cam is not defined
+    at VueComponent.drawCharacter (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:494:26)
+    at eval (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:462:14)
+    at Array.forEach (<anonymous>)
+    at VueComponent.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:460:20)
+    at VueComponent.loop (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:157:12)
+    at VueComponent.startGame (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:72:12)
+    at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+    at VueComponent.invoker (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:1884:20)
+    at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+    at Vue.$emit (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3782:17)
+   url=http://localhost:8080/river-city
+   stack:
+   ReferenceError: cam is not defined
+       at VueComponent.drawCharacter (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:494:26)
+       at eval (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:462:14)
+       at Array.forEach (<anonymous>)
+       at VueComponent.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:460:20)
+       at VueComponent.loop (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:157:12)
+       at VueComponent.startGame (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:72:12)
+       at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+       at VueComponent.invoker (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:1884:20)
+       at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+35. [error/vue.errorHandler] 2026-08-07T07:15:40.350Z route=/river-city
+   cam is not defined
+   url=http://localhost:8080/river-city
+   stack:
+   ReferenceError: cam is not defined
+       at VueComponent.drawCharacter (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:494:26)
+       at eval (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:462:14)
+       at Array.forEach (<anonymous>)
+       at VueComponent.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:460:20)
+       at VueComponent.loop (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:157:12)
+       at VueComponent.startGame (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:72:12)
+       at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+       at VueComponent.invoker (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:1884:20)
+       at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+36. [error/console.error] 2026-08-07T07:15:40.350Z route=/river-city
+   ReferenceError: cam is not defined
+    at VueComponent.drawCharacter (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:494:26)
+    at eval (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:462:14)
+    at Array.forEach (<anonymous>)
+    at VueComponent.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:460:20)
+    at VueComponent.loop (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:157:12)
+    at VueComponent.startGame (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:72:12)
+    at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+    at VueComponent.invoker (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:1884:20)
+    at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+    at Vue.$emit (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3782:17)
+   url=http://localhost:8080/river-city
+   stack:
+   ReferenceError: cam is not defined
+       at VueComponent.drawCharacter (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:494:26)
+       at eval (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:462:14)
+       at Array.forEach (<anonymous>)
+       at VueComponent.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:460:20)
+       at VueComponent.loop (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:157:12)
+       at VueComponent.startGame (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-

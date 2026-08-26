@@ -1,0 +1,94 @@
+/* 项目分析器：收集当前工程的基础结构，供后续规划和代码生成使用 */
+
+const fs = require('fs')
+const fsp = fs.promises
+const path = require('path')
+
+const CACHE_TTL_MS = 15000
+let cached = null
+let cachedAt = 0
+
+async function safeRead (filePath) {
+  try {
+    const content = await fsp.readFile(filePath, 'utf8')
+    return content
+  } catch (e) {
+    return ''
+  }
+}
+
+function listVueFiles (viewsDir) {
+  try {
+    const files = fs.readdirSync(viewsDir)
+    return files
+      .filter(f => f.endsWith('.vue'))
+      .map(f => ({
+        name: path.basename(f, '.vue'),
+        file: path.join('src', 'views', f)
+      }))
+  } catch (e) {
+    return []
+  }
+}
+
+// 非严格 Router 解析：尽量提取出 path 和 component 名称
+function parseRoutes (routerCode) {
+  const routes = []
+  const routeRegex = /{\s*path:\s*'([^']+)'\s*,\s*component:\s*([A-Za-z0-9_]+)[^}]*}/g
+  let m
+  while ((m = routeRegex.exec(routerCode)) !== null) {
+    routes.push({
+      path: m[1],
+      component: m[2]
+    })
+  }
+  return routes
+}
+
+async function analyze (skipCache = false) {
+  const now = Date.now()
+  if (!skipCache && cached && (now - cachedAt) < CACHE_TTL_MS) {
+    return cached
+  }
+  const projectRoot = path.resolve(__dirname, '..', '..')
+  const pkgPath = path.resolve(projectRoot, 'package.json')
+  const routerPath = path.resolve(projectRoot, 'src', 'router', 'index.js')
+  const storePath = path.resolve(projectRoot, 'src', 'store', 'index.js')
+  const viewsDir = path.resolve(projectRoot, 'src', 'views')
+
+  const [pkgJsonStr, routerCode, storeCode] = await Promise.all([
+    safeRead(pkgPath),
+    safeRead(routerPath),
+    safeRead(storePath)
+  ])
+
+  let pkg = {}
+  try {
+    pkg = pkgJsonStr ? JSON.parse(pkgJsonStr) : {}
+  } catch (e) {
+    pkg = {}
+  }
+
+  const views = listVueFiles(viewsDir)
+  const routes = parseRoutes(routerCode)
+
+  cached = {
+    root: projectRoot,
+    framework: 'vue2',
+    pkg,
+    files: {
+      router: 'src/router/index.js',
+      store: fs.existsSync(storePath) ? 'src/store/index.js' : null,
+      viewsDir: 'src/views'
+    },
+    views,
+    routes
+  }
+  cachedAt = now
+  return cached
+}
+
+module.exports = {
+  analyze
+}
+

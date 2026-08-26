@@ -1,0 +1,134 @@
+/* 消息路由器：根据单条聊天输入，决定是生成新页面、修改现有代码，还是走问答 */
+
+const { callDeepseekJson } = require('./shared-llm')
+
+// 规则优先：对一些高频、明确的场景直接给出路由和指令，避免完全依赖大模型
+function ruleBasedRoute (message) {
+  const text = (message || '').trim()
+  if (!text) return null
+
+  // 明确「优化…样式/颜色/布局/卡片高度/间距」→ 直接走改代码，避免误判为问答或走慢的 LLM 路由
+  if (text.includes('优化') && (text.includes('指令市场') || text.includes('CommandMarket') || text.includes('页面'))) {
+    const styleLike = (
+      text.includes('样式') ||
+      text.includes('颜色') ||
+      text.includes('布局') ||
+      text.includes('美观') ||
+      text.includes('卡片') ||
+      text.includes('高度') ||
+      text.includes('间距')
+    )
+    if (styleLike) {
+      const file = 'src/views/CommandMarket.vue'
+      return {
+        kind: 'modify_existing',
+        engineInstruction: [
+          `优化 ${file} 的整体视觉和卡片高度，包括布局、颜色、字体、间距等，使其更美观统一；`,
+          '业务逻辑必须完全不变（筛选、分页、弹窗、新建/编辑等行为保持原样）；',
+          '整体布局调整应优先通过 CSS（margin/padding/gap/flex/grid 等）完成，',
+          '严禁大幅改动 template 结构，尤其是 el-row/el-col 栅格、卡片循环、表单字段、class 名称，保证每行卡片高度一致且可用。'
+        ].join(''),
+        qaHint: '',
+        notes: '规则：优化指令市场样式/卡片高度 -> 改 CommandMarket.vue 的 <style>，不动逻辑'
+      }
+    }
+  }
+
+  // 笼统「优化页面/指令市场」易触发整页重写、样式丢失 → 走问答并引导用户具体说明要改哪一块
+  if (text.includes('优化') && (text.includes('指令市场') || text.includes('页面') || /优化\s*(一下)?\s*$/.test(text))) {
+    const hasSpecific = /改|加|把|标题|按钮|样式|颜色|布局|增加|删除|替换|改成|改为|文案|文字/.test(text)
+    if (!hasSpecific) {
+      return {
+        kind: 'qa',
+        engineInstruction: '',
+        qaHint: '用户说想优化指令市场或页面，但没有说明具体要改什么。请用一两句话建议：请具体说明要优化哪一块（例如：只改标题、只改某个按钮文字、只加一个筛选条件），这样可以在保留现有样式的前提下精准修改。',
+        notes: '规则：笼统优化引导用户具体化'
+      }
+    }
+  }
+
+  // 典型场景：列表 / 卡片 点击跳转详情
+  const hasList = text.includes('列表')
+  const hasCard = text.includes('卡片')
+  const hasDetail = text.includes('详情')
+  const hasCommand = text.includes('指令') || text.includes('自定义指令')
+
+  if (hasDetail && (hasList || hasCard || hasCommand)) {
+    const engineInstruction = [
+      '请在当前项目的自定义指令列表页面 src/views/CommandMarket.vue 中，',
+      '为指令卡片或列表项添加跳转到详情页的逻辑，详情页路由统一使用 /generated/latest。',
+      '',
+      '要求：',
+      '1. 在合适的点击入口（例如卡片点击或「编辑/查看详情」按钮）中调用 this.$router.push。',
+      '2. 可以使用 this.$router.push({ path: \'/generated/latest\', query: { id: command.id } })，其中 command.id 来源于当前循环项。',
+      '3. 保持 CommandMarket 原有的筛选、分页、mock 数据等逻辑不变，只添加点击跳转行为，不要删除或重构其它逻辑。',
+      '4. 路由 /generated/latest 视为最新生成的详情页，无需在本次修改中生成新视图。'
+    ].join('\n')
+
+    return {
+      kind: 'modify_existing',
+      engineInstruction,
+      qaHint: '',
+      notes: '规则匹配：用户在描述列表/卡片跳转详情，优先修改 CommandMarket.vue'
+    }
+  }
+
+  return null
+}
+
+async function routeMessage (message, projectInfo, context) {
+  // 先尝试规则匹配，命中则直接返回，减少幻觉
+  const rule = ruleBasedRoute(message)
+  if (rule) return rule
+
+  const systemPrompt = [
+    '你是一个智能路由器，负责判断「一条用户聊天输入」在前端项目里的作用类型。',
+    '项目是 Vue2 + ElementUI + Vue Router 架构。',
+    '',
+    '你只输出 JSON，不要任何解释或注释。',
+    '',
+    '可选的 kind：',
+    '- "generate_page"：用户在描述一个新的页面结构、布局、模块（适合走页面生成流程）。',
+    '- "modify_existing"：用户在要求修改现有页面/路由/样式/校验等行为（例如「列表点击跳详情」「按钮加事件」「只改样式」等）。',
+    '- "qa"：用户在纯粹提问（例如问使用方法、解释代码、问业务概念），需要走问答，不改代码。',
+    '',
+    'Context: 项目结构（只读）：',
+    JSON.stringify(projectInfo, null, 2),
+    '',
+    '调用方上下文（只读）：',
+    JSON.stringify(context || {}, null, 2),
+    '',
+    '输出 JSON 结构：',
+    '{',
+    '  "kind": "generate_page" | "modify_existing" | "qa",',
+    '  "engineInstruction": "若 kind=modify_existing，这里给出一条适合发送给 /api/engine/apply-instruction 的中文指令；',
+    '                        若 kind=generate_page，可留空；若 kind=qa，可省略或留空。",',
+    '  "qaHint": "若 kind=qa，这里给出一条附加提示，说明这是关于什么的提问（如：页面用法 / 代码解释 / 业务概念），便于后续问答更准确。",',
+    '  "notes": "可选，人类可读备注"',
+    '}'
+  ].join('\n')
+
+  const userPrompt = [
+    '这是一条刚刚在前端「无代码开发」聊天输入框中发送的用户消息：',
+    '',
+    message
+  ].join('\n')
+
+  const data = await callDeepseekJson(systemPrompt, userPrompt)
+  if (!data || typeof data !== 'object') {
+    return { kind: 'qa' }
+  }
+  const allowed = ['generate_page', 'modify_existing', 'qa']
+  const kind = allowed.includes(data.kind) ? data.kind : 'qa'
+  return {
+    kind,
+    engineInstruction: data.engineInstruction || '',
+    qaHint: data.qaHint || '',
+    notes: data.notes || ''
+  }
+}
+
+module.exports = {
+  routeMessage
+}
+

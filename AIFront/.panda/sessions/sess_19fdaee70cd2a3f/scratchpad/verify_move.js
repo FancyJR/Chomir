@@ -1,0 +1,64 @@
+const puppeteer = require('puppeteer-core');
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+(async () => {
+  const browser = await puppeteer.launch({
+    executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    headless: true,
+    args: ['--no-sandbox', '--disable-gpu']
+  });
+  const page = await browser.newPage();
+  await page.setViewport({ width: 1280, height: 800 });
+  page.on('console', m => console.log('[console]', m.type(), m.text()));
+  page.on('pageerror', e => console.log('[pageerror]', e.message));
+
+  await page.goto('http://localhost:8081/river-city', { waitUntil: 'networkidle2', timeout: 30000 });
+  await sleep(800);
+
+  // 点击开始游戏
+  const clicked = await page.evaluate(() => {
+    const btns = [...document.querySelectorAll('button')];
+    const start = btns.find(b => b.textContent.includes('开始游戏') || b.textContent.trim() === '开始');
+    if (start) { start.click(); return true; }
+    return false;
+  });
+  console.log('clicked start:', clicked);
+  await sleep(1200);
+
+  // 读取玩家 x 坐标（通过 Vue 实例）
+  const readPlayer = () => page.evaluate(() => {
+    const el = document.querySelector('.river-city');
+    if (!el || !el.__vue__) return null;
+    const vm = el.__vue__;
+    return {
+      x: vm.player ? vm.player.x : null,
+      started: vm.started,
+      paused: vm.paused,
+      enemies: vm.enemies.length
+    };
+  });
+
+  const before = await readPlayer();
+  console.log('before:', JSON.stringify(before));
+
+  // 按住右键 1 秒
+  await page.keyboard.down('ArrowRight');
+  await sleep(1000);
+  await page.keyboard.up('ArrowRight');
+
+  const after = await readPlayer();
+  console.log('after:', JSON.stringify(after));
+
+  if (before && after && before.x !== null && after.x !== null) {
+    const moved = after.x - before.x;
+    console.log('MOVED_DELTA:', moved, moved > 50 ? 'PASS' : 'FAIL');
+  } else {
+    console.log('COULD_NOT_READ_PLAYER');
+  }
+
+  // 截图
+  await page.screenshot({ path: '.panda/sessions/sess_19fdaee70cd2a3f/scratchpad/river_move.png' });
+  console.log('screenshot saved');
+
+  await browser.close();
+})().catch(e => { console.error('FATAL', e); process.exit(1); });

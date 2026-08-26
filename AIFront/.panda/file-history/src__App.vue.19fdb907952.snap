@@ -1,0 +1,192 @@
+<template>
+  <div id="app" class="layout">
+    <el-container style="height: 100vh">
+      <el-aside v-if="!isFullscreenTool" width="220px" class="aside">
+        <div class="logo">My PC Admin</div>
+        <el-menu
+          :default-active="$route.path"
+          router
+          background-color="#ffffff"
+          text-color="#4b5563"
+          active-text-color="#3b82f6"
+        >
+          <el-menu-item index="/panda">
+            <i class="el-icon-cpu"></i>
+            <span slot="title">Panda 工作台</span>
+          </el-menu-item>
+          <el-menu-item index="/token-usage">
+            <i class="el-icon-data-line"></i>
+            <span slot="title">Token 使用量统计</span>
+          </el-menu-item>
+          <el-menu-item index="/dashboard">
+            <i class="el-icon-menu"></i>
+            <span slot="title">仪表盘</span>
+          </el-menu-item>
+          <el-menu-item index="/orchestration">
+            <i class="el-icon-connection"></i>
+            <span slot="title">编排</span>
+          </el-menu-item>
+          <el-menu-item index="/table">
+            <i class="el-icon-document"></i>
+            <span slot="title">表格页</span>
+          </el-menu-item>
+          <el-menu-item index="/command-market">
+            <i class="el-icon-s-operation"></i>
+            <span slot="title">指令市场</span>
+          </el-menu-item>
+          <el-menu-item index="/today-stock-recommendation">
+            <i class="el-icon-star-on"></i>
+            <span slot="title">今日股票推荐</span>
+          </el-menu-item>
+          <el-menu-item index="/no-code">
+            <i class="el-icon-magic-stick"></i>
+            <span slot="title">无代码开发</span>
+          </el-menu-item>
+          <el-menu-item index="/football-goals-chart">
+            <i class="el-icon-data-analysis"></i>
+            <span slot="title">足球数据统计</span>
+          </el-menu-item>
+          <el-menu-item index="/basketball-chart">
+            <i class="el-icon-data-analysis"></i>
+            <span slot="title">篮球数据统计</span>
+          </el-menu-item>
+
+          <el-menu-item index="/badminton-chart">
+            <i class="el-icon-data-analysis"></i>
+            <span slot="title">羽毛球数据统计</span>
+          </el-menu-item>
+          <el-menu-item index="/futures-prediction">
+            <i class="el-icon-data-analysis"></i>
+            <span slot="title">期货预测</span>
+          </el-menu-item>
+
+          <el-menu-item index="/command/detail/:id">
+            <i class="el-icon-document"></i>
+            <span slot="title">指令详情</span>
+          </el-menu-item>
+          <el-menu-item index="/dev/editor">
+            <i class="el-icon-edit-outline"></i>
+            <span slot="title">云编译器</span>
+          </el-menu-item>
+          <el-menu-item index="/long-term-memory">
+            <i class="el-icon-collection"></i>
+            <span slot="title">长期记忆</span>
+          </el-menu-item>
+          <el-menu-item index="/tank-battle">
+            <i class="el-icon-aim"></i>
+            <span slot="title">坦克大战</span>
+          </el-menu-item>
+          <el-menu-item index="/river-city">
+            <i class="el-icon-soccer"></i>
+            <span slot="title">热血物语</span>
+          </el-menu-item>
+        </el-menu>
+      </el-aside>
+
+      <el-container>
+        <el-header v-if="!isFullscreenTool" class="header">
+          <div class="header-left">
+            <span class="system-title">后台管理系统</span>
+          </div>
+          <div class="header-right">
+            <el-dropdown>
+              <span class="el-dropdown-link">
+                Admin<i class="el-icon-arrow-down el-icon--right"></i>
+              </span>
+              <el-dropdown-menu slot="dropdown">
+                <el-dropdown-item>个人中心</el-dropdown-item>
+                <el-dropdown-item divided>退出登录</el-dropdown-item>
+              </el-dropdown-menu>
+            </el-dropdown>
+          </div>
+        </el-header>
+
+        <el-main :class="{ 'is-fullscreen-main': isFullscreenTool }">
+          <router-view />
+        </el-main>
+      </el-container>
+    </el-container>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'App',
+  computed: {
+    isFullscreenTool () {
+      const p = this.$route && this.$route.path
+      return p === '/dev/editor' || p === '/panda' || p === '/token-usage'
+    }
+  }
+}
+</script>
+
+<style scoped>
+.layout {
+  background: linear-gradient(135deg, #eaf3ff 0%, #f5f9ff 40%, #eef6ff 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.aside {
+  background: #ffffff;
+  color: #1f2937;
+  box-shadow: 2px 0 12px rgba(59, 130, 246, 0.08);
+  border-right: 1px solid #e3eefb;
+}
+
+.logo {
+  height: 60px;
+  line-height: 60px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+  color: #3b82f6;
+  background: linear-gradient(135deg, #eaf3ff 0%, #f0f7ff 100%);
+  padding: 0 16px;
+  box-sizing: border-box;
+  border-bottom: 1px solid #e3eefb;
+}
+
+.header {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 1px 6px rgba(59, 130, 246, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 60px;
+  flex-shrink: 0;
+  z-index: 10;
+  border-bottom: 1px solid #e3eefb;
+}
+
+.system-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  letter-spacing: 0.5px;
+}
+
+.header-right {
+  font-size: 14px;
+  color: #4b5563;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-right .el-dropdown-link {
+  color: #1f2937;
+  cursor: pointer;
+}
+
+.is-fullscreen-main {
+  padding: 0 !important;
+  height: 100vh;
+  overflow: hidden;
+}
+</style>

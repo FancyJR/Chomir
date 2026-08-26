@@ -1,0 +1,9 @@
+{
+  "autoApprove": true,
+  "maxRounds": 48,
+  "model": "deepseek-chat",
+  "yolo": false,
+  "sandbox": true,
+  "extraRoots": [],
+  "defaultActiveFile": "src/views/CommandMarket.vue"
+}

@@ -1,0 +1,14 @@
+{
+  "id": "fork_19fd618f73d829",
+  "type": "fork",
+  "goal": "只输出你继承到的用户原话摘要",
+  "parentSessionId": null,
+  "status": "error",
+  "createdAt": "2026-08-06T08:03:08.221Z",
+  "result": "Fork 失败：NO_MODEL_CONFIG",
+  "messages": [],
+  "model": "deepseek-chat",
+  "permissionMode": "plan",
+  "readFileStateEntries": [],
+  "finishedAt": "2026-08-06T08:03:08.248Z"
+}

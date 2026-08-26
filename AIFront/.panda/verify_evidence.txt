@@ -1,0 +1,53 @@
+=== 验证证据：TodayStockRecommendation.vue 关键实现 ===
+
+--- 1. 统计卡片 stat-cards ---
+4:    <div class="stat-cards">
+5:      <div class="stat-card stat-card--accent">
+15:          <div class="stat-value stat-value--up">{{ avgChange }}%</div>
+22:          <div class="stat-value stat-value--warn">{{ avgProbability }}%</div>
+29:          <div class="stat-value">{{ industryCount }}</div>
+149:    avgChange () {
+154:    avgProbability () {
+159:    industryCount () {
+243:.stat-cards {
+267:.stat-card--accent {
+272:.stat-card--accent .stat-label,
+273:.stat-card--accent .stat-value {
+290:.stat-card--accent .stat-icon {
+
+--- 2. 涨停概率进度条 ---
+84:              <div class="prob-bar">
+85:                <div class="prob-bar-fill" :style="{ width: scope.row.limitUpProbability + '%' }"></div>
+445:.prob-bar {
+453:.prob-bar-fill {
+
+--- 3. 涨跌幅彩色箭头标签 ---
+75:            <span :class="['change-tag', scope.row.change > 0 ? 'change-up' : scope.row.change < 0 ? 'change-down' : 'change-flat']">
+413:.change-tag {
+423:.change-up {
+428:.change-down {
+
+--- 4. 分页 ---
+51:        :data="pagedList"
+121:        <el-pagination
+125:          :page-size="pageSize"
+126:          :current-page.sync="currentPage"
+140:      currentPage: 1,
+141:      pageSize: 10
+145:    pagedList () {
+146:      const start = (this.currentPage - 1) * this.pageSize
+147:      return this.stockList.slice(start, start + this.pageSize)
+504:.pagination-wrap >>> .el-pagination.is-background .el-pager li:not(.disabled).active {
+
+--- 5. 行业标签 ---
+93:            <span class="industry-tag">{{ scope.row.industry }}</span>
+469:.industry-tag {
+
+--- 文件结构闭合 ---
+11
+1
+1
+
+--- vue-template-compiler 编译结果 ---
+template编译错误数: 0
+script块存在: true | style块数: 1

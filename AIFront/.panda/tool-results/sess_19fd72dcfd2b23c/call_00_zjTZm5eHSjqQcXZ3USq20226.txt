@@ -1,0 +1,493 @@
+1|<template>
+2|  <div class="futures-prediction">
+3|    <el-container>
+4|      <el-header>
+5|        <h1>期货预测</h1>
+6|        <p class="subtitle">基于历史数据和模型分析的期货价格预测</p>
+7|      </el-header>
+8|      <el-main>
+9|        <div v-if="pageError" class="error-container">
+10|          <el-result icon="error" title="页面加载失败" :sub-title="errorMessage">
+11|            <template #extra>
+12|              <el-button type="primary" @click="retryLoadPage">重试</el-button>
+13|            </template>
+14|          </el-result>
+15|        </div>
+16|        <template v-else-if="!pageLoading">
+17|          <el-row :gutter="20" v-loading="contentLoading">
+18|            <el-col :span="16">
+19|              <el-card class="chart-card">
+20|                <div slot="header">
+21|                  <span>期货价格趋势预测</span>
+22|                  <el-select v-model="selectedFuture" placeholder="选择期货品种" size="small" style="float: right; width: 150px">
+23|                    <el-option v-for="item in futuresOptions" :key="item.value" :label="item.label" :value="item.value"></el-option>
+24|                  </el-select>
+25|                </div>
+26|                <div ref="chartContainer" style="height: 400px"></div>
+27|              </el-card>
+28|            </el-col>
+29|            <el-col :span="8">
+30|              <el-card class="prediction-card">
+31|                <div slot="header">
+32|                  <span>预测结果</span>
+33|                </div>
+34|                <div class="prediction-content">
+35|                  <div class="prediction-item">
+36|                    <span class="label">当前价格：</span>
+37|                    <span class="value">{{ currentPrice }}</span>
+38|                  </div>
+39|                  <div class="prediction-item">
+40|                    <span class="label">预测价格：</span>
+41|                    <span class="value" :class="{ 'up': predictionTrend === 'up', 'down': predictionTrend === 'down' }">{{ predictedPrice }}</span>
+42|                  </div>
+43|                  <div class="prediction-item">
+44|                    <span class="label">预测趋势：</span>
+45|                    <el-tag :type="predictionTrend === 'up' ? 'success' : 'danger'">{{ predictionText }}</el-tag>
+46|                  </div>
+47|                  <div class="prediction-item">
+48|                    <span class="label">置信度：</span>
+49|                    <el-progress :percentage="confidence" :color="confidenceColor"></el-progress>
+50|                  </div>
+51|                  <div class="prediction-item">
+52|                    <span class="label">预测时间：</span>
+53|                    <span class="value">{{ predictionDate }}</span>
+54|                  </div>
+55|                </div>
+56|                <div class="prediction-actions">
+57|                  <el-button type="primary" @click="refreshPrediction" :loading="loading">刷新预测</el-button>
+58|                  <el-button @click="showHistory">查看历史</el-button>
+59|                </div>
+60|              </el-card>
+61|            </el-col>
+62|          </el-row>
+63|          <el-row :gutter="20" style="margin-top: 20px">
+64|            <el-col :span="24">
+65|              <el-card>
+66|                <div slot="header">
+67|                  <span>期货数据表</span>
+68|                  <el-button type="text" @click="exportData" style="float: right">导出数据</el-button>
+69|                </div>
+70|                <el-table :data="tableData" style="width: 100%" border stripe v-loading="tableLoading">
+71|                  <el-table-column prop="date" label="日期" width="120"></el-table-column>
+72|                  <el-table-column prop="future" label="期货品种" width="120"></el-table-column>
+73|                  <el-table-column prop="open" label="开盘价" width="100"></el-table-column>
+74|                  <el-table-column prop="close" label="收盘价" width="100"></el-table-column>
+75|                  <el-table-column prop="high" label="最高价" width="100"></el-table-column>
+76|                  <el-table-column prop="low" label="最低价" width="100"></el-table-column>
+77|                  <el-table-column prop="volume" label="成交量" width="100"></el-table-column>
+78|                  <el-table-column prop="prediction" label="预测价" width="100"></el-table-column>
+79|                  <el-table-column prop="trend" label="趋势" width="100">
+80|                    <template slot-scope="scope">
+81|                      <el-tag :type="scope.row.trend === '上涨' ? 'success' : 'danger'" size="small">{{ scope.row.trend }}</el-tag>
+82|                    </template>
+83|                  </el-table-column>
+84|                  <el-table-column label="操作" width="120">
+85|                    <template slot-scope="scope">
+86|                      <el-button type="text" size="small" @click="viewDetail(scope.row)">详情</el-button>
+87|                    </template>
+88|                  </el-table-column>
+89|                </el-table>
+90|                <el-pagination
+91|                  @size-change="handleSizeChange"
+92|                  @current-change="handleCurrentChange"
+93|                  :current-page="currentPage"
+94|                  :page-sizes="[10, 20, 50, 100]"
+95|                  :page-size="pageSize"
+96|                  layout="total, sizes, prev, pager, next, jumper"
+97|                  :total="total"
+98|                  style="margin-top: 20px; text-align: right"
+99|                ></el-pagination>
+100|              </el-card>
+101|            </el-col>
+102|          </el-row>
+103|        </template>
+104|        <div v-else class="loading-container">
+105|          <el-result icon="info" title="页面加载中">
+106|            <template #extra>
+107|              <el-button type="text" @click="retryLoadPage">若加载时间过长，请点击重试</el-button>
+108|            </template>
+109|          </el-result>
+110|        </div>
+111|      </el-main>
+112|    </el-container>
+113|  </div>
+114|</template>
+115|
+116|<script>
+117|import * as echarts from 'echarts';
+118|
+119|export default {
+120|  name: 'FuturesPrediction',
+121|  data() {
+122|    return {
+123|      selectedFuture: 'gold',
+124|      futuresOptions: [
+125|        { label: '黄金期货', value: 'gold' },
+126|        { label: '原油期货', value: 'oil' },
+127|        { label: '大豆期货', value: 'soybean' },
+128|        { label: '铜期货', value: 'copper' },
+129|        { label: '白银期货', value: 'silver' }
+130|      ],
+131|      currentPrice: 1850.50,
+132|      predictedPrice: 1885.75,
+133|      predictionTrend: 'up',
+134|      confidence: 85,
+135|      predictionDate: '2023-10-15',
+136|      loading: false,
+137|      tableData: [],
+138|      tableLoading: false,
+139|      currentPage: 1,
+140|      pageSize: 10,
+141|      total: 50,
+142|      chartInstance: null,
+143|      pageError: false,
+144|      errorMessage: '',
+145|      pageLoading: true,
+146|      contentLoading: false
+147|    };
+148|  },
+149|  computed: {
+150|    predictionText() {
+151|      return this.predictionTrend === 'up' ? '上涨' : '下跌';
+152|    },
+153|    confidenceColor() {
+154|      if (this.confidence >= 80) return '#67c23a';
+155|      if (this.confidence >= 60) return '#e6a23c';
+156|      return '#f56c6c';
+157|    }
+158|  },
+159|  mounted() {
+160|    this.loadPageData();
+161|  },
+162|  beforeDestroy() {
+163|    if (this.chartInstance) {
+164|      this.chartInstance.dispose();
+165|    }
+166|    window.removeEventListener('resize', this.handleResize);
+167|  },
+168|  methods: {
+169|    async loadPageData() {
+170|      this.pageError = false;
+171|      this.errorMessage = '';
+172|      this.pageLoading = true;
+173|      this.contentLoading = true;
+174|      try {
+175|        // 先结束全局加载状态，让包含图表容器的 DOM 分支渲染出来
+176|        this.pageLoading = false;
+177|        await this.$nextTick();
+178|        await Promise.all([
+179|          this.initChart(),
+180|          this.loadTableData()
+181|        ]);
+182|      } catch (error) {
+183|        console.error('页面数据加载失败:', error);
+184|        this.pageError = true;
+185|        this.errorMessage = error.message || '页面加载失败，请检查网络或稍后重试';
+186|        this.$message.error('页面加载失败: ' + (error.message || '未知错误'));
+187|      } finally {
+188|        this.contentLoading = false;
+189|      }
+190|    },
+191|    retryLoadPage() {
+192|      this.loadPageData();
+193|    },
+194|    initChart() {
+195|      return new Promise((resolve, reject) => {
+196|        // 使用 $nextTick 确保 DOM 已渲染
+197|        this.$nextTick(() => {
+198|          if (!this.$refs.chartContainer) {
+199|            const error = new Error('图表容器未找到');
+200|            console.error('Chart container not found');
+201|            this.pageError = true;
+202|            this.errorMessage = '图表初始化失败，请重试';
+203|            reject(error);
+204|            return;
+205|          }
+206|          try {
+207|            if (this.chartInstance) {
+208|              this.chartInstance.dispose();
+209|            }
+210|            this.chartInstance = echarts.init(this.$refs.chartContainer);
+211|            const option = {
+212|              title: {
+213|                text: '黄金期货价格预测',
+214|                left: 'center'
+215|              },
+216|              tooltip: {
+217|                trigger: 'axis',
+218|                formatter: function(params) {
+219|                  let result = params[0].name + '<br/>';
+220|                  params.forEach(param => {
+221|                    result += param.seriesName + ': ' + param.value + '<br/>';
+222|                  });
+223|                  return result;
+224|                }
+225|              },
+226|              legend: {
+227|                data: ['历史价格', '预测价格'],
+228|                top: 30
+229|              },
+230|              grid: {
+231|                left: '3%',
+232|                right: '4%',
+233|                bottom: '3%',
+234|                containLabel: true
+235|              },
+236|              xAxis: {
+237|                type: 'category',
+238|                boundaryGap: false,
+239|                data: ['10-01', '10-02', '10-03', '10-04', '10-05', '10-06', '10-07', '10-08', '10-09', '10-10', '10-11', '10-12', '10-13', '10-14', '10-15']
+240|              },
+241|              yAxis: {
+242|                type: 'value'
+243|              },
+244|              series: [
+245|                {
+246|                  name: '历史价格',
+247|                  type: 'line',
+248|                  data: [1820, 1835, 1842, 1838, 1845, 1850, 1848, 1852, 1855, 1850, 1853, 1858, 1860, 1855, 1850],
+249|                  itemStyle: {
+250|                    color: '#2563eb'
+251|                  },
+252|                  lineStyle: {
+253|                    width: 3
+254|                  }
+255|                },
+256|                {
+257|                  name: '预测价格',
+258|                  type: 'line',
+259|                  data: [null, null, null, null, null, null, null, null, null, null, null, null, null, 1855, 1885],
+260|                  itemStyle: {
+261|                    color: '#3b82f6'
+262|                  },
+263|                  lineStyle: {
+264|                    type: 'dashed',
+265|                    width: 3
+266|                  }
+267|                }
+268|              ]
+269|            };
+270|            this.chartInstance.setOption(option);
+271|            window.addEventListener('resize', this.handleResize);
+272|            resolve();
+273|          } catch (error) {
+274|            console.error('Failed to initialize chart:', error);
+275|            this.pageError = true;
+276|            this.errorMessage = '图表初始化失败: ' + error.message;
+277|            reject(error);
+278|          }
+279|        });
+280|      });
+281|    },
+282|    handleResize() {
+283|      if (this.chartInstance) {
+284|        this.chartInstance.resize();
+285|      }
+286|    },
+287|    async loadTableData() {
+288|      this.tableLoading = true;
+289|      try {
+290|        // 模拟异步请求
+291|        await new Promise(resolve => setTimeout(resolve, 500));
+292|        const futures = ['黄金期货', '原油期货', '大豆期货', '铜期货', '白银期货'];
+293|        const trends = ['上涨', '下跌'];
+294|        this.tableData = Array.from({ length: 10 }, (_, index) => ({
+295|          date: `2023-10-${String(index + 1).padStart(2, '0')}`,
+296|          future: futures[index % 5],
+297|          open: (1800 + Math.random() * 100).toFixed(2),
+298|          close: (1810 + Math.random() * 100).toFixed(2),
+299|          high: (1820 + Math.random() * 100).toFixed(2),
+300|          low: (1790 + Math.random() * 100).toFixed(2),
+301|          volume: (10000 + Math.random() * 5000).toFixed(0),
+302|          prediction: (1825 + Math.random() * 100).toFixed(2),
+303|          trend: trends[Math.floor(Math.random() * 2)]
+304|        }));
+305|        this.total = 50;
+306|      } catch (error) {
+307|        console.error('Failed to load table data:', error);
+308|        this.$message.error('数据加载失败: ' + (error.message || '未知错误'));
+309|        this.tableData = [];
+310|        this.total = 0;
+311|        throw error;
+312|      } finally {
+313|        this.tableLoading = false;
+314|      }
+315|    },
+316|    refreshPrediction() {
+317|      this.loading = true;
+318|      // 模拟异步请求
+319|      setTimeout(() => {
+320|        try {
+321|          this.currentPrice = (1850 + Math.random() * 50).toFixed(2);
+322|          this.predictedPrice = (this.currentPrice * 1.02).toFixed(2);
+323|          this.predictionTrend = Math.random() > 0.5 ? 'up' : 'down';
+324|          this.confidence = Math.floor(Math.random() * 30) + 70;
+325|          this.predictionDate = new Date().toISOString().split('T')[0];
+326|          this.$message.success('预测数据已刷新');
+327|        } catch (error) {
+328|          console.error('Failed to refresh prediction:', error);
+329|          this.$message.error('刷新失败: ' + (error.message || '未知错误'));
+330|        } finally {
+331|          this.loading = false;
+332|        }
+333|      }, 1000);
+334|    },
+335|    showHistory() {
+336|      this.$message.info('查看历史功能待实现');
+337|    },
+338|    exportData() {
+339|      this.$message.success('数据导出成功（模拟）');
+340|    },
+341|    viewDetail(row) {
+342|      this.$message.info(`查看详情：${row.future} - ${row.date}`);
+343|    },
+344|    handleSizeChange(val) {
+345|      this.pageSize = val;
+346|      this.loadTableData();
+347|    },
+348|    handleCurrentChange(val) {
+349|      this.currentPage = val;
+350|      this.loadTableData();
+351|    }
+352|  }
+353|};
+354|</script>
+355|
+356|<style scoped>
+357|.futures-prediction {
+358|  height: 100%;
+359|  padding: 20px;
+360|  background: radial-gradient(circle at top left, #dbeafe 0, #eff6ff 45%, #f0f9ff 100%);
+361|}
+362|
+363|.el-header {
+364|  background: linear-gradient(135deg, #2563eb, #3b82f6);
+365|  border-bottom: none;
+366|  padding: 20px 24px;
+367|  margin-bottom: 20px;
+368|  border-radius: 14px;
+369|  box-shadow: 0 10px 30px rgba(37, 99, 235, 0.35);
+370|  color: #eff6ff;
+371|}
+372|
+373|.el-header h1 {
+374|  margin: 0;
+375|  font-size: 26px;
+376|  font-weight: 700;
+377|  letter-spacing: 0.5px;
+378|}
+379|
+380|.subtitle {
+381|  margin: 10px 0 0 0;
+382|  font-size: 14px;
+383|  color: #bfdbfe;
+384|}
+385|
+386|.chart-card,
+387|.prediction-card {
+388|  height: 100%;
+389|  border-radius: 14px;
+390|  border: none;
+391|  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+392|  background: linear-gradient(145deg, #ffffff, #eff6ff);
+393|  transition: transform 0.2s ease, box-shadow 0.2s ease;
+394|}
+395|
+396|.chart-card:hover,
+397|.prediction-card:hover {
+398|  transform: translateY(-3px);
+399|  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.2);
+400|}
+401|
+402|.chart-card >>> .el-card__header,
+403|.prediction-card >>> .el-card__header {
+404|  padding: 18px 20px;
+405|  border-bottom: 1px solid rgba(191, 219, 254, 0.8);
+406|  background: linear-gradient(to right, #eff6ff, #ffffff);
+407|  border-radius: 14px 14px 0 0;
+408|  color: #1e293b;
+409|  font-weight: 600;
+410|}
+411|
+412|.prediction-content {
+413|  padding: 20px;
+414|}
+415|
+416|.prediction-item {
+417|  display: flex;
+418|  justify-content: space-between;
+419|  align-items: center;
+420|  margin-bottom: 20px;
+421|  padding-bottom: 12px;
+422|  border-bottom: 1px dashed rgba(191, 219, 254, 0.8);
+423|}
+424|
+425|.prediction-item:last-child {
+426|  border-bottom: none;
+427|  margin-bottom: 0;
+428|  padding-bottom: 0;
+429|}
+430|
+431|.prediction-item .label {
+432|  font-size: 14px;
+433|  color: #64748b;
+434|  font-weight: 500;
+435|}
+436|
+437|.prediction-item .value {
+438|  font-size: 18px;
+439|  font-weight: 700;
+440|  color: #0f172a;
+441|}
+442|
+443|.prediction-item .value.up {
+444|  color: #22c55e;
+445|}
+446|
+447|.prediction-item .value.down {
+448|  color: #f97316;
+449|}
+450|
+451|.prediction-actions {
+452|  margin-top: 24px;
+453|  padding-top: 18px;
+454|  border-top: 1px solid rgba(226, 232, 240, 0.9);
+455|  text-align: center;
+456|}
+457|
+458|.prediction-actions .el-button--primary {
+459|  background: linear-gradient(135deg, #3b82f6, #2563eb);
+460|  border-color: #3b82f6;
+461|}
+462|
+463|.prediction-actions .el-button--primary:hover {
+464|  filter: brightness(1.06);
+465|}
+466|
+467|.el-row {
+468|  margin-bottom: 20px;
+469|}
+470|
+471|.el-card {
+472|  border-radius: 14px;
+473|  overflow: hidden;
+474|}
+475|
+476|.el-card >>> .el-card__header {
+477|  padding: 18px 20px;
+478|  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+479|  background: linear-gradient(to right, #eff6ff, #ffffff);
+480|}
+481|
+482|.el-card >>> .el-card__body {
+483|  padding: 20px;
+484|}
+485|
+486|.error-container,
+487|.loading-container {
+488|  padding: 40px 20px;
+489|  background-color: #ffffff;
+490|  border-radius: 12px;
+491|  text-align: center;
+492|  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
+493|}</style>

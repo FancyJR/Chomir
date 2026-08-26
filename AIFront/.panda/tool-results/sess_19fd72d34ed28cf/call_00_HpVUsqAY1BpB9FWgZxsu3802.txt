@@ -1,0 +1,595 @@
+1|<template>
+2|  <div class="page-dev-editor">
+3|    <el-card class="page-card">
+4|      <div slot="header" class="card-header">
+5|        <div class="left">
+6|          <span class="title">云编译器（当前工程在线编辑）</span>
+7|          <span class="sub">仅供开发自用，左侧展示 server 与 src 下的工程文件层级结构。</span>
+8|        </div>
+9|      </div>
+10|
+11|      <div class="editor-layout">
+12|        <div class="pane pane-left" :style="{ flexBasis: leftWidth + 'px' }">
+13|          <div class="file-list">
+14|            <div class="file-list-title">项目文件（工程根目录）</div>
+15|            <div v-if="filesLoading" class="file-list-empty file-list-loading">
+16|              <i class="el-icon-loading" /> 正在加载文件列表...
+17|            </div>
+18|            <template v-else-if="filesLoadError">
+19|              <div class="file-list-empty file-list-error">
+20|                {{ filesLoadError }}
+21|              </div>
+22|              <el-button type="text" size="small" class="file-list-retry" @click="fetchFiles">
+23|                重试
+24|              </el-button>
+25|            </template>
+26|            <el-tree
+27|              v-else-if="fileTree.length"
+28|              :data="fileTree"
+29|              node-key="id"
+30|              :props="treeProps"
+31|              highlight-current
+32|              default-expand-all
+33|              class="file-tree"
+34|              :render-content="renderTreeNode"
+35|              @node-click="handleNodeClick"
+36|            />
+37|            <div v-else class="file-list-empty">
+38|              暂无可编辑文件（请确认后端服务已启动且工程根目录下存在 .js/.vue/.ts/.json 文件）
+39|            </div>
+40|          </div>
+41|        </div>
+42|
+43|        <div class="pane-resizer" @mousedown="startDrag('left', $event)"></div>
+44|
+45|        <div class="pane pane-middle">
+46|          <div class="pane-middle-inner">
+47|            <div class="editor-panel">
+48|              <div class="editor-header">
+49|                <span class="editor-path">{{ currentPath || '请选择左侧文件' }}</span>
+50|                <div class="editor-actions">
+51|                  <el-input
+52|                    v-model="searchText"
+53|                    size="mini"
+54|                    placeholder="查找"
+55|                    class="toolbar-input"
+56|                    @keyup.enter.native="handleFindNext"
+57|                  />
+58|                  <el-input
+59|                    v-model="replaceText"
+60|                    size="mini"
+61|                    placeholder="替换为"
+62|                    class="toolbar-input"
+63|                    @keyup.enter.native="handleReplaceAll"
+64|                  />
+65|                  <el-button size="mini" @click="handleFindNext" :disabled="!searchText">查找</el-button>
+66|                  <el-button size="mini" @click="handleReplaceAll" :disabled="!searchText">全部替换</el-button>
+67|                  <el-button
+68|                    size="mini"
+69|                    :disabled="!currentPath || formatting"
+70|                    :loading="formatting"
+71|                    @click="handleFormat"
+72|                  >
+73|                    格式化
+74|                  </el-button>
+75|                </div>
+76|              </div>
+77|              <div v-if="loading" class="editor-loading">
+78|                <el-spinner /> 正在加载文件内容...
+79|              </div>
+80|              <div v-else-if="!currentPath" class="editor-empty">
+81|                <div class="editor-empty-title">欢迎使用云编译器</div>
+82|                <div class="editor-empty-desc">
+83|                  在左侧选择任意一个文件开始编辑当前工程的代码。
+84|                </div>
+85|                <div class="editor-empty-tips">
+86|                  - 左边是完整的项目文件树（根目录、server、src 等）<br>
+87|                  - 右边支持代码高亮、查找/替换、自动保存和一键格式化
+88|                </div>
+89|              </div>
+90|              <codemirror
+91|                v-else
+92|                ref="cmEditor"
+93|                v-model="content"
+94|                class="editor-codemirror"
+95|                :options="cmOptions"
+96|                :style="{ height: '100%' }"
+97|              />
+98|              <div v-if="error" class="editor-error">
+99|                {{ error }}
+100|              </div>
+101|            </div>
+102|
+103|            <div v-show="showTerminal" class="terminal-panel">
+104|              <div class="terminal-tabs">
+105|                <div
+106|                  v-for="tab in terminalTabs"
+107|                  :key="tab.id"
+108|                  :class="['terminal-tab', { active: tab.id === activeTerminalId }]"
+109|                  @click="activeTerminalId = tab.id"
+110|                >
+111|                  <span class="terminal-tab-title">{{ tab.title }}</span>
+112|                  <i
+113|                    class="el-icon-close terminal-tab-close"
+114|                    v-if="terminalTabs.length > 1"
+115|                    @click.stop="closeTerminal(tab.id)"
+116|                  />
+117|                </div>
+118|                <div class="terminal-tab add" @click="addTerminal">
+119|                  <i class="el-icon-plus" />
+120|                </div>
+121|              </div>
+122|              <div ref="terminalBody" class="terminal-body">
+123|                <pre class="terminal-log">
+124|{{ activeTerminal && activeTerminal.log ? activeTerminal.log : '在这里运行命令，例如：npm run dev' }}
+125|                </pre>
+126|              </div>
+127|              <div class="terminal-input-bar">
+128|                <el-input
+129|                  v-model="terminalCommand"
+130|                  size="mini"
+131|                  placeholder="在此输入命令，例如 npm run dev（当前为本地模拟输出）"
+132|                  @keyup.enter.native="runTerminalCommand"
+133|                />
+134|                <el-button size="mini" @click="runTerminalCommand">运行</el-button>
+135|              </div>
+136|            </div>
+137|          </div>
+138|        </div>
+139|
+140|        <div class="pane-resizer" @mousedown="startDrag('right', $event)"></div>
+141|
+142|        <div class="pane pane-right" :style="{ flexBasis: rightWidth + 'px' }">
+143|          <div class="chat-panel">
+144|            <div class="chat-header">
+145|              <span class="chat-title">AI 助手 · 无代码开发</span>
+146|              <span class="chat-sub">问答 / 生成页面 / 修改代码</span>
+147|            </div>
+148|            <div ref="chatBody" class="chat-body">
+149|              <div
+150|                v-for="(msg, idx) in chatMessages"
+151|                :key="idx"
+152|                class="chat-item"
+153|                :class="`is-${msg.role}`"
+154|              >
+155|                <div class="chat-bubble">
+156|                  <!-- 加速器：发送需求后实时显示 分析→规划→生成→应用 进度，减轻等待焦虑 -->
+157|                  <div
+158|                    v-if="msg.role === 'assistant' && msg.meta && msg.meta.progress"
+159|                    class="engine-accelerator"
+160|                  >
+161|                    <span class="accelerator-label">
+162|                      <i class="el-icon-loading" /> 加速中
+163|                    </span>
+164|                    <div class="accelerator-track">
+165|                      <div
+166|                        v-for="step in [{ n: 1, label: '分析' }, { n: 2, label: '规划' }, { n: 3, label: '生成' }, { n: 4, label: '应用' }]"
+167|                        :key="step.n"
+168|                        class="accelerator-step"
+169|                        :class="{ done: (msg.meta.engineStepIndex || 0) >= step.n, current: (msg.meta.engineStepIndex || 0) === step.n - 1 }"
+170|                      >
+171|                        <i v-if="(msg.meta.engineStepIndex || 0) >= step.n" class="el-icon-check" />
+172|                        <i v-else-if="(msg.meta.engineStepIndex || 0) === step.n - 1" class="el-icon-loading accelerator-step-loading" />
+173|                        <span v-else class="step-dot" />
+174|                        {{ step.label }}
+175|                      </div>
+176|                    </div>
+177|                  </div>
+178|                  <div v-if="msg.role === 'assistant' && msg.meta && msg.meta.kind" class="chat-tag">
+179|                    {{ msg.meta.kind === 'qa' ? '问答' : msg.meta.kind === 'modify_existing' ? '改代码' : '生成页面' }}
+180|                  </div>
+181|                  <!-- AI-UI：助手消息用 Markdown + 代码高亮 + ECharts 图表渲染 -->
+182|                  <chat-content
+183|                    v-if="msg.role === 'assistant'"
+184|                    :content="msg.content || ''"
+185|                    :streaming="!!(msg.meta && msg.meta.streaming)"
+186|                  />
+187|                  <div v-else class="chat-text">{{ msg.content }}</div>
+188|                  <!-- 思维引擎：推流展示思考过程 -->
+189|                  <div v-if="msg.role === 'assistant' && msg.meta && (msg.meta.reasoningStream != null && msg.meta.reasoningStream !== '')" class="think-reasoning-stream">
+190|                    <span class="think-reasoning-label">💭 思考过程</span>
+191|                    <pre class="think-reasoning-pre">{{ msg.meta.reasoningStream }}</pre>
+192|                  </div>
+193|                  <!-- Cursor 式：在「正在生成代码」下方显示 Thinking + 流式生成过程 -->
+194|                  <div v-if="msg.role === 'assistant' && msg.meta && msg.meta.codegenThinking" class="codegen-thinking">
+195|                    <span class="codegen-thinking-label"><i class="el-icon-loading" /> Thinking{{ getThinkingSeconds(msg) > 0 ? ' · ' + getThinkingSeconds(msg) + 's' : '' }}</span>
+196|                    <pre class="codegen-stream-pre"><code>{{ msg.meta.codegenStreamingContent || '' }}</code></pre>
+197|                  </div>
+198|                  <!-- 思考/规划/生成等待阶段：显示加载动画，避免用户以为卡住 -->
+199|                  <div v-if="msg.role === 'assistant' && msg.meta && msg.meta.progress && !msg.meta.needsClarification" class="engine-waiting-hint">
+200|                    <i class="el-icon-loading" />
+201|                    <span>{{ getEngineWaitingLabel(msg) }}</span>
+202|                  </div>
+203|                  <div v-if="msg.meta && msg.meta.reverted" class="chat-note">
+204|                    本次改动已回退
+205|                  </div>
+206|                </div>
+207|              </div>
+208|            </div>
+209|            <!-- 同意/撤回 放在输入框上方，与 Cursor 一致 -->
+210|            <div v-if="pendingChangeMessage" class="chat-actions-bar">
+211|              <span class="chat-actions-label">有未确认的代码改动</span>
+212|              <el-button
+213|                size="mini"
+214|                type="primary"
+215|                plain
+216|                @click="confirmChange(pendingChangeMessage)"
+217|              >
+218|                同意更改
+219|              </el-button>
+220|              <el-button
+221|                size="mini"
+222|                type="danger"
+223|                plain
+224|                :loading="pendingChangeMessage.meta && pendingChangeMessage.meta.reverting"
+225|                @click="revertChange(pendingChangeMessage)"
+226|              >
+227|                回退此次更改
+228|              </el-button>
+229|            </div>
+230|            <div v-if="lastMessageNeedsClarification" class="chat-clarification-hint">
+231|              <span class="chat-clarification-hint-text">💬 请在此回答确认问题或继续输入，与思维引擎对话</span>
+232|            </div>
+233|            <div class="chat-input-bar">
+234|              <el-input
+235|                ref="chatInputRef"
+236|                v-model="chatInput"
+237|                class="chat-main-input"
+238|                type="textarea"
+239|                size="mini"
+240|                :autosize="{ minRows: 1, maxRows: 4 }"
+241|                resize="none"
+242|                :placeholder="chatInputPlaceholder"
+243|                @keyup.enter.native.exact.prevent="handleSendChat"
+244|              />
+245|              <div class="chat-toolbar">
+246|                <el-select
+247|                  v-model="agentMode"
+248|                  size="mini"
+249|                  class="chat-select"
+250|                  placeholder="Agent"
+251|                >
+252|                  <el-option label="Claw Agent" value="default" />
+253|                  <el-option label="Planner" value="planner" />
+254|                  <el-option label="Q&A" value="qa_only" />
+255|                </el-select>
+256|                <el-select
+257|                  v-model="chatModel"
+258|                  size="mini"
+259|                  class="chat-select"
+260|                  placeholder="模型"
+261|                >
+262|                  <el-option label="Auto" value="deepseek-chat" />
+263|                  <el-option label="Reasoner" value="deepseek-reasoner" />
+264|                </el-select>
+265|                <div class="chat-icons">
+266|                  <el-upload
+267|                    class="chat-icon-btn"
+268|                    action=""
+269|                    :auto-upload="false"
+270|                    :file-list="chatFiles"
+271|                    :multiple="true"
+272|                    :show-file-list="false"
+273|                    :on-change="handleFileChange"
+274|                    :on-remove="handleFileRemove"
+275|                  >
+276|                    <i class="el-icon-picture-outline" />
+277|                  </el-upload>
+278|                  <i class="el-icon-mic chat-icon-btn" />
+279|                  <el-button
+280|                    type="primary"
+281|                    size="mini"
+282|                    class="chat-send-btn"
+283|                    :loading="chatSending"
+284|                    :disabled="!chatInput.trim()"
+285|                    @click="handleSendChat"
+286|                  >
+287|                    发送
+288|                  </el-button>
+289|                </div>
+290|              </div>
+291|            </div>
+292|          </div>
+293|        </div>
+294|      </div>
+295|      <div class="status-bar">
+296|        <div class="status-left" @click="toggleTerminal">
+297|          <span class="status-icon">
+298|            <i :class="showTerminal ? 'el-icon-caret-down' : 'el-icon-caret-up'" />
+299|            <i class="el-icon-warning-outline status-icon-warning" />
+300|          </span>
+301|          <span class="status-text">终端</span>
+302|        </div>
+303|        <div class="status-right">
+304|          <span class="status-item">Dev Editor</span>
+305|        </div>
+306|      </div>
+307|    </el-card>
+308|  </div>
+309|</template>
+310|
+311|<script>
+312|import ChatContent from '@/components/ChatContent.vue'
+313|
+314|export default {
+315|  name: 'DevEditor',
+316|  components: { ChatContent },
+317|  data () {
+318|    return {
+319|      files: [],
+320|      fileTree: [],
+321|      filesLoading: true,
+322|      filesLoadError: '',
+323|      currentPath: '',
+324|      content: '',
+325|      loading: false,
+326|      saving: false,
+327|      error: '',
+328|      searchText: '',
+329|      replaceText: '',
+330|      lastSearchIndex: null,
+331|      formatting: false,
+332|      autoSaveTimer: null,
+333|      chatMessages: [],
+334|      chatInput: '',
+335|      chatSending: false,
+336|      agentMode: 'default',
+337|      chatModel: 'deepseek-chat',
+338|      chatFiles: [],
+339|      lastTargetViewFile: '',
+340|      clawSessionId: '',
+341|      leftWidth: 260,
+342|      rightWidth: 280,
+343|      draggingSide: null,
+344|      dragStartX: 0,
+345|      dragStartLeft: 0,
+346|      dragStartRight: 0,
+347|      showTerminal: false,
+348|      terminalTabs: [
+349|        { id: '1', title: '终端 1', log: '', running: false }
+350|      ],
+351|      activeTerminalId: '1',
+352|      nextTerminalId: 2,
+353|      terminalCommand: '',
+354|      terminalTimers: Object.create(null),
+355|      thinkingTimerTick: 0,
+356|      thinkingTimerId: null,
+357|      treeProps: {
+358|        label: 'label',
+359|        children: 'children'
+360|      },
+361|      cmOptions: {
+362|        tabSize: 2,
+363|        lineNumbers: true,
+364|        lineWrapping: false,
+365|        theme: 'material',
+366|        mode: 'text/plain',
+367|        styleActiveLine: true,
+368|        matchBrackets: true,
+369|        autoCloseBrackets: true,
+370|        autoCloseTags: true,
+371|        extraKeys: {}
+372|      }
+373|    }
+374|  },
+375|  computed: {
+376|    activeTerminal () {
+377|      return this.terminalTabs.find(t => t.id === this.activeTerminalId) || this.terminalTabs[0] || null
+378|    },
+379|    // 最近一条可同意/回退的助手消息（用于输入框上方操作栏，与 Cursor 一致）
+380|    pendingChangeMessage () {
+381|      const list = this.chatMessages || []
+382|      for (let i = list.length - 1; i >= 0; i--) {
+383|        const msg = list[i]
+384|        if (msg.role !== 'assistant' || !msg.meta) continue
+385|        if (msg.meta.kind === 'qa') continue
+386|        if (msg.meta.reverted) continue
+387|        if (!Array.isArray(msg.meta.changed) || !msg.meta.changed.length) continue
+388|        const hasPath = msg.meta.changed.some(c => (c.path || c.viewFile || c.file))
+389|        if (hasPath) return msg
+390|      }
+391|      return null
+392|    },
+393|    // 最后一条助手消息是否为「需要确认」——展示再次提问/继续输入提示，与思维引擎澄清能力一致
+394|    lastMessageNeedsClarification () {
+395|      const list = this.chatMessages || []
+396|      for (let i = list.length - 1; i >= 0; i--) {
+397|        const msg = list[i]
+398|        if (msg.role !== 'assistant') return false
+399|        return !!(msg.meta && msg.meta.needsClarification)
+400|      }
+401|      return false
+402|    },
+403|    chatInputPlaceholder () {
+404|      return this.lastMessageNeedsClarification
+405|        ? '请回答上面的确认问题，或继续描述您的需求…（回车发送）'
+406|        : 'Plan, @ for context, / for commands'
+407|    }
+408|  },
+409|  created () {
+410|    this.fetchFiles()
+411|    // 需要在 created 里绑定 extraKeys 以访问组件 this
+412|    this.cmOptions.extraKeys = {
+413|      'Ctrl-Space': cm => {
+414|        if (cm && cm.showHint) {
+415|          cm.showHint()
+416|        }
+417|      }
+418|    }
+419|  },
+420|  beforeDestroy () {
+421|    Object.keys(this.terminalTimers).forEach(id => {
+422|      clearInterval(this.terminalTimers[id])
+423|    })
+424|    if (this.thinkingTimerId) {
+425|      clearInterval(this.thinkingTimerId)
+426|      this.thinkingTimerId = null
+427|    }
+428|  },
+429|  watch: {
+430|    content () {
+431|      this.scheduleAutoSave()
+432|    }
+433|  },
+434|  methods: {
+435|    getCodeMirror () {
+436|      return this.$refs.cmEditor && this.$refs.cmEditor.codemirror
+437|    },
+438|    activeTerminalSafe () {
+439|      return this.terminalTabs.find(t => t.id === this.activeTerminalId) || this.terminalTabs[0] || null
+440|    },
+441|    startDrag (side, event) {
+442|      event.preventDefault()
+443|      this.draggingSide = side
+444|      this.dragStartX = event.clientX
+445|      this.dragStartLeft = this.leftWidth
+446|      this.dragStartRight = this.rightWidth
+447|      document.body && (document.body.style.userSelect = 'none')
+448|      document.body && (document.body.style.cursor = 'col-resize')
+449|      document.addEventListener('mousemove', this.handleDragging)
+450|      document.addEventListener('mouseup', this.stopDrag)
+451|    },
+452|    handleDragging (event) {
+453|      if (!this.draggingSide) return
+454|      const dx = event.clientX - this.dragStartX
+455|      const minWidth = 180
+456|      const maxWidth = this.draggingSide === 'right' ? 420 : 600
+457|      if (this.draggingSide === 'left') {
+458|        let next = this.dragStartLeft + dx
+459|        if (next < minWidth) next = minWidth
+460|        if (next > maxWidth) next = maxWidth
+461|        this.leftWidth = next
+462|      } else if (this.draggingSide === 'right') {
+463|        let next = this.dragStartRight - dx
+464|        if (next < minWidth) next = minWidth
+465|        if (next > maxWidth) next = maxWidth
+466|        this.rightWidth = next
+467|      }
+468|    },
+469|    stopDrag () {
+470|      if (!this.draggingSide) return
+471|      this.draggingSide = null
+472|      document.removeEventListener('mousemove', this.handleDragging)
+473|      document.removeEventListener('mouseup', this.stopDrag)
+474|      if (document.body) {
+475|        document.body.style.userSelect = ''
+476|        document.body.style.cursor = ''
+477|      }
+478|    },
+479|    async fetchFiles () {
+480|      this.filesLoadError = ''
+481|      this.filesLoading = true
+482|      try {
+483|        const res = await fetch('/api/dev/files')
+484|        const data = await res.json().catch(() => ({}))
+485|        if (res.ok && data && Array.isArray(data.files)) {
+486|          this.files = data.files
+487|          this.buildFileTree(data.files)
+488|          this.error = ''
+489|        } else {
+490|          this.filesLoadError = (data && data.message) || '获取文件列表失败'
+491|        }
+492|      } catch (e) {
+493|        this.filesLoadError = e.message || '获取文件列表失败（请确认后端服务已启动，如 npm run server）'
+494|      } finally {
+495|        this.filesLoading = false
+496|      }
+497|    },
+498|    buildFileTree (files) {
+499|      const root = []
+500|      const map = {}
+501|      files.forEach(f => {
+502|        const parts = f.path.split('/')
+503|        let parent = root
+504|        let curKey = ''
+505|        parts.forEach((seg, idx) => {
+506|          curKey = curKey ? `${curKey}/${seg}` : seg
+507|          if (!map[curKey]) {
+508|            const node = {
+509|              id: curKey,
+510|              label: seg,
+511|              children: [],
+512|              isDir: idx !== parts.length - 1
+513|            }
+514|            // 最后一段是文件，挂上 path 方便点击
+515|            if (idx === parts.length - 1) {
+516|              node.path = f.path
+517|              node.isDir = false
+518|              const dotIndex = f.path.lastIndexOf('.')
+519|              if (dotIndex !== -1) {
+520|                node.ext = f.path.slice(dotIndex + 1)
+521|              }
+522|            }
+523|            map[curKey] = node
+524|            parent.push(node)
+525|          }
+526|          parent = map[curKey].children
+527|        })
+528|      })
+529|      // 递归排序：目录在前，之后文件，按名称排序
+530|      const sortNodes = nodes => {
+531|        if (!Array.isArray(nodes)) return
+532|        nodes.sort((a, b) => {
+533|          const aDir = !!a.isDir
+534|          const bDir = !!b.isDir
+535|          if (aDir !== bDir) return aDir ? -1 : 1
+536|          return a.label.localeCompare(b.label)
+537|        })
+538|        nodes.forEach(n => sortNodes(n.children))
+539|      }
+540|      sortNodes(root)
+541|      this.fileTree = root
+542|    },
+543|    renderTreeNode (h, { data }) {
+544|      const isDir = data.isDir
+545|      const label = data.label
+546|      let iconClass = 'icon-file-generic'
+547|      let iconText = ''
+548|      if (isDir) {
+549|        iconClass = 'icon-folder'
+550|        iconText = ''
+551|      } else if (data.ext === 'vue') {
+552|        iconClass = 'icon-file-vue'
+553|        iconText = 'V'
+554|      } else if (data.ext === 'js' || data.ext === 'ts') {
+555|        iconClass = 'icon-file-js'
+556|        iconText = 'JS'
+557|      } else if (data.ext === 'json') {
+558|        iconClass = 'icon-file-json'
+559|        iconText = '{}'
+560|      }
+561|      return h('span', { class: 'tree-node' }, [
+562|        h('span', { class: ['file-icon', iconClass] }, iconText),
+563|        h('span', { class: 'file-label' }, label)
+564|      ])
+565|    },
+566|    handleNodeClick (data) {
+567|      if (data && data.path) {
+568|        this.handleSelectFile(data.path)
+569|      }
+570|    },
+571|    scrollChatToBottom () {
+572|      this.$nextTick(() => {
+573|        const el = this.$refs.chatBody
+574|        if (el) {
+575|          el.scrollTop = el.scrollHeight
+576|        }
+577|      })
+578|    },
+579|    focusChatInput () {
+580|      this.$nextTick(() => {
+581|        const ref = this.$refs.chatInputRef
+582|        if (!ref || !ref.$el) return
+583|        const textarea = ref.$el.querySelector('textarea')
+584|        if (textarea) {
+585|          textarea.focus()
+586|        }
+587|      })
+588|    },
+589|    startThinkingTimer () {
+590|      if (this.thinkingTimerId) return
+591|      this.thinkingTimerId = setInterval(() => {
+592|        const hasAny = (this.chatMessages || []).some(m => m.meta && m.meta.codegenThinking)
+593|        if (!hasAny) {
+594|          clearInterval(this.thinkingTimerId)
+595|       

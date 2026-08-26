@@ -1,0 +1,213 @@
+<template>
+  <div class="today-stock-recommendation">
+    <el-card class="main-card">
+      <div slot="header" class="clearfix">
+        <span class="title">今日股票推荐</span>
+        <el-button type="primary" size="small" @click="refreshData" :loading="loading">刷新推荐</el-button>
+      </div>
+      
+      <div class="description">
+        <p>本页面推荐明天可能涨停的30个股票，基于历史数据和市场分析得出。以下列表仅供参考，投资需谨慎。</p>
+      </div>
+      
+      <el-table
+        :data="stockList"
+        border
+        stripe
+        style="width: 100%"
+        v-loading="loading"
+        element-loading-text="数据加载中..."
+      >
+        <el-table-column prop="code" label="股票代码" width="120" align="center"></el-table-column>
+        <el-table-column prop="name" label="股票名称" width="150"></el-table-column>
+        <el-table-column prop="currentPrice" label="当前价格(元)" width="130" align="right">
+          <template slot-scope="scope">
+            {{ scope.row.currentPrice.toFixed(2) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="changePercent" label="今日涨幅" width="120" align="right">
+          <template slot-scope="scope">
+            <span :class="{ 'positive': scope.row.changePercent > 0, 'negative': scope.row.changePercent < 0 }">
+              {{ (scope.row.changePercent > 0 ? '+' : '') + scope.row.changePercent.toFixed(2) }}%
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="industry" label="行业" width="150"></el-table-column>
+        <el-table-column prop="marketValue" label="市值(亿元)" width="130" align="right">
+          <template slot-scope="scope">
+            {{ (scope.row.marketValue / 100000000).toFixed(2) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="recommendReason" label="推荐理由" min-width="200"></el-table-column>
+        <el-table-column label="操作" width="100" align="center" fixed="right">
+          <template slot-scope="scope">
+            <el-button type="text" size="small" @click="viewDetail(scope.row)">详情</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      
+      <div class="pagination-container">
+        <el-pagination
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+          :current-page="currentPage"
+          :page-sizes="[10, 20, 30]"
+          :page-size="pageSize"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="total"
+        ></el-pagination>
+      </div>
+    </el-card>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'TodayStockRecommendation',
+  data() {
+    return {
+      loading: false,
+      stockList: [],
+      currentPage: 1,
+      pageSize: 10,
+      total: 30
+    }
+  },
+  mounted() {
+    this.fetchStockData()
+  },
+  methods: {
+    // 获取股票数据（模拟数据）
+    fetchStockData() {
+      this.loading = true
+      // 模拟异步请求
+      setTimeout(() => {
+        // 生成30个模拟股票数据
+        const mockStocks = []
+        const industries = ['科技', '金融', '消费', '医药', '能源', '制造', '地产', '交通']
+        const reasons = [
+          '技术面突破，成交量放大',
+          '政策利好，行业景气度提升',
+          '业绩超预期，增长潜力大',
+          '资金持续流入，主力控盘',
+          '估值合理，安全边际高',
+          '概念热点，市场关注度高'
+        ]
+        
+        for (let i = 1; i <= 30; i++) {
+          const code = `600${i.toString().padStart(3, '0')}`
+          const name = `股票${i}号`
+          const currentPrice = 10 + Math.random() * 90
+          const changePercent = (Math.random() * 10 - 2).toFixed(2) // -2% 到 +8%
+          const industry = industries[Math.floor(Math.random() * industries.length)]
+          const marketValue = currentPrice * (1000000 + Math.random() * 9000000)
+          const recommendReason = reasons[Math.floor(Math.random() * reasons.length)]
+          
+          mockStocks.push({
+            id: i,
+            code,
+            name,
+            currentPrice: parseFloat(currentPrice.toFixed(2)),
+            changePercent: parseFloat(changePercent),
+            industry,
+            marketValue: parseFloat(marketValue.toFixed(2)),
+            recommendReason
+          })
+        }
+        
+        this.stockList = mockStocks
+        this.loading = false
+      }, 800)
+    },
+    
+    // 刷新数据
+    refreshData() {
+      this.fetchStockData()
+    },
+    
+    // 查看详情
+    viewDetail(row) {
+      this.$message({
+        message: `查看股票 ${row.name} (${row.code}) 的详细信息`,
+        type: 'info'
+      })
+      // 这里可以跳转到详情页面或打开对话框
+    },
+    
+    // 分页大小改变
+    handleSizeChange(val) {
+      this.pageSize = val
+      this.currentPage = 1
+    },
+    
+    // 当前页改变
+    handleCurrentChange(val) {
+      this.currentPage = val
+    }
+  }
+}
+</script>
+
+<style scoped>
+.today-stock-recommendation {
+  padding: 20px;
+  background-color: #f5f7fa;
+  min-height: calc(100vh - 84px);
+}
+
+.main-card {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: bold;
+  color: #303133;
+}
+
+.clearfix {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.description {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #f0f9ff;
+  border-radius: 4px;
+  border-left: 4px solid #409eff;
+}
+
+.description p {
+  margin: 0;
+  color: #606266;
+  line-height: 1.5;
+}
+
+.positive {
+  color: #f56c6c;
+  font-weight: bold;
+}
+
+.negative {
+  color: #67c23a;
+  font-weight: bold;
+}
+
+.pagination-container {
+  margin-top: 20px;
+  text-align: right;
+}
+
+@media (max-width: 1200px) {
+  .today-stock-recommendation {
+    padding: 15px;
+  }
+  
+  .main-card {
+    max-width: 100%;
+  }
+}
+</style>

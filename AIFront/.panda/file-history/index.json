@@ -1,0 +1,482 @@
+[
+  {
+    "id": "19fd75f3c75",
+    "file": "src/App.vue",
+    "snap": "src__App.vue.19fd75f3c75.snap",
+    "at": "2026-08-06T13:59:30.678Z"
+  },
+  {
+    "id": "19fd7698f95",
+    "file": "src/views/TankBattle.vue",
+    "snap": "src__views__TankBattle.vue.19fd7698f95.snap",
+    "at": "2026-08-06T14:10:47.325Z"
+  },
+  {
+    "id": "19fd769b9ea",
+    "file": "src/views/TankBattle.vue",
+    "snap": "src__views__TankBattle.vue.19fd769b9ea.snap",
+    "at": "2026-08-06T14:10:58.155Z"
+  },
+  {
+    "id": "19fd769edea",
+    "file": "src/views/TankBattle.vue",
+    "snap": "src__views__TankBattle.vue.19fd769edea.snap",
+    "at": "2026-08-06T14:11:11.468Z"
+  },
+  {
+    "id": "19fd76a0cc0",
+    "file": "src/views/TankBattle.vue",
+    "snap": "src__views__TankBattle.vue.19fd76a0cc0.snap",
+    "at": "2026-08-06T14:11:19.360Z"
+  },
+  {
+    "id": "19fd76a6f5d",
+    "file": "src/views/TankBattle.vue",
+    "snap": "src__views__TankBattle.vue.19fd76a6f5d.snap",
+    "at": "2026-08-06T14:11:44.606Z"
+  },
+  {
+    "id": "19fd76a86d4",
+    "file": "src/views/TankBattle.vue",
+    "snap": "src__views__TankBattle.vue.19fd76a86d4.snap",
+    "at": "2026-08-06T14:11:50.612Z"
+  },
+  {
+    "id": "19fd76aa71a",
+    "file": "src/views/TankBattle.vue",
+    "snap": "src__views__TankBattle.vue.19fd76aa71a.snap",
+    "at": "2026-08-06T14:11:58.878Z"
+  },
+  {
+    "id": "19fd7829912",
+    "file": "src/views/TodayStockRecommendation.vue",
+    "snap": "src__views__TodayStockRecommendation.vue.19fd7829912.snap",
+    "at": "2026-08-06T14:38:08.153Z"
+  },
+  {
+    "id": "19fd782992a",
+    "file": "src/views/Dashboard.vue",
+    "snap": "src__views__Dashboard.vue.19fd782992a.snap",
+    "at": "2026-08-06T14:38:08.171Z"
+  },
+  {
+    "id": "19fd78f9457",
+    "file": "src/views/TodayStockRecommendation.vue",
+    "snap": "src__views__TodayStockRecommendation.vue.19fd78f9457.snap",
+    "at": "2026-08-06T14:52:18.910Z"
+  },
+  {
+    "id": "19fd78f9f55",
+    "file": "src/views/TodayStockRecommendation.vue",
+    "snap": "src__views__TodayStockRecommendation.vue.19fd78f9f55.snap",
+    "at": "2026-08-06T14:52:21.718Z"
+  },
+  {
+    "id": "19fd790080d",
+    "file": "src/views/TodayStockRecommendation.vue",
+    "snap": "src__views__TodayStockRecommendation.vue.19fd790080d.snap",
+    "at": "2026-08-06T14:52:48.526Z"
+  },
+  {
+    "id": "19fda043ae7",
+    "file": ".panda/_nb_smoke.ipynb",
+    "snap": ".panda___nb_smoke.ipynb.19fda043ae7.snap",
+    "at": "2026-08-07T02:18:58.153Z"
+  },
+  {
+    "id": "19fdaf0e363",
+    "file": "src/views/FootballGoalsChart.vue",
+    "snap": "src__views__FootballGoalsChart.vue.19fdaf0e363.snap",
+    "at": "2026-08-07T06:37:27.788Z"
+  },
+  {
+    "id": "19fdaf11429",
+    "file": "src/views/FootballGoalsChart.vue",
+    "snap": "src__views__FootballGoalsChart.vue.19fdaf11429.snap",
+    "at": "2026-08-07T06:37:40.272Z"
+  },
+  {
+    "id": "19fdaf13da5",
+    "file": "src/views/FootballGoalsChart.vue",
+    "snap": "src__views__FootballGoalsChart.vue.19fdaf13da5.snap",
+    "at": "2026-08-07T06:37:50.888Z"
+  },
+  {
+    "id": "19fdaf21f64",
+    "file": "src/views/FootballGoalsChart.vue",
+    "snap": "src__views__FootballGoalsChart.vue.19fdaf21f64.snap",
+    "at": "2026-08-07T06:38:48.686Z"
+  },
+  {
+    "id": "19fdaf22aa9",
+    "file": "src/views/FootballGoalsChart.vue",
+    "snap": "src__views__FootballGoalsChart.vue.19fdaf22aa9.snap",
+    "at": "2026-08-07T06:38:51.562Z"
+  },
+  {
+    "id": "19fdaf3e6fa",
+    "file": "src/views/FootballGoalsChart.vue",
+    "snap": "src__views__FootballGoalsChart.vue.19fdaf3e6fa.snap",
+    "at": "2026-08-07T06:40:45.315Z"
+  },
+  {
+    "id": "19fdaf3ef63",
+    "file": "src/views/FootballGoalsChart.vue",
+    "snap": "src__views__FootballGoalsChart.vue.19fdaf3ef63.snap",
+    "at": "2026-08-07T06:40:47.460Z"
+  },
+  {
+    "id": "19fdaf402a6",
+    "file": "src/views/FootballGoalsChart.vue",
+    "snap": "src__views__FootballGoalsChart.vue.19fdaf402a6.snap",
+    "at": "2026-08-07T06:40:52.390Z"
+  },
+  {
+    "id": "19fdb073285",
+    "file": "src/views/FootballGoalsChart.vue",
+    "snap": "src__views__FootballGoalsChart.vue.19fdb073285.snap",
+    "at": "2026-08-07T07:01:49.835Z"
+  },
+  {
+    "id": "19fdb0994ac",
+    "file": "src/views/NoCodeBuilder.vue",
+    "snap": "src__views__NoCodeBuilder.vue.19fdb0994ac.snap",
+    "at": "2026-08-07T07:04:26.036Z"
+  },
+  {
+    "id": "19fdb0aa692",
+    "file": "src/views/NoCodeBuilder.vue",
+    "snap": "src__views__NoCodeBuilder.vue.19fdb0aa692.snap",
+    "at": "2026-08-07T07:05:36.154Z"
+  },
+  {
+    "id": "19fdb0b9227",
+    "file": "src/views/NoCodeBuilder.vue",
+    "snap": "src__views__NoCodeBuilder.vue.19fdb0b9227.snap",
+    "at": "2026-08-07T07:06:36.465Z"
+  },
+  {
+    "id": "19fdb0c6988",
+    "file": "src/views/NoCodeBuilder.vue",
+    "snap": "src__views__NoCodeBuilder.vue.19fdb0c6988.snap",
+    "at": "2026-08-07T07:07:31.597Z"
+  },
+  {
+    "id": "19fdb0e54b4",
+    "file": "src/views/RiverCityRansom.vue",
+    "snap": "src__views__RiverCityRansom.vue.19fdb0e54b4.snap",
+    "at": "2026-08-07T07:09:37.338Z"
+  },
+  {
+    "id": "19fdb0e5bb5",
+    "file": "src/router/index.js",
+    "snap": "src__router__index.js.19fdb0e5bb5.snap",
+    "at": "2026-08-07T07:09:39.126Z"
+  },
+  {
+    "id": "19fdb0e83bd",
+    "file": "src/router/index.js",
+    "snap": "src__router__index.js.19fdb0e83bd.snap",
+    "at": "2026-08-07T07:09:49.375Z"
+  },
+  {
+    "id": "19fdb0eb9b3",
+    "file": "src/App.vue",
+    "snap": "src__App.vue.19fdb0eb9b3.snap",
+    "at": "2026-08-07T07:10:03.194Z"
+  },
+  {
+    "id": "19fdb12d2cc",
+    "file": ".panda/sessions/sess_19fdaee70cd2a3f/scratchpad/check_river.js",
+    "snap": ".panda__sessions__sess_19fdaee70cd2a3f__scratchpad__check_river.js.19fdb12d2cc.snap",
+    "at": "2026-08-07T07:14:31.756Z"
+  },
+  {
+    "id": "19fdb16c9ea",
+    "file": "src/views/RiverCityRansom.vue",
+    "snap": "src__views__RiverCityRansom.vue.19fdb16c9ea.snap",
+    "at": "2026-08-07T07:18:51.634Z"
+  },
+  {
+    "id": "19fdb186a71",
+    "file": "src/views/RiverCityRansom.vue",
+    "snap": "src__views__RiverCityRansom.vue.19fdb186a71.snap",
+    "at": "2026-08-07T07:20:38.264Z"
+  },
+  {
+    "id": "19fdb1aac36",
+    "file": "src/views/RiverCityRansom.vue",
+    "snap": "src__views__RiverCityRansom.vue.19fdb1aac36.snap",
+    "at": "2026-08-07T07:23:06.177Z"
+  },
+  {
+    "id": "19fdb1b35dd",
+    "file": "src/views/RiverCityRansom.vue",
+    "snap": "src__views__RiverCityRansom.vue.19fdb1b35dd.snap",
+    "at": "2026-08-07T07:23:41.411Z"
+  },
+  {
+    "id": "19fdb1b6d41",
+    "file": ".panda/sessions/sess_19fdaee70cd2a3f/scratchpad/verify_move.js",
+    "snap": ".panda__sessions__sess_19fdaee70cd2a3f__scratchpad__verify_move.js.19fdb1b6d41.snap",
+    "at": "2026-08-07T07:23:55.591Z"
+  },
+  {
+    "id": "19fdb1bb72d",
+    "file": ".panda/sessions/sess_19fdaee70cd2a3f/scratchpad/verify_move.js",
+    "snap": ".panda__sessions__sess_19fdaee70cd2a3f__scratchpad__verify_move.js.19fdb1bb72d.snap",
+    "at": "2026-08-07T07:24:14.511Z"
+  },
+  {
+    "id": "19fdb2124d7",
+    "file": "src/views/TankBattle.vue",
+    "snap": "src__views__TankBattle.vue.19fdb2124d7.snap",
+    "at": "2026-08-07T07:30:10.471Z"
+  },
+  {
+    "id": "19fdb2132d8",
+    "file": "src/views/TankBattle.vue",
+    "snap": "src__views__TankBattle.vue.19fdb2132d8.snap",
+    "at": "2026-08-07T07:30:13.849Z"
+  },
+  {
+    "id": "19fdb24c853",
+    "file": "src/App.vue",
+    "snap": "src__App.vue.19fdb24c853.snap",
+    "at": "2026-08-07T07:34:08.725Z"
+  },
+  {
+    "id": "19fdb24e719",
+    "file": "src/views/TankBattle.vue",
+    "snap": "src__views__TankBattle.vue.19fdb24e719.snap",
+    "at": "2026-08-07T07:34:16.603Z"
+  },
+  {
+    "id": "19fdb24f721",
+    "file": "src/views/RiverCityRansom.vue",
+    "snap": "src__views__RiverCityRansom.vue.19fdb24f721.snap",
+    "at": "2026-08-07T07:34:20.706Z"
+  },
+  {
+    "id": "19fdb382cfc",
+    "file": "src/views/CommandMarket.vue",
+    "snap": "src__views__CommandMarket.vue.19fdb382cfc.snap",
+    "at": "2026-08-07T07:55:19.679Z"
+  },
+  {
+    "id": "19fdb7ef1c9",
+    "file": "src/views/TokenUsageScreen.vue",
+    "snap": "src__views__TokenUsageScreen.vue.19fdb7ef1c9.snap",
+    "at": "2026-08-07T09:12:37.578Z"
+  },
+  {
+    "id": "19fdb7f02c3",
+    "file": "src/router/index.js",
+    "snap": "src__router__index.js.19fdb7f02c3.snap",
+    "at": "2026-08-07T09:12:41.929Z"
+  },
+  {
+    "id": "19fdb7f51b3",
+    "file": "src/router/index.js",
+    "snap": "src__router__index.js.19fdb7f51b3.snap",
+    "at": "2026-08-07T09:13:02.137Z"
+  },
+  {
+    "id": "19fdb7f5bfe",
+    "file": "src/App.vue",
+    "snap": "src__App.vue.19fdb7f5bfe.snap",
+    "at": "2026-08-07T09:13:04.767Z"
+  },
+  {
+    "id": "19fdb7f64e5",
+    "file": "src/App.vue",
+    "snap": "src__App.vue.19fdb7f64e5.snap",
+    "at": "2026-08-07T09:13:07.046Z"
+  },
+  {
+    "id": "19fdb8e1b42",
+    "file": "src/views/TokenUsageScreen.vue",
+    "snap": "src__views__TokenUsageScreen.vue.19fdb8e1b42.snap",
+    "at": "2026-08-07T09:29:11.235Z"
+  },
+  {
+    "id": "19fdb8e7205",
+    "file": "src/views/TokenUsageScreen.vue",
+    "snap": "src__views__TokenUsageScreen.vue.19fdb8e7205.snap",
+    "at": "2026-08-07T09:29:33.446Z"
+  },
+  {
+    "id": "19fdb8e96cc",
+    "file": "src/views/TokenUsageScreen.vue",
+    "snap": "src__views__TokenUsageScreen.vue.19fdb8e96cc.snap",
+    "at": "2026-08-07T09:29:42.861Z"
+  },
+  {
+    "id": "19fdb907952",
+    "file": "src/App.vue",
+    "snap": "src__App.vue.19fdb907952.snap",
+    "at": "2026-08-07T09:31:46.387Z"
+  },
+  {
+    "id": "19fdb929332",
+    "file": "src/views/TokenUsageScreen.vue",
+    "snap": "src__views__TokenUsageScreen.vue.19fdb929332.snap",
+    "at": "2026-08-07T09:34:04.083Z"
+  },
+  {
+    "id": "19fdb92ca0f",
+    "file": "src/views/TokenUsageScreen.vue",
+    "snap": "src__views__TokenUsageScreen.vue.19fdb92ca0f.snap",
+    "at": "2026-08-07T09:34:18.128Z"
+  },
+  {
+    "id": "19fdb92d727",
+    "file": "src/views/TokenUsageScreen.vue",
+    "snap": "src__views__TokenUsageScreen.vue.19fdb92d727.snap",
+    "at": "2026-08-07T09:34:21.480Z"
+  },
+  {
+    "id": "19fdb92e220",
+    "file": "src/views/TokenUsageScreen.vue",
+    "snap": "src__views__TokenUsageScreen.vue.19fdb92e220.snap",
+    "at": "2026-08-07T09:34:24.289Z"
+  },
+  {
+    "id": "19fdb930b1d",
+    "file": "src/views/TokenUsageScreen.vue",
+    "snap": "src__views__TokenUsageScreen.vue.19fdb930b1d.snap",
+    "at": "2026-08-07T09:34:34.782Z"
+  },
+  {
+    "id": "19fdb931b0f",
+    "file": "src/views/TokenUsageScreen.vue",
+    "snap": "src__views__TokenUsageScreen.vue.19fdb931b0f.snap",
+    "at": "2026-08-07T09:34:38.864Z"
+  },
+  {
+    "id": "19fdb938d49",
+    "file": "src/views/TokenUsageScreen.vue",
+    "snap": "src__views__TokenUsageScreen.vue.19fdb938d49.snap",
+    "at": "2026-08-07T09:35:08.105Z"
+  },
+  {
+    "id": "19fdb96924d",
+    "file": "src/views/TokenUsageScreen.vue",
+    "snap": "src__views__TokenUsageScreen.vue.19fdb96924d.snap",
+    "at": "2026-08-07T09:38:25.998Z"
+  },
+  {
+    "id": "19fdb9828f1",
+    "file": "src/views/TokenUsageScreen.vue",
+    "snap": "src__views__TokenUsageScreen.vue.19fdb9828f1.snap",
+    "at": "2026-08-07T09:40:10.098Z"
+  },
+  {
+    "id": "19fdb983c32",
+    "file": "src/views/TokenUsageScreen.vue",
+    "snap": "src__views__TokenUsageScreen.vue.19fdb983c32.snap",
+    "at": "2026-08-07T09:40:15.027Z"
+  },
+  {
+    "id": "19fdb98a9f0",
+    "file": "src/views/TokenUsageScreen.vue",
+    "snap": "src__views__TokenUsageScreen.vue.19fdb98a9f0.snap",
+    "at": "2026-08-07T09:40:43.121Z"
+  },
+  {
+    "id": "19fdb991467",
+    "file": "src/views/TokenUsageScreen.vue",
+    "snap": "src__views__TokenUsageScreen.vue.19fdb991467.snap",
+    "at": "2026-08-07T09:41:10.376Z"
+  },
+  {
+    "id": "19fdb99629f",
+    "file": "src/views/TokenUsageScreen.vue",
+    "snap": "src__views__TokenUsageScreen.vue.19fdb99629f.snap",
+    "at": "2026-08-07T09:41:30.399Z"
+  },
+  {
+    "id": "19fdb99a6d8",
+    "file": "src/views/TokenUsageScreen.vue",
+    "snap": "src__views__TokenUsageScreen.vue.19fdb99a6d8.snap",
+    "at": "2026-08-07T09:41:47.865Z"
+  },
+  {
+    "id": "19fdb99c1f6",
+    "file": "src/views/TokenUsageScreen.vue",
+    "snap": "src__views__TokenUsageScreen.vue.19fdb99c1f6.snap",
+    "at": "2026-08-07T09:41:54.807Z"
+  },
+  {
+    "id": "19fdb9a10b5",
+    "file": "src/views/TokenUsageScreen.vue",
+    "snap": "src__views__TokenUsageScreen.vue.19fdb9a10b5.snap",
+    "at": "2026-08-07T09:42:14.966Z"
+  },
+  {
+    "id": "19fdb9a86e5",
+    "file": "src/views/TokenUsageScreen.vue",
+    "snap": "src__views__TokenUsageScreen.vue.19fdb9a86e5.snap",
+    "at": "2026-08-07T09:42:45.222Z"
+  },
+  {
+    "id": "19fdb9b2544",
+    "file": "src/views/TokenUsageScreen.vue",
+    "snap": "src__views__TokenUsageScreen.vue.19fdb9b2544.snap",
+    "at": "2026-08-07T09:43:25.765Z"
+  },
+  {
+    "id": "19fdbb9b9c7",
+    "file": "src/views/TokenUsageScreen.vue",
+    "snap": "src__views__TokenUsageScreen.vue.19fdbb9b9c7.snap",
+    "at": "2026-08-07T10:16:49.864Z"
+  },
+  {
+    "id": "19fdbb9ee8f",
+    "file": "src/views/TokenUsageScreen.vue",
+    "snap": "src__views__TokenUsageScreen.vue.19fdbb9ee8f.snap",
+    "at": "2026-08-07T10:17:03.376Z"
+  },
+  {
+    "id": "19fdbba0691",
+    "file": "src/views/TokenUsageScreen.vue",
+    "snap": "src__views__TokenUsageScreen.vue.19fdbba0691.snap",
+    "at": "2026-08-07T10:17:09.523Z"
+  },
+  {
+    "id": "19fdbba387e",
+    "file": "src/views/TokenUsageScreen.vue",
+    "snap": "src__views__TokenUsageScreen.vue.19fdbba387e.snap",
+    "at": "2026-08-07T10:17:22.306Z"
+  },
+  {
+    "id": "19fdbba699e",
+    "file": "src/views/TokenUsageScreen.vue",
+    "snap": "src__views__TokenUsageScreen.vue.19fdbba699e.snap",
+    "at": "2026-08-07T10:17:34.879Z"
+  },
+  {
+    "id": "1a027ba729e",
+    "file": "src/views/ClientStats.vue",
+    "snap": "src__views__ClientStats.vue.1a027ba729e.snap",
+    "at": "2026-08-22T04:28:45.600Z"
+  },
+  {
+    "id": "1a027ba8595",
+    "file": "src/App.vue",
+    "snap": "src__App.vue.1a027ba8595.snap",
+    "at": "2026-08-22T04:28:50.454Z"
+  },
+  {
+    "id": "1a027ba92e5",
+    "file": "src/router/index.js",
+    "snap": "src__router__index.js.1a027ba92e5.snap",
+    "at": "2026-08-22T04:28:53.862Z"
+  },
+  {
+    "id": "1a027baba0a",
+    "file": "src/router/index.js",
+    "snap": "src__router__index.js.1a027baba0a.snap",
+    "at": "2026-08-22T04:29:03.883Z"
+  }
+]

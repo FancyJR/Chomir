@@ -1,0 +1,63 @@
+{
+  "name": "aifront",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AIFront desktop & web coding workbench",
+  "author": {
+    "name": "AIFront",
+    "email": "aifront@localhost"
+  },
+  "main": "electron/main.js",
+  "bin": {
+    "chomircode-agent": "bin/chomircode-agent.js"
+  },
+  "scripts": {
+    "setup": "node scripts/desktop-setup.mjs",
+    "serve": "vue-cli-service serve",
+    "server": "node server/index.js",
+    "dev": "node scripts/desktop-dev.mjs",
+    "dev:web": "concurrently \"yarn serve\" \"yarn server\"",
+    "build": "vue-cli-service build",
+    "dist:mac": "node scripts/desktop-dist.mjs mac",
+    "dist:win": "node scripts/desktop-dist.mjs win",
+    "dist:linux": "node scripts/desktop-dist.mjs linux",
+    "package:dir": "yarn build && electron-builder --config electron-builder.yml --dir",
+    "chomircode-agent": "node bin/chomircode-agent.js",
+    "pack:dsh-subagent-aifront": "node scripts/pack-dsh-subagent-aifront.cjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "concurrently": "^9.2.1",
+    "core-js": "^3.37.1",
+    "d3": "^7.9.0",
+    "dompurify": "^3.0.9",
+    "dotenv": "^17.2.3",
+    "echarts": "^6.0.0",
+    "element-ui": "^2.15.14",
+    "express": "^5.2.1",
+    "highlight.js": "^11.9.0",
+    "marked": "^12.0.1",
+    "puppeteer-core": "^25.5.0",
+    "vue": "^2.7.16",
+    "vue-router": "^3.6.5",
+    "vuex": "^3.6.2",
+    "ws": "^8.21.2"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "^5.0.8",
+    "@vue/cli-service": "^5.0.8",
+    "babel-eslint": "^10.1.0",
+    "codemirror": "^5.65.21",
+    "electron": "33.2.1",
+    "electron-builder": "^25.1.8",
+    "prettier": "^2.8.8",
+    "typescript": "^5.9.3",
+    "vue-codemirror": "^4.0.6",
+    "vue-template-compiler": "^2.7.16"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
+}

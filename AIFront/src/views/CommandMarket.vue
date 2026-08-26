@@ -1,0 +1,1076 @@
+<template>
+  <div class="page-command-market">
+    <el-card class="page-card">
+      <!-- 标题区 -->
+      <div class="page-header">
+        <div class="page-title-block">
+          <div class="page-title">指令市场AI</div>
+          <div class="page-subtitle">浏览、订阅和管理团队共享的指令</div>
+        </div>
+      </div>
+
+      <!-- 状态 Tab 区域 -->
+      <div class="status-tabs">
+        <button
+          v-for="tab in statusTabs"
+          :key="tab.value"
+          :class="['status-tab-btn', { 'is-active': currentStatusTab === tab.value }]"
+          @click="handleStatusChange(tab.value)"
+        >
+          <span class="tab-label">{{ tab.label }}</span>
+          <span class="tab-count">{{ tab.count }}</span>
+        </button>
+      </div>
+
+      <!-- 工具栏 -->
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <span class="toolbar-label">类型筛选：</span>
+          <el-select
+            v-model="filters.type"
+            size="small"
+            class="type-select"
+            @change="handleFilterChange"
+          >
+            <el-option
+              v-for="item in commandTypes"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+          <span class="toolbar-label" style="margin-left: 16px;">状态：</span>
+          <el-select
+            v-model="filters.status"
+            size="small"
+            class="status-select"
+            @change="handleFilterChange"
+          >
+            <el-option
+              v-for="item in statusOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </div>
+        <div class="toolbar-right">
+          <el-input
+            v-model="filters.keyword"
+            size="small"
+            placeholder="搜索指令名称"
+            class="search-input"
+            clearable
+            @keyup.enter.native="handleSearch"
+          >
+            <el-button slot="append" icon="el-icon-search" class="search-btn" @click="handleSearch" />
+          </el-input>
+          <el-button type="primary" size="small" class="create-btn" @click="handleCreate">
+            新建指令
+          </el-button>
+        </div>
+      </div>
+
+      <!-- 卡片网格 -->
+      <div class="card-grid" v-loading="loading">
+        <el-row>
+          <el-col
+            v-for="item in commandList"
+            :key="item.id"
+            :xs="24"
+            :sm="12"
+            :md="8"
+            :lg="5"
+            :xl="5"
+          >
+            <div class="command-card" @click="handleCardClick(item.id)">
+              <div class="command-card-main">
+                <div class="command-card-top">
+                  <div :class="['command-icon', getIconColorClass(item)]">
+                    <span class="icon-text">{{ getIconText(item) }}</span>
+                  </div>
+                  <div class="card-actions">
+                    <el-button
+                      type="text"
+                      icon="el-icon-edit-outline"
+                      @click.stop="handleEdit(item)"
+                    />
+                  </div>
+                </div>
+                <div class="command-content">
+                  <div class="name-row">
+                    <el-tooltip :content="item.nameZh" placement="top" :open-delay="300">
+                      <div class="name-zh">{{ item.nameZh }}</div>
+                    </el-tooltip>
+                    <el-tooltip :content="item.nameEn" placement="top" :open-delay="300">
+                      <div class="name-en">{{ item.nameEn }}</div>
+                    </el-tooltip>
+                  </div>
+                  <div class="description-wrap">
+                    <el-tooltip :content="item.description" placement="top" :open-delay="300" effect="light" popper-class="command-description-tooltip">
+                      <div class="description">
+                        {{ item.description }}
+                      </div>
+                    </el-tooltip>
+                  </div>
+                  <div class="tags-row">
+                    <el-tag
+                      v-for="tag in item.tags"
+                      :key="tag"
+                      size="mini"
+                      class="tag-item"
+                    >
+                      {{ tag }}
+                    </el-tag>
+                  </div>
+                </div>
+              </div>
+              <div class="command-card-footer">
+                <div class="meta-left">
+                  <span class="creator">{{ item.createdBy }}</span>
+                  <span class="created-at">{{ item.createdAt }}</span>
+                </div>
+                <div class="meta-right">
+                  <span class="subscribe">
+                    <i class="el-icon-user" />
+                    <span class="number">{{ item.subscribeCount }}</span>
+                  </span>
+                  <span :class="['status', getStatusClass(item)]">{{ getStatusText(item) }}</span>
+                </div>
+              </div>
+            </div>
+          </el-col>
+        </el-row>
+
+        <div v-if="!commandList.length" class="empty-block">
+          <el-empty description="暂无指令，请点击右上角“新建指令”创建。" />
+        </div>
+      </div>
+
+      <!-- 分页 -->
+      <div class="pagination-wrapper" v-if="pagination.total > 0">
+        <span class="total-text">共 {{ pagination.total }} 条</span>
+        <el-pagination
+          background
+          layout="prev, pager, next, sizes"
+          :page-sizes="[10, 20, 50]"
+          :page-size="pagination.pageSize"
+          :current-page="pagination.pageNum"
+          :total="pagination.total"
+          @size-change="handleSizeChange"
+          @current-change="handlePageChange"
+        />
+      </div>
+    </el-card>
+
+    <!-- 新建 / 编辑弹窗 -->
+    <el-dialog
+      :title="isEdit ? '编辑指令' : '新建指令'"
+      :visible.sync="dialogVisible"
+      width="520px"
+      @close="handleDialogClose"
+      custom-class="command-dialog"
+    >
+      <el-form
+        ref="commandFormRef"
+        :model="form"
+        :rules="rules"
+        label-width="90px"
+        class="command-form"
+      >
+        <el-form-item label="中文名称" prop="nameZh">
+          <el-input v-model="form.nameZh" placeholder="请输入中文名称" />
+        </el-form-item>
+        <el-form-item label="英文名称" prop="nameEn">
+          <el-input v-model="form.nameEn" placeholder="请输入英文名称" />
+        </el-form-item>
+        <el-form-item label="指令类型" prop="type">
+          <el-select v-model="form.type" placeholder="请选择指令类型">
+            <el-option
+              v-for="item in commandTypes.filter(t => t.value)"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="标签" prop="tags">
+          <el-select
+            v-model="form.tags"
+            multiple
+            collapse-tags
+            :multiple-limit="5"
+            placeholder="请选择标签（最多 5 个）"
+          >
+            <el-option
+              v-for="tag in commandTags"
+              :key="tag.value"
+              :label="tag.label"
+              :value="tag.value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="描述" prop="description">
+          <el-input
+            v-model="form.description"
+            type="textarea"
+            :rows="3"
+            maxlength="200"
+            show-word-limit
+            placeholder="请输入指令功能描述"
+          />
+        </el-form-item>
+      </el-form>
+
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogVisible = false">取 消</el-button>
+        <el-button type="primary" :loading="submitLoading" @click="handleSubmit">
+          保 存
+        </el-button>
+      </div>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+import { fetchCommandList, createCommand, updateCommand } from '@/api/command'
+import { COMMAND_TAGS, COMMAND_TYPES } from '@/constants/command'
+
+export default {
+  name: 'CommandMarket',
+  data () {
+    const validateTags = (rule, value, callback) => {
+      if (Array.isArray(value) && value.length > 5) {
+        callback(new Error('最多选择 5 个标签'))
+      } else {
+        callback()
+      }
+    }
+
+    return {
+      loading: false,
+      commandList: [],
+      commandTags: COMMAND_TAGS,
+      commandTypes: COMMAND_TYPES,
+      currentStatusTab: 'all',
+      subscribedCount: 0,
+      statusTabs: [
+        { label: '全部', value: 'all', count: 0 },
+        { label: '我创建的', value: 'mine', count: 0 },
+        { label: '已订阅指令', value: 'subscribed', count: 0 },
+        { label: '未订阅指令', value: 'unsubscribed', count: 0 }
+      ],
+      filters: {
+        type: '',
+        keyword: '',
+        status: ''
+      },
+      statusOptions: [
+        { label: '全部状态', value: '' },
+        { label: '已启用', value: 'enabled' },
+        { label: '已禁用', value: 'disabled' },
+        { label: '草稿', value: 'draft' }
+      ],
+      pagination: {
+        pageNum: 1,
+        pageSize: 10,
+        total: 0
+      },
+      dialogVisible: false,
+      isEdit: false,
+      currentEditId: null,
+      submitLoading: false,
+      form: {
+        nameZh: '',
+        nameEn: '',
+        type: '',
+        tags: [],
+        description: '',
+        createdBy: 'Admin'
+      },
+      rules: {
+        nameZh: [{ required: true, message: '请输入中文名称', trigger: 'blur' }],
+        type: [{ required: true, message: '请选择指令类型', trigger: 'change' }],
+        tags: [{ validator: validateTags, trigger: 'change' }]
+      }
+    }
+  },
+  created () {
+    this.loadData()
+  },
+  methods: {
+    async loadData () {
+      this.loading = true
+      try {
+        const { pageNum, pageSize } = this.pagination
+        const params = {
+          pageNum,
+          pageSize,
+          type: this.filters.type,
+          keyword: this.filters.keyword,
+          status: this.filters.status,
+          statusTab: this.currentStatusTab,
+          currentUser: 'Admin'
+        }
+        const res = await fetchCommandList(params)
+        const records = res.records || []
+        // 如果不足5条，补充假数据
+        const mockData = [
+          {
+            id: 'mock-command-1',
+            nameZh: '代码格式化工具',
+            nameEn: 'Code Formatter',
+            type: '代码质量',
+            description: '自动格式化代码风格，确保团队代码规范统一，提高代码可读性与可维护性，减少人工排版工作量。',
+            tags: ['质量', '规范'],
+            createdBy: 'Admin',
+            createdAt: '2024-03-15 10:30:00',
+            subscribeCount: 128,
+            subscribed: true
+          }
+        ]
+        this.commandList = records.length >= 5 ? records : [...records, ...mockData]
+        this.pagination.total = Math.max(res.total || 0, 5)
+        this.updateStatusCounts()
+      } catch (e) {
+        this.$message.error('获取指令列表失败，请稍后重试')
+      } finally {
+        this.loading = false
+      }
+    },
+    updateStatusCounts () {
+      const allList = this.commandList
+      const mineCount = allList.filter(item => item.createdBy === 'Admin').length
+      const subCount = allList.filter(item => item.subscribed).length
+      const unsubscribedCount = allList.filter(item => !item.subscribed).length
+
+      this.subscribedCount = subCount
+
+      this.statusTabs = [
+        { label: '全部', value: 'all', count: allList.length },
+        { label: '我创建的', value: 'mine', count: mineCount },
+        { label: '已订阅指令', value: 'subscribed', count: subCount },
+        { label: '未订阅指令', value: 'unsubscribed', count: unsubscribedCount }
+      ]
+    },
+    handleStatusChange (value) {
+      if (this.currentStatusTab === value) return
+      this.currentStatusTab = value
+      this.pagination.pageNum = 1
+      this.loadData()
+    },
+    handleFilterChange () {
+      this.pagination.pageNum = 1
+      this.loadData()
+    },
+    handleSearch () {
+      this.handleFilterChange()
+    },
+    handleSizeChange (size) {
+      this.pagination.pageSize = size
+      this.pagination.pageNum = 1
+      this.loadData()
+    },
+    handlePageChange (page) {
+      this.pagination.pageNum = page
+      this.loadData()
+    },
+    handleCardClick (commandId) {
+      this.$router.push('/command/detail/' + commandId)
+    },
+    handleCreate () {
+      this.isEdit = false
+      this.currentEditId = null
+      this.resetForm()
+      this.dialogVisible = true
+    },
+    handleEdit (row) {
+      this.isEdit = true
+      this.currentEditId = row.id
+      this.form = {
+        nameZh: row.nameZh,
+        nameEn: row.nameEn,
+        type: row.type,
+        tags: (row.tags && row.tags.slice()) || [],
+        description: row.description,
+        createdBy: row.createdBy
+      }
+      this.dialogVisible = true
+    },
+    handleDialogClose () {
+      this.resetForm()
+    },
+    resetForm () {
+      this.$nextTick(() => {
+        if (this.$refs.commandFormRef) {
+          this.$refs.commandFormRef.resetFields()
+        }
+      })
+      this.form = {
+        nameZh: '',
+        nameEn: '',
+        type: '',
+        tags: [],
+        description: '',
+        createdBy: 'Admin'
+      }
+      this.submitLoading = false
+    },
+    async handleSubmit () {
+      if (!this.$refs.commandFormRef) return
+      this.$refs.commandFormRef.validate(async valid => {
+        if (!valid) return
+        this.submitLoading = true
+        try {
+          if (this.isEdit && this.currentEditId != null) {
+            await updateCommand(this.currentEditId, this.form)
+            this.$message.success('更新成功')
+          } else {
+            await createCommand(this.form)
+            this.$message.success('创建成功')
+          }
+          this.dialogVisible = false
+          this.pagination.pageNum = 1
+          this.loadData()
+        } catch (e) {
+          this.$message.error('保存失败，请稍后重试')
+        } finally {
+          this.submitLoading = false
+        }
+      })
+    },
+    getStatusText (item) {
+      const map = {
+        enabled: '已启用',
+        disabled: '已禁用',
+        draft: '草稿'
+      }
+      return map[item.status] || '已启用'
+    },
+    getStatusClass (item) {
+      const map = {
+        enabled: 'enabled',
+        disabled: 'disabled',
+        draft: 'draft'
+      }
+      return map[item.status] || 'enabled'
+    },
+    getIconText (item) {
+      if (item.nameEn) {
+        return item.nameEn[0].toUpperCase()
+      }
+      if (item.nameZh) {
+        return item.nameZh[0]
+      }
+      return '?'
+    },
+    getIconColorClass (item) {
+      const map = {
+        代码质量: 'color-purple',
+        前端开发: 'color-green',
+        后端开发: 'color-blue',
+        单元测试: 'color-indigo',
+        数据库操作: 'color-orange',
+        脚本开发: 'color-cyan',
+        其他: 'color-red'
+      }
+      return map[item.type] || 'color-purple'
+    },
+  }
+}
+</script>
+
+<style scoped>
+.page-command-market {
+  padding: 32px 40px;
+  background:
+    radial-gradient(1200px 400px at 10% -10%, rgba(59, 130, 246, 0.18), transparent 60%),
+    radial-gradient(1000px 400px at 90% 0%, rgba(99, 102, 241, 0.16), transparent 60%),
+    linear-gradient(160deg, #eef4ff 0%, #e0ecff 40%, #d6e6ff 100%);
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  color: #1e293b;
+  box-sizing: border-box;
+}
+
+.page-card {
+  padding: 0 32px 32px;
+  border-radius: 20px;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  box-shadow: 0 12px 40px rgba(59, 130, 246, 0.12);
+  background-color: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  margin-bottom: 32px;
+  min-height: 0;
+}
+
+.page-card:hover {
+  box-shadow: 0 16px 48px rgba(59, 130, 246, 0.18);
+  border-color: rgba(59, 130, 246, 0.35);
+}
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28px 0 22px;
+  border-bottom: 1px solid rgba(59, 130, 246, 0.15);
+  margin-bottom: 16px;
+  min-height: 0;
+  position: relative;
+}
+
+.page-header::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 28px;
+  bottom: 22px;
+  width: 4px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #3b82f6, #2563eb);
+}
+
+.page-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+  padding-left: 16px;
+}
+
+.page-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin-bottom: 0;
+  letter-spacing: -0.3px;
+  line-height: 1.3;
+  background: linear-gradient(135deg, #1e3a8a, #2563eb);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.page-subtitle {
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.6;
+  font-weight: 400;
+  max-width: 680px;
+}
+
+.status-tabs {
+  padding: 20px 0 16px;
+  display: inline-flex;
+  flex-wrap: wrap;
+  min-height: 0;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 12px;
+  padding: 4px;
+  gap: 0;
+}
+
+.status-tab-btn {
+  min-width: 0;
+  text-align: center;
+  border-radius: 9px;
+  margin-right: 0;
+  font-weight: 500;
+  transition: all 0.25s ease;
+  border: none;
+  padding: 8px 20px;
+  font-size: 14px;
+  color: #64748b;
+  background-color: transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.status-tab-btn + .status-tab-btn {
+  margin-left: 2px;
+}
+
+.status-tab-btn .tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: #e0eaff;
+  color: #3b82f6;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.status-tab-btn:hover {
+  color: #2563eb;
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.status-tab-btn.is-active {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.status-tab-btn.is-active .tab-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+  flex-wrap: wrap;
+  gap: 16px;
+  min-height: 0;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  min-height: 0;
+}
+.toolbar-label {
+  font-size: 14px;
+  color: #64748b;
+  margin-right: 0;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.type-select {
+  width: 180px;
+}
+
+.status-select {
+  width: 160px;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  min-height: 0;
+}
+
+.search-input {
+  width: 280px;
+}
+
+.search-input >>> .el-input-group__append {
+  background-color: #3b82f6;
+  border: 1px solid #3b82f6;
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  padding: 0;
+  overflow: hidden;
+  transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+
+.search-input >>> .el-input-group__append:hover {
+  background-color: #2563eb;
+  border-color: #2563eb;
+}
+
+.search-input >>> .search-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  padding: 0 16px;
+  margin: 0;
+  border: none;
+  background: transparent;
+  color: #ffffff;
+  font-size: 16px;
+}
+
+.search-input >>> .search-btn:hover,
+.search-input >>> .search-btn:focus {
+  background: transparent;
+  color: #ffffff;
+}
+
+.search-input >>> .el-input__inner {
+  border-radius: 8px 0 0 8px;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-right: none;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  padding: 8px 14px;
+  font-size: 14px;
+  background-color: #ffffff;
+  color: #1e293b;
+}
+
+.search-input >>> .el-input__inner:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.search-input >>> .el-input__inner::placeholder {
+  color: #94a3b8;
+}
+
+.create-btn {
+  margin-left: 0;
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  border: 1px solid #2563eb;
+  transition: all 0.25s ease;
+  font-size: 14px;
+  letter-spacing: 0.3px;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.create-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+}
+
+.card-grid {
+  padding-top: 12px;
+  min-height: 0;
+}
+
+.command-card {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid rgba(59, 130, 246, 0.18);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  cursor: pointer;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  box-shadow: 0 2px 10px rgba(59, 130, 246, 0.08);
+  position: relative;
+}
+
+.command-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #3b82f6, #2563eb, #06b6d4);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.command-card:hover {
+  box-shadow: 0 16px 36px rgba(59, 130, 246, 0.2);
+  transform: translateY(-5px);
+  border-color: #3b82f6;
+  background: #ffffff;
+}
+
+.command-card:hover::before {
+  opacity: 1;
+}
+
+.command-card.selected {
+  background: linear-gradient(145deg, #eff6ff, #dbeafe);
+  border-color: #3b82f6;
+  border-width: 2px;
+  box-shadow: 0 12px 28px rgba(59, 130, 246, 0.25);
+}
+
+.command-card.selected .command-card-footer {
+  background: #eff6ff;
+  border-top-color: rgba(59, 130, 246, 0.2);
+}
+
+.command-card.selected .command-icon {
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.35);
+}
+
+.command-card-main {
+  display: flex;
+  flex-direction: column;
+  padding: 18px 18px 14px;
+  flex: 1;
+  box-sizing: border-box;
+  min-height: 0;
+}
+
+.command-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.command-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.name-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.name-zh {
+  font-size: 15px;
+  font-weight: 600;
+  color: #f1f5f9;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.name-en {
+  font-size: 11px;
+  font-weight: 400;
+  color: #6b7280;
+  letter-spacing: 0.3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.description-wrap {
+  display: flex;
+  align-items: flex-start;
+  min-height: 0;
+}
+
+.description {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #9ca3af;
+  max-width: 100%;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+}
+
+.command-card-footer {
+  padding: 10px 18px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  background: transparent;
+  box-sizing: border-box;
+  margin: auto 0 0;
+  border-top: 1px solid rgba(59, 130, 246, 0.15);
+}
+
+.command-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 18px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.25s ease;
+}
+
+.command-card:hover .command-icon {
+  transform: scale(1.06);
+}
+
+.card-actions {
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.command-card:hover .card-actions {
+  opacity: 1;
+}
+
+/* 引擎保护：保证卡片名称横向 */
+.name-row, .name-zh, .name-en { writing-mode: horizontal-tb !important; }
+
+/* 引擎保留：自动补全关键样式 */
+/* 保留：卡片图标按类型配色，避免优化后变黑白 */
+.command-icon.color-purple { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+.command-icon.color-green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+.command-icon.color-blue { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+.command-icon.color-indigo { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); }
+.command-icon.color-orange { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+.command-icon.color-cyan { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); }
+.command-icon.color-red { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+
+.meta-left { font-size: 12px; color: #9ca3af; }
+.meta-left .creator { margin-right: 8px; font-weight: 600; color: #e5e7eb; }
+.meta-left .created-at { color: #6b7280; }
+.meta-right { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #9ca3af; }
+.meta-right .subscribe .number { margin-left: 4px; font-weight: 600; color: #e5e7eb; }
+.meta-right .status { padding: 2px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+.meta-right .status.enabled { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+.meta-right .status.disabled { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+.meta-right .status.draft { background: rgba(148, 163, 184, 0.15); color: #94a3b8; }
+
+.pagination-wrapper { display: flex; align-items: center; justify-content: flex-end; padding: 20px 0; gap: 16px; }
+.pagination-wrapper .total-text { font-size: 13px; color: #9ca3af; }
+.empty-block { padding: 48px 0; }
+
+/* 卡片网格使用 flex 布局，保证同一行高度一致 */
+.card-grid >>> .el-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: -12px;
+  margin-left: -12px;
+}
+
+.card-grid >>> .el-col {
+  padding: 0 12px;
+  margin-bottom: 24px;
+  display: flex;
+  box-sizing: border-box;
+}
+
+/* 大屏及以上每行 5 个卡片 */
+@media (min-width: 1200px) {
+  .card-grid >>> .el-col {
+    width: 20%;
+    max-width: 20%;
+    flex: 0 0 20%;
+  }
+}
+
+.card-grid .command-card {
+  width: 100%;
+  min-height: 240px;
+}
+
+.tags-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; }
+
+.tag-item {
+  margin-right: 0;
+  margin-bottom: 0;
+  border-radius: 6px;
+  background: #e0eaff;
+  border-color: #c3d6f7;
+  color: #2563eb;
+  font-weight: 500;
+}</style>
+
+<style>
+.command-description-tooltip {
+  max-width: 360px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.5;
+}
+
+.command-dialog {
+  border-radius: 24px !important;
+  border: 1px solid rgba(59, 130, 246, 0.25) !important;
+  box-shadow: 0 24px 56px rgba(59, 130, 246, 0.25) !important;
+  background: #ffffff !important;
+}
+
+.command-dialog .el-dialog__header {
+  padding: 28px 28px 20px !important;
+  border-bottom: 1px solid rgba(59, 130, 246, 0.15) !important;
+  background: linear-gradient(135deg, #eef4ff, #e0ecff) !important;
+  border-radius: 24px 24px 0 0 !important;
+}
+
+.command-dialog .el-dialog__title {
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  color: #1e3a8a !important;
+}
+
+.command-dialog .el-dialog__body {
+  padding: 28px !important;
+}
+
+.command-dialog .el-form-item__label {
+  font-weight: 600 !important;
+  color: #475569 !important;
+}
+
+.command-dialog .el-input__inner,
+.command-dialog .el-textarea__inner,
+.command-dialog .el-select__tags {
+  border-radius: 12px !important;
+  border: 1px solid rgba(59, 130, 246, 0.25) !important;
+  transition: all 0.3s ease !important;
+  background-color: #ffffff !important;
+  color: #1e293b !important;
+}
+
+.command-dialog .el-input__inner:focus,
+.command-dialog .el-textarea__inner:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
+}
+
+.command-dialog .el-dialog__footer {
+  padding: 20px 28px 28px !important;
+  border-top: 1px solid rgba(59, 130, 246, 0.15) !important;
+  background: #ffffff !important;
+  border-radius: 0 0 24px 24px !important;
+}
+
+.command-dialog .el-button {
+  border-radius: 16px !important;
+  padding: 12px 28px !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+}
+
+.command-dialog .el-button:not(.el-button--primary) {
+  background-color: #eef2ff !important;
+  border-color: #c3d6f7 !important;
+  color: #2563eb !important;
+}
+
+.command-dialog .el-button:not(.el-button--primary):hover {
+  background-color: #e0eaff !important;
+  border-color: #3b82f6 !important;
+  color: #1e3a8a !important;
+}
+
+.command-dialog .el-button--primary {
+  background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+  border: 1px solid #2563eb !important;
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3) !important;
+}
+
+.command-dialog .el-button--primary:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 12px 32px rgba(59, 130, 246, 0.45) !important;
+}
+</style>

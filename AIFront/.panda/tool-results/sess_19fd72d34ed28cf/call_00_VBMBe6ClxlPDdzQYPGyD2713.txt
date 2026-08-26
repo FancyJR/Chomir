@@ -1,0 +1,272 @@
+浏览器控制台最近 20 条：
+1. [error/console.error] 2026-08-06T13:20:15.042Z route=/orchestration
+   [Vue warn]: Property or method "zoom" is not defined on the instance but referenced during render. Make sure that this property is reactive, either in the data option, or for class-based components, by initializing the property. See: https://v2.vuejs.org/v2/guide/reactivity.html#Declaring-Reactive-Properties.
+
+found in
+
+---> <OrchestrationBuilder> at src/views/OrchestrationBuilder.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/orchestration
+2. [error/console.error] 2026-08-06T13:20:15.043Z route=/orchestration
+   [Vue warn]: Property or method "orphanNodes" is not defined on the instance but referenced during render. Make sure that this property is reactive, either in the data option, or for class-based components, by initializing the property. See: https://v2.vuejs.org/v2/guide/reactivity.html#Declaring-Reactive-Properties.
+
+found in
+
+---> <OrchestrationBuilder> at src/views/OrchestrationBuilder.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/orchestration
+3. [error/vue.errorHandler] 2026-08-06T13:20:15.046Z route=/orchestration
+   Cannot read properties of undefined (reading 'length')
+   url=http://localhost:8080/orchestration
+   stack:
+   TypeError: Cannot read properties of undefined (reading 'length')
+       at Proxy.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/loaders/templateLoader.js??ruleSet[1].rules[3]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/OrchestrationBuilder.vue?vue&type=template&id=24e33454&scoped=true:438:35)
+       at Vue._render (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:2750:28)
+       at VueComponent.updateComponent (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3941:27)
+       at Watcher.get (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3512:33)
+       at new Watcher (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3502:51)
+       at mountComponent (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3958:5)
+       at Vue.$mount (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:8844:12)
+       at init (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:4476:19)
+       at merged (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:4630:9)
+4. [error/console.error] 2026-08-06T13:20:15.046Z route=/orchestration
+   TypeError: Cannot read properties of undefined (reading 'length')
+    at Proxy.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/loaders/templateLoader.js??ruleSet[1].rules[3]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/OrchestrationBuilder.vue?vue&type=template&id=24e33454&scoped=true:438:35)
+    at Vue._render (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:2750:28)
+    at VueComponent.updateComponent (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3941:27)
+    at Watcher.get (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3512:33)
+    at new Watcher (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3502:51)
+    at mountComponent (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3958:5)
+    at Vue.$mount (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:8844:12)
+    at init (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:4476:19)
+    at merged (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:4630:9)
+    at createComponent (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:6638:17)
+   url=http://localhost:8080/orchestration
+   stack:
+   TypeError: Cannot read properties of undefined (reading 'length')
+       at Proxy.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/loaders/templateLoader.js??ruleSet[1].rules[3]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/OrchestrationBuilder.vue?vue&type=template&id=24e33454&scoped=true:438:35)
+       at Vue._render (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:2750:28)
+       at VueComponent.updateComponent (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3941:27)
+       at Watcher.get (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3512:33)
+       at new Watcher (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3502:51)
+       at mountComponent (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3958:5)
+       at Vue.$mount (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:8844:12)
+       at init (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:4476:19)
+       at merged (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:4630:9)
+5. [error/console.error] 2026-08-06T13:20:15.051Z route=/orchestration
+   [Vue warn]: Property or method "minimapW" is not defined on the instance but referenced during render. Make sure that this property is reactive, either in the data option, or for class-based components, by initializing the property. See: https://v2.vuejs.org/v2/guide/reactivity.html#Declaring-Reactive-Properties.
+
+found in
+
+---> <OrchestrationBuilder> at src/views/OrchestrationBuilder.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/orchestration
+6. [error/console.error] 2026-08-06T13:20:15.052Z route=/orchestration
+   [Vue warn]: Property or method "minimapH" is not defined on the instance but referenced during render. Make sure that this property is reactive, either in the data option, or for class-based components, by initializing the property. See: https://v2.vuejs.org/v2/guide/reactivity.html#Declaring-Reactive-Properties.
+
+found in
+
+---> <OrchestrationBuilder> at src/views/OrchestrationBuilder.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/orchestration
+7. [error/console.error] 2026-08-06T13:20:15.052Z route=/orchestration
+   [Vue warn]: Property or method "minimapScale" is not defined on the instance but referenced during render. Make sure that this property is reactive, either in the data option, or for class-based components, by initializing the property. See: https://v2.vuejs.org/v2/guide/reactivity.html#Declaring-Reactive-Properties.
+
+found in
+
+---> <OrchestrationBuilder> at src/views/OrchestrationBuilder.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/orchestration
+8. [error/console.error] 2026-08-06T13:20:15.053Z route=/orchestration
+   [Vue warn]: Property or method "NODE_COLORS" is not defined on the instance but referenced during render. Make sure that this property is reactive, either in the data option, or for class-based components, by initializing the property. See: https://v2.vuejs.org/v2/guide/reactivity.html#Declaring-Reactive-Properties.
+
+found in
+
+---> <OrchestrationBuilder> at src/views/OrchestrationBuilder.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/orchestration
+9. [error/vue.errorHandler] 2026-08-06T13:20:15.053Z route=/orchestration
+   Cannot read properties of undefined (reading 'green')
+   url=http://localhost:8080/orchestration
+   stack:
+   TypeError: Cannot read properties of undefined (reading 'green')
+       at eval (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/loaders/templateLoader.js??ruleSet[1].rules[3]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/OrchestrationBuilder.vue?vue&type=template&id=24e33454&scoped=true:404:30)
+       at Proxy.renderList (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:2100:22)
+       at Proxy.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/loaders/templateLoader.js??ruleSet[1].rules[3]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/OrchestrationBuilder.vue?vue&type=template&id=24e33454&scoped=true:396:11)
+       at Vue._render (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:2750:28)
+       at VueComponent.updateComponent (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3941:27)
+       at Watcher.get (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3512:33)
+       at Watcher.run (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3588:30)
+       at flushSchedulerQueue (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:4191:17)
+       at Array.eval (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3209:20)
+10. [error/console.error] 2026-08-06T13:20:15.053Z route=/orchestration
+   TypeError: Cannot read properties of undefined (reading 'green')
+    at eval (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/loaders/templateLoader.js??ruleSet[1].rules[3]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/OrchestrationBuilder.vue?vue&type=template&id=24e33454&scoped=true:404:30)
+    at Proxy.renderList (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:2100:22)
+    at Proxy.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/loaders/templateLoader.js??ruleSet[1].rules[3]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/OrchestrationBuilder.vue?vue&type=template&id=24e33454&scoped=true:396:11)
+    at Vue._render (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:2750:28)
+    at VueComponent.updateComponent (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3941:27)
+    at Watcher.get (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3512:33)
+    at Watcher.run (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3588:30)
+    at flushSchedulerQueue (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:4191:17)
+    at Array.eval (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3209:20)
+    at flushCallbacks (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3131:18)
+   url=http://localhost:8080/orchestration
+   stack:
+   TypeError: Cannot read properties of undefined (reading 'green')
+       at eval (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/loaders/templateLoader.js??ruleSet[1].rules[3]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/OrchestrationBuilder.vue?vue&type=template&id=24e33454&scoped=true:404:30)
+       at Proxy.renderList (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:2100:22)
+       at Proxy.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/loaders/templateLoader.js??ruleSet[1].rules[3]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/OrchestrationBuilder.vue?vue&type=template&id=24e33454&scoped=true:396:11)
+       at Vue._render (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:2750:28)
+       at VueComponent.updateComponent (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3941:27)
+       at Watcher.get (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3512:33)
+       at Watcher.run (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3588:30)
+       at flushSchedulerQueue (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:4191:17)
+       at Array.eval (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3209:20)
+11. [error/console.error] 2026-08-06T13:20:23.473Z route=/orchestration
+   [Vue warn]: Property or method "zoom" is not defined on the instance but referenced during render. Make sure that this property is reactive, either in the data option, or for class-based components, by initializing the property. See: https://v2.vuejs.org/v2/guide/reactivity.html#Declaring-Reactive-Properties.
+
+found in
+
+---> <OrchestrationBuilder> at src/views/OrchestrationBuilder.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/orchestration
+12. [error/console.error] 2026-08-06T13:20:23.476Z route=/orchestration
+   [Vue warn]: Property or method "orphanNodes" is not defined on the instance but referenced during render. Make sure that this property is reactive, either in the data option, or for class-based components, by initializing the property. See: https://v2.vuejs.org/v2/guide/reactivity.html#Declaring-Reactive-Properties.
+
+found in
+
+---> <OrchestrationBuilder> at src/views/OrchestrationBuilder.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/orchestration
+13. [error/vue.errorHandler] 2026-08-06T13:20:23.479Z route=/orchestration
+   Cannot read properties of undefined (reading 'length')
+   url=http://localhost:8080/orchestration
+   stack:
+   TypeError: Cannot read properties of undefined (reading 'length')
+       at Proxy.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/loaders/templateLoader.js??ruleSet[1].rules[3]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/OrchestrationBuilder.vue?vue&type=template&id=24e33454&scoped=true:438:35)
+       at Vue._render (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:2750:28)
+       at VueComponent.updateComponent (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3941:27)
+       at Watcher.get (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3512:33)
+       at new Watcher (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3502:51)
+       at mountComponent (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3958:5)
+       at Vue.$mount (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:8844:12)
+       at init (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:4476:19)
+       at merged (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:4630:9)
+14. [error/console.error] 2026-08-06T13:20:23.479Z route=/orchestration
+   TypeError: Cannot read properties of undefined (reading 'length')
+    at Proxy.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/loaders/templateLoader.js??ruleSet[1].rules[3]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/OrchestrationBuilder.vue?vue&type=template&id=24e33454&scoped=true:438:35)
+    at Vue._render (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:2750:28)
+    at VueComponent.updateComponent (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3941:27)
+    at Watcher.get (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3512:33)
+    at new Watcher (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3502:51)
+    at mountComponent (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3958:5)
+    at Vue.$mount (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:8844:12)
+    at init (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:4476:19)
+    at merged (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:4630:9)
+    at createComponent (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:6638:17)
+   url=http://localhost:8080/orchestration
+   stack:
+   TypeError: Cannot read properties of undefined (reading 'length')
+       at Proxy.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/loaders/templateLoader.js??ruleSet[1].rules[3]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/OrchestrationBuilder.vue?vue&type=template&id=24e33454&scoped=true:438:35)
+       at Vue._render (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:2750:28)
+       at VueComponent.updateComponent (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3941:27)
+       at Watcher.get (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3512:33)
+       at new Watcher (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3502:51)
+       at mountComponent (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3958:5)
+       at Vue.$mount (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:8844:12)
+       at init (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:4476:19)
+       at merged (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:4630:9)
+15. [error/console.error] 2026-08-06T13:20:23.521Z route=/orchestration
+   [Vue warn]: Property or method "minimapW" is not defined on the instance but referenced during render. Make sure that this property is reactive, either in the data option, or for class-based components, by initializing the property. See: https://v2.vuejs.org/v2/guide/reactivity.html#Declaring-Reactive-Properties.
+
+found in
+
+---> <OrchestrationBuilder> at src/views/OrchestrationBuilder.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/orchestration
+16. [error/console.error] 2026-08-06T13:20:23.525Z route=/orchestration
+   [Vue warn]: Property or method "minimapH" is not defined on the instance but referenced during render. Make sure that this property is reactive, either in the data option, or for class-based components, by initializing the property. See: https://v2.vuejs.org/v2/guide/reactivity.html#Declaring-Reactive-Properties.
+
+found in
+
+---> <OrchestrationBuilder> at src/views/OrchestrationBuilder.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/orchestration
+17. [error/console.error] 2026-08-06T13:20:23.525Z route=/orchestration
+   [Vue warn]: Property or method "minimapScale" is not defined on the instance but referenced during render. Make sure that this property is reactive, either in the data option, or for class-based components, by initializing the property. See: https://v2.vuejs.org/v2/guide/reactivity.html#Declaring-Reactive-Properties.
+
+found in
+
+---> <OrchestrationBuilder> at src/views/OrchestrationBuilder.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/orchestration
+18. [error/console.error] 2026-08-06T13:20:23.528Z route=/orchestration
+   [Vue warn]: Property or method "NODE_COLORS" is not defined on the instance but referenced during render. Make sure that this property is reactive, either in the data option, or for class-based components, by initializing the property. See: https://v2.vuejs.org/v2/guide/reactivity.html#Declaring-Reactive-Properties.
+
+found in
+
+---> <OrchestrationBuilder> at src/views/OrchestrationBuilder.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/orchestration
+19. [error/vue.errorHandler] 2026-08-06T13:20:23.528Z route=/orchestration
+   Cannot read properties of undefined (reading 'green')
+   url=http://localhost:8080/orchestration
+   stack:
+   TypeError: Cannot read properties of undefined (reading 'green')
+       at eval (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/loaders/templateLoader.js??ruleSet[1].rules[3]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/OrchestrationBuilder.vue?vue&type=template&id=24e33454&scoped=true:404:30)
+       at Proxy.renderList (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:2100:22)
+       at Proxy.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/loaders/templateLoader.js??ruleSet[1].rules[3]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/OrchestrationBuilder.vue?vue&type=template&id=24e33454&scoped=true:396:11)
+       at Vue._render (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:2750:28)
+       at VueComponent.updateComponent (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3941:27)
+       at Watcher.get (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3512:33)
+       at Watcher.run (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3588:30)
+       at flushSchedulerQueue (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:4191:17)
+       at Array.eval (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3209:20)
+20. [error/console.error] 2026-08-06T13:20:23.528Z route=/orchestration
+   TypeError: Cannot read properties of undefined (reading 'green')
+    at eval (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/loaders/templateLoader.js??ruleSet[1].rules[3]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/OrchestrationBuilder.vue?vue&type=template&id=24e33454&scoped=true:404:30)
+    at Proxy.renderList (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:2100:22)
+    at Proxy.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/loaders/templateLoader.js??ruleSet[1].rules[3]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/OrchestrationBuilder.vue?vue&type=template&id=24e33454&scoped=true:396:11)
+    at Vue._render (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:2750:28)
+    at VueComponent.updateComponent (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3941:27)
+    at Watcher.get (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3512:33)
+    at Watcher.run (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3588:30)
+    at flushSchedulerQueue (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:4191:17)
+    at Array.eval (webpack-internal:///./node_m

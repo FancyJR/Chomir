@@ -1,0 +1,15 @@
+{
+  "PreToolUse": [
+    {
+      "matcher": "bash|bash_bg|write_file",
+      "message": "即将执行写入或终端操作，请确认目标正确"
+    }
+  ],
+  "PostToolUse": [
+    {
+      "matcher": "edit_file|write_file",
+      "message": "文件已改动，建议 /lsp 或 diagnostics 复查"
+    }
+  ],
+  "Stop": []
+}

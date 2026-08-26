@@ -1,0 +1,309 @@
+{
+	"name": "chomircode-agent",
+	"displayName": "%displayName%",
+	"description": "%description%",
+	"version": "0.1.0",
+	"publisher": "chomircode",
+	"license": "MIT",
+	"engines": {
+		"vscode": "^1.90.0"
+	},
+	"categories": [
+		"AI",
+		"Chat",
+		"Other"
+	],
+	"activationEvents": [
+		"onStartupFinished"
+	],
+	"main": "./out/extension",
+	"enabledApiProposals": [
+		"defaultChatParticipant",
+		"chatParticipantAdditions",
+		"chatProvider"
+	],
+	"scripts": {
+		"compile": "gulp compile-extension:chomircode-agent",
+		"watch": "gulp watch-extension:chomircode-agent"
+	},
+	"capabilities": {
+		"virtualWorkspaces": false,
+		"untrustedWorkspaces": {
+			"supported": "limited",
+			"description": "%workspaceTrust.description%"
+		}
+	},
+	"contributes": {
+		"languageModelChatProviders": [
+			{
+				"vendor": "deepseek",
+				"displayName": "DeepSeek",
+				"configuration": {
+					"type": "object",
+					"properties": {
+						"apiKey": {
+							"type": "string",
+							"secret": true,
+							"minLength": 1,
+							"description": "DeepSeek API key from platform.deepseek.com",
+							"title": "API Key"
+						},
+						"baseUrl": {
+							"type": "string",
+							"default": "https://api.deepseek.com",
+							"description": "OpenAI-compatible API base URL (no trailing slash)",
+							"title": "Base URL"
+						}
+					},
+					"required": [
+						"apiKey"
+					]
+				}
+			}
+		],
+		"chatParticipants": [
+			{
+				"id": "chomircode.agent",
+				"fullName": "%chatParticipant.fullName%",
+				"name": "chomircode",
+				"description": "%chatParticipant.description%",
+				"isDefault": true,
+				"modes": [
+					"agent",
+					"ask",
+					"edit"
+				],
+				"disambiguation": [
+					{
+						"category": "coding_agent",
+						"description": "Ask the ChomirCode coding agent to read, edit, or create files and run shell commands in the workspace.",
+						"examples": [
+							"Add a hello.txt file to the project",
+							"Fix the TypeScript compile error in src/",
+							"Refactor this function and update callers"
+						]
+					}
+				]
+			}
+		],
+		"configuration": {
+			"title": "ChomirCode Agent",
+			"properties": {
+				"chomircode.apiKey": {
+					"type": "string",
+					"default": "",
+					"markdownDescription": "%config.apiKey%",
+					"scope": "application",
+					"order": 1
+				},
+				"chomircode.baseUrl": {
+					"type": "string",
+					"default": "https://api.deepseek.com",
+					"markdownDescription": "%config.baseUrl%",
+					"scope": "application",
+					"order": 2
+				},
+				"chomircode.model": {
+					"type": "string",
+					"default": "deepseek-chat",
+					"enum": [
+						"deepseek-chat",
+						"deepseek-reasoner",
+						"deepseek-v4-flash",
+						"deepseek-v4-pro"
+					],
+					"enumDescriptions": [
+						"Official alias · general chat / coding",
+						"Official alias · reasoner",
+						"DeepSeek V4 Flash",
+						"DeepSeek V4 Pro"
+					],
+					"markdownDescription": "%config.model%",
+					"scope": "window",
+					"order": 3
+				},
+				"chomircode.enginePath": {
+					"type": "string",
+					"default": "",
+					"markdownDescription": "%config.enginePath%",
+					"scope": "window",
+					"order": 10
+				},
+				"chomircode.permissionMode": {
+					"type": "string",
+					"default": "acceptEdits",
+					"enum": [
+						"bypassPermissions",
+						"auto",
+						"acceptEdits",
+						"default",
+						"dontAsk",
+						"plan"
+					],
+					"enumDescriptions": [
+						"%config.permissionMode.bypassPermissions%",
+						"%config.permissionMode.auto%",
+						"%config.permissionMode.acceptEdits%",
+						"%config.permissionMode.default%",
+						"%config.permissionMode.dontAsk%",
+						"%config.permissionMode.plan%"
+					],
+					"markdownDescription": "%config.permissionMode%",
+					"scope": "window",
+					"order": 11
+				},
+				"chomircode.maxRounds": {
+					"type": "number",
+					"default": 40,
+					"minimum": 1,
+					"maximum": 80,
+					"markdownDescription": "%config.maxRounds%",
+					"scope": "window",
+					"order": 12
+				},
+				"chomircode.openChangedFiles": {
+					"type": "boolean",
+					"default": true,
+					"markdownDescription": "%config.openChangedFiles%",
+					"scope": "window",
+					"order": 13
+				},
+				"chomircode.useSidecar": {
+					"type": "boolean",
+					"default": true,
+					"markdownDescription": "%config.useSidecar%",
+					"scope": "window",
+					"order": 14
+				},
+				"chomircode.continueLastSession": {
+					"type": "boolean",
+					"default": true,
+					"markdownDescription": "%config.continueLastSession%",
+					"scope": "window",
+					"order": 15
+				},
+				"chomircode.contextWindow": {
+					"type": "number",
+					"default": 128000,
+					"minimum": 8000,
+					"maximum": 1000000,
+					"markdownDescription": "%config.contextWindow%",
+					"scope": "window",
+					"order": 16
+				},
+				"chomircode.compactOutputReserve": {
+					"type": "number",
+					"default": 8192,
+					"minimum": 1024,
+					"maximum": 64000,
+					"markdownDescription": "%config.compactOutputReserve%",
+					"scope": "window",
+					"order": 17
+				},
+				"chomircode.autocompactBuffer": {
+					"type": "number",
+					"default": 16000,
+					"minimum": 1000,
+					"maximum": 64000,
+					"markdownDescription": "%config.autocompactBuffer%",
+					"scope": "window",
+					"order": 18
+				}
+			}
+		},
+		"commands": [
+			{
+				"command": "chomircode.agent.setApiKey",
+				"title": "%command.setApiKey%",
+				"category": "ChomirCode"
+			},
+			{
+				"command": "chomircode.agent.selectModel",
+				"title": "%command.selectModel%",
+				"category": "ChomirCode"
+			},
+			{
+				"command": "chomircode.agent.showStatus",
+				"title": "%command.showStatus%",
+				"category": "ChomirCode"
+			},
+			{
+				"command": "chomircode.agent.openSettings",
+				"title": "%command.openSettings%",
+				"category": "ChomirCode"
+			},
+			{
+				"command": "chomircode.agent.manageModels",
+				"title": "%command.manageModels%",
+				"category": "ChomirCode"
+			},
+			{
+				"command": "chomircode.agent.openPandaConfig",
+				"title": "%command.openPandaConfig%",
+				"category": "ChomirCode"
+			},
+			{
+				"command": "chomircode.agent.openMcpConfig",
+				"title": "%command.openMcpConfig%",
+				"category": "ChomirCode"
+			},
+			{
+				"command": "chomircode.agent.openPermissions",
+				"title": "%command.openPermissions%",
+				"category": "ChomirCode"
+			},
+			{
+				"command": "chomircode.agent.openHooks",
+				"title": "%command.openHooks%",
+				"category": "ChomirCode"
+			},
+			{
+				"command": "chomircode.agent.openSkills",
+				"title": "%command.openSkills%",
+				"category": "ChomirCode"
+			},
+			{
+				"command": "chomircode.agent.openMemory",
+				"title": "%command.openMemory%",
+				"category": "ChomirCode"
+			},
+			{
+				"command": "chomircode.agent.connectMcp",
+				"title": "%command.connectMcp%",
+				"category": "ChomirCode"
+			},
+			{
+				"command": "chomircode.agent.showSessions",
+				"title": "%command.showSessions%",
+				"category": "ChomirCode"
+			},
+			{
+				"command": "chomircode.agent.newSession",
+				"title": "%command.newSession%",
+				"category": "ChomirCode"
+			},
+			{
+				"command": "chomircode.agent.compactContext",
+				"title": "%command.compactContext%",
+				"category": "ChomirCode"
+			},
+			{
+				"command": "chomircode.agent.cyclePermissionMode",
+				"title": "%command.cyclePermissionMode%",
+				"category": "ChomirCode"
+			},
+			{
+				"command": "chomircode.agent.showEngineDashboard",
+				"title": "%command.showEngineDashboard%",
+				"category": "ChomirCode"
+			}
+		]
+	},
+	"devDependencies": {
+		"@types/node": "24.x"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/vscode.git"
+	}
+}

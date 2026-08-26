@@ -1,0 +1,535 @@
+<template>
+  <div class="page-dev-editor">
+    <el-card class="page-card">
+      <div slot="header" class="card-header">
+        <div class="left">
+          <span class="title">云编译器（当前工程在线编辑）</span>
+          <span class="sub">仅供开发自用，左侧展示 server 与 src 下的工程文件层级结构。</span>
+        </div>
+      </div>
+
+      <div class="editor-layout">
+        <div class="pane pane-left" :style="{ flexBasis: leftWidth + 'px' }">
+          <div class="file-list">
+            <div class="file-list-title">项目文件（工程根目录）</div>
+            <div v-if="filesLoading" class="file-list-empty file-list-loading">
+              <i class="el-icon-loading" /> 正在加载文件列表...
+            </div>
+            <template v-else-if="filesLoadError">
+              <div class="file-list-empty file-list-error">
+                {{ filesLoadError }}
+              </div>
+              <el-button type="text" size="small" class="file-list-retry" @click="fetchFiles">
+                重试
+              </el-button>
+            </template>
+            <el-tree
+              v-else-if="fileTree.length"
+              :data="fileTree"
+              node-key="id"
+              :props="treeProps"
+              highlight-current
+              default-expand-all
+              class="file-tree"
+              :render-content="renderTreeNode"
+              @node-click="handleNodeClick"
+            />
+            <div v-else class="file-list-empty">
+              暂无可编辑文件（请确认后端服务已启动且工程根目录下存在 .js/.vue/.ts/.json 文件）
+            </div>
+          </div>
+        </div>
+
+        <div class="pane-resizer" @mousedown="startDrag('left', $event)"></div>
+
+        <div class="pane pane-middle">
+          <div class="pane-middle-inner">
+            <div class="editor-panel">
+              <div class="editor-header">
+                <span class="editor-path">{{ currentPath || '请选择左侧文件' }}</span>
+                <div class="editor-actions">
+                  <el-input
+                    v-model="searchText"
+                    size="mini"
+                    placeholder="查找"
+                    class="toolbar-input"
+                    @keyup.enter.native="handleFindNext"
+                  />
+                  <el-input
+                    v-model="replaceText"
+                    size="mini"
+                    placeholder="替换为"
+                    class="toolbar-input"
+                    @keyup.enter.native="handleReplaceAll"
+                  />
+                  <el-button size="mini" @click="handleFindNext" :disabled="!searchText">查找</el-button>
+                  <el-button size="mini" @click="handleReplaceAll" :disabled="!searchText">全部替换</el-button>
+                  <el-button
+                    size="mini"
+                    :disabled="!currentPath || formatting"
+                    :loading="formatting"
+                    @click="handleFormat"
+                  >
+                    格式化
+                  </el-button>
+                </div>
+              </div>
+              <div v-if="loading" class="editor-loading">
+                <el-spinner /> 正在加载文件内容...
+              </div>
+              <div v-else-if="!currentPath" class="editor-empty">
+                <div class="editor-empty-title">欢迎使用云编译器</div>
+                <div class="editor-empty-desc">
+                  在左侧选择任意一个文件开始编辑当前工程的代码。
+                </div>
+                <div class="editor-empty-tips">
+                  - 左边是完整的项目文件树（根目录、server、src 等）<br>
+                  - 右边支持代码高亮、查找/替换、自动保存和一键格式化
+                </div>
+              </div>
+              <codemirror
+                v-else
+                ref="cmEditor"
+                v-model="content"
+                class="editor-codemirror"
+                :options="cmOptions"
+                :style="{ height: '100%' }"
+              />
+              <div v-if="error" class="editor-error">
+                {{ error }}
+              </div>
+            </div>
+
+            <div v-show="showTerminal" class="terminal-panel">
+              <div class="terminal-tabs">
+                <div
+                  v-for="tab in terminalTabs"
+                  :key="tab.id"
+                  :class="['terminal-tab', { active: tab.id === activeTerminalId }]"
+                  @click="activeTerminalId = tab.id"
+                >
+                  <span class="terminal-tab-title">{{ tab.title }}</span>
+                  <i
+                    class="el-icon-close terminal-tab-close"
+                    v-if="terminalTabs.length > 1"
+                    @click.stop="closeTerminal(tab.id)"
+                  />
+                </div>
+                <div class="terminal-tab add" @click="addTerminal">
+                  <i class="el-icon-plus" />
+                </div>
+              </div>
+              <div ref="terminalBody" class="terminal-body">
+                <pre class="terminal-log">
+{{ activeTerminal && activeTerminal.log ? activeTerminal.log : '在这里运行命令，例如：npm run dev' }}
+                </pre>
+              </div>
+              <div class="terminal-input-bar">
+                <el-input
+                  v-model="terminalCommand"
+                  size="mini"
+                  placeholder="在此输入命令，例如 npm run dev（当前为本地模拟输出）"
+                  @keyup.enter.native="runTerminalCommand"
+                />
+                <el-button size="mini" @click="runTerminalCommand">运行</el-button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pane-resizer" @mousedown="startDrag('right', $event)"></div>
+
+        <div class="pane pane-right" :style="{ flexBasis: rightWidth + 'px' }">
+          <div class="chat-panel">
+            <div class="chat-header">
+              <span class="chat-title">AI 助手 · 无代码开发</span>
+              <span class="chat-sub">问答 / 生成页面 / 修改代码</span>
+            </div>
+            <div ref="chatBody" class="chat-body">
+              <div
+                v-for="(msg, idx) in chatMessages"
+                :key="idx"
+                class="chat-item"
+                :class="`is-${msg.role}`"
+              >
+                <div class="chat-bubble">
+                  <!-- 加速器：发送需求后实时显示 分析→规划→生成→应用 进度，减轻等待焦虑 -->
+                  <div
+                    v-if="msg.role === 'assistant' && msg.meta && msg.meta.progress"
+                    class="engine-accelerator"
+                  >
+                    <span class="accelerator-label">
+                      <i class="el-icon-loading" /> 加速中
+                    </span>
+                    <div class="accelerator-track">
+                      <div
+                        v-for="step in [{ n: 1, label: '分析' }, { n: 2, label: '规划' }, { n: 3, label: '生成' }, { n: 4, label: '应用' }]"
+                        :key="step.n"
+                        class="accelerator-step"
+                        :class="{ done: (msg.meta.engineStepIndex || 0) >= step.n, current: (msg.meta.engineStepIndex || 0) === step.n - 1 }"
+                      >
+                        <i v-if="(msg.meta.engineStepIndex || 0) >= step.n" class="el-icon-check" />
+                        <i v-else-if="(msg.meta.engineStepIndex || 0) === step.n - 1" class="el-icon-loading accelerator-step-loading" />
+                        <span v-else class="step-dot" />
+                        {{ step.label }}
+                      </div>
+                    </div>
+                  </div>
+                  <div v-if="msg.role === 'assistant' && msg.meta && msg.meta.kind" class="chat-tag">
+                    {{ msg.meta.kind === 'qa' ? '问答' : msg.meta.kind === 'modify_existing' ? '改代码' : '生成页面' }}
+                  </div>
+                  <!-- AI-UI：助手消息用 Markdown + 代码高亮 + ECharts 图表渲染 -->
+                  <chat-content
+                    v-if="msg.role === 'assistant'"
+                    :content="msg.content || ''"
+                    :streaming="!!(msg.meta && msg.meta.streaming)"
+                  />
+                  <div v-else class="chat-text">{{ msg.content }}</div>
+                  <!-- 思维引擎：推流展示思考过程 -->
+                  <div v-if="msg.role === 'assistant' && msg.meta && (msg.meta.reasoningStream != null && msg.meta.reasoningStream !== '')" class="think-reasoning-stream">
+                    <span class="think-reasoning-label">💭 思考过程</span>
+                    <pre class="think-reasoning-pre">{{ msg.meta.reasoningStream }}</pre>
+                  </div>
+                  <!-- Cursor 式：在「正在生成代码」下方显示 Thinking + 流式生成过程 -->
+                  <div v-if="msg.role === 'assistant' && msg.meta && msg.meta.codegenThinking" class="codegen-thinking">
+                    <span class="codegen-thinking-label"><i class="el-icon-loading" /> Thinking{{ getThinkingSeconds(msg) > 0 ? ' · ' + getThinkingSeconds(msg) + 's' : '' }}</span>
+                    <pre class="codegen-stream-pre"><code>{{ msg.meta.codegenStreamingContent || '' }}</code></pre>
+                  </div>
+                  <!-- 思考/规划/生成等待阶段：显示加载动画，避免用户以为卡住 -->
+                  <div v-if="msg.role === 'assistant' && msg.meta && msg.meta.progress && !msg.meta.needsClarification" class="engine-waiting-hint">
+                    <i class="el-icon-loading" />
+                    <span>{{ getEngineWaitingLabel(msg) }}</span>
+                  </div>
+                  <div v-if="msg.meta && msg.meta.reverted" class="chat-note">
+                    本次改动已回退
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- 同意/撤回 放在输入框上方，与 Cursor 一致 -->
+            <div v-if="pendingChangeMessage" class="chat-actions-bar">
+              <span class="chat-actions-label">有未确认的代码改动</span>
+              <el-button
+                size="mini"
+                type="primary"
+                plain
+                @click="confirmChange(pendingChangeMessage)"
+              >
+                同意更改
+              </el-button>
+              <el-button
+                size="mini"
+                type="danger"
+                plain
+                :loading="pendingChangeMessage.meta && pendingChangeMessage.meta.reverting"
+                @click="revertChange(pendingChangeMessage)"
+              >
+                回退此次更改
+              </el-button>
+            </div>
+            <div v-if="lastMessageNeedsClarification" class="chat-clarification-hint">
+              <span class="chat-clarification-hint-text">💬 请在此回答确认问题或继续输入，与思维引擎对话</span>
+            </div>
+            <div class="chat-input-bar">
+              <el-input
+                ref="chatInputRef"
+                v-model="chatInput"
+                class="chat-main-input"
+                type="textarea"
+                size="mini"
+                :autosize="{ minRows: 1, maxRows: 4 }"
+                resize="none"
+                :placeholder="chatInputPlaceholder"
+                @keyup.enter.native.exact.prevent="handleSendChat"
+              />
+              <div class="chat-toolbar">
+                <el-select
+                  v-model="agentMode"
+                  size="mini"
+                  class="chat-select"
+                  placeholder="Agent"
+                >
+                  <el-option label="Claw Agent" value="default" />
+                  <el-option label="Planner" value="planner" />
+                  <el-option label="Q&A" value="qa_only" />
+                </el-select>
+                <el-select
+                  v-model="chatModel"
+                  size="mini"
+                  class="chat-select"
+                  placeholder="模型"
+                >
+                  <el-option label="Auto" value="deepseek-chat" />
+                  <el-option label="Reasoner" value="deepseek-reasoner" />
+                </el-select>
+                <div class="chat-icons">
+                  <el-upload
+                    class="chat-icon-btn"
+                    action=""
+                    :auto-upload="false"
+                    :file-list="chatFiles"
+                    :multiple="true"
+                    :show-file-list="false"
+                    :on-change="handleFileChange"
+                    :on-remove="handleFileRemove"
+                  >
+                    <i class="el-icon-picture-outline" />
+                  </el-upload>
+                  <i class="el-icon-mic chat-icon-btn" />
+                  <el-button
+                    type="primary"
+                    size="mini"
+                    class="chat-send-btn"
+                    :loading="chatSending"
+                    :disabled="!chatInput.trim()"
+                    @click="handleSendChat"
+                  >
+                    发送
+                  </el-button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="status-bar">
+        <div class="status-left" @click="toggleTerminal">
+          <span class="status-icon">
+            <i :class="showTerminal ? 'el-icon-caret-down' : 'el-icon-caret-up'" />
+            <i class="el-icon-warning-outline status-icon-warning" />
+          </span>
+          <span class="status-text">终端</span>
+        </div>
+        <div class="status-right">
+          <span class="status-item">Dev Editor</span>
+        </div>
+      </div>
+    </el-card>
+  </div>
+</template>
+
+<script>
+import ChatContent from '@/components/ChatContent.vue'
+
+export default {
+  name: 'DevEditor',
+  components: { ChatContent },
+  data () {
+    return {
+      files: [],
+      fileTree: [],
+      filesLoading: true,
+      filesLoadError: '',
+      currentPath: '',
+      content: '',
+      loading: false,
+      saving: false,
+      error: '',
+      searchText: '',
+      replaceText: '',
+      lastSearchIndex: null,
+      formatting: false,
+      autoSaveTimer: null,
+      chatMessages: [],
+      chatInput: '',
+      chatSending: false,
+      agentMode: 'default',
+      chatModel: 'deepseek-chat',
+      chatFiles: [],
+      lastTargetViewFile: '',
+      clawSessionId: '',
+      leftWidth: 260,
+      rightWidth: 280,
+      draggingSide: null,
+      dragStartX: 0,
+      dragStartLeft: 0,
+      dragStartRight: 0,
+      showTerminal: false,
+      terminalTabs: [
+        { id: '1', title: '终端 1', log: '', running: false }
+      ],
+      activeTerminalId: '1',
+      nextTerminalId: 2,
+      terminalCommand: '',
+      terminalTimers: Object.create(null),
+      thinkingTimerTick: 0,
+      thinkingTimerId: null,
+      treeProps: {
+        label: 'label',
+        children: 'children'
+      },
+      cmOptions: {
+        tabSize: 2,
+        lineNumbers: true,
+        lineWrapping: false,
+        theme: 'material',
+        mode: 'text/plain',
+        styleActiveLine: true,
+        matchBrackets: true,
+        autoCloseBrackets: true,
+        autoCloseTags: true,
+        extraKeys: {}
+      }
+    }
+  },
+  computed: {
+    activeTerminal () {
+      return this.terminalTabs.find(t => t.id === this.activeTerminalId) || this.terminalTabs[0] || null
+    },
+    // 最近一条可同意/回退的助手消息（用于输入框上方操作栏，与 Cursor 一致）
+    pendingChangeMessage () {
+      const list = this.chatMessages || []
+      for (let i = list.length - 1; i >= 0; i--) {
+        const msg = list[i]
+        if (msg.role !== 'assistant' || !msg.meta) continue
+        if (msg.meta.kind === 'qa') continue
+        if (msg.meta.reverted) continue
+        if (!Array.isArray(msg.meta.changed) || !msg.meta.changed.length) continue
+        const hasPath = msg.meta.changed.some(c => (c.path || c.viewFile || c.file))
+        if (hasPath) return msg
+      }
+      return null
+    },
+    // 最后一条助手消息是否为「需要确认」——展示再次提问/继续输入提示，与思维引擎澄清能力一致
+    lastMessageNeedsClarification () {
+      const list = this.chatMessages || []
+      for (let i = list.length - 1; i >= 0; i--) {
+        const msg = list[i]
+        if (msg.role !== 'assistant') return false
+        return !!(msg.meta && msg.meta.needsClarification)
+      }
+      return false
+    },
+    chatInputPlaceholder () {
+      return this.lastMessageNeedsClarification
+        ? '请回答上面的确认问题，或继续描述您的需求…（回车发送）'
+        : 'Plan, @ for context, / for commands'
+    }
+  },
+  created () {
+    this.fetchFiles()
+    // 需要在 created 里绑定 extraKeys 以访问组件 this
+    this.cmOptions.extraKeys = {
+      'Ctrl-Space': cm => {
+        if (cm && cm.showHint) {
+          cm.showHint()
+        }
+      }
+    }
+  },
+  beforeDestroy () {
+    Object.keys(this.terminalTimers).forEach(id => {
+      clearInterval(this.terminalTimers[id])
+    })
+    if (this.thinkingTimerId) {
+      clearInterval(this.thinkingTimerId)
+      this.thinkingTimerId = null
+    }
+  },
+  watch: {
+    content () {
+      this.scheduleAutoSave()
+    }
+  },
+  methods: {
+    getCodeMirror () {
+      return this.$refs.cmEditor && this.$refs.cmEditor.codemirror
+    },
+    activeTerminalSafe () {
+      return this.terminalTabs.find(t => t.id === this.activeTerminalId) || this.terminalTabs[0] || null
+    },
+    startDrag (side, event) {
+      event.preventDefault()
+      this.draggingSide = side
+      this.dragStartX = event.clientX
+      this.dragStartLeft = this.leftWidth
+      this.dragStartRight = this.rightWidth
+      document.body && (document.body.style.userSelect = 'none')
+      document.body && (document.body.style.cursor = 'col-resize')
+      document.addEventListener('mousemove', this.handleDragging)
+      document.addEventListener('mouseup', this.stopDrag)
+    },
+    handleDragging (event) {
+      if (!this.draggingSide) return
+      const dx = event.clientX - this.dragStartX
+      const minWidth = 180
+      const maxWidth = this.draggingSide === 'right' ? 420 : 600
+      if (this.draggingSide === 'left') {
+        let next = this.dragStartLeft + dx
+        if (next < minWidth) next = minWidth
+        if (next > maxWidth) next = maxWidth
+        this.leftWidth = next
+      } else if (this.draggingSide === 'right') {
+        let next = this.dragStartRight - dx
+        if (next < minWidth) next = minWidth
+        if (next > maxWidth) next = maxWidth
+        this.rightWidth = next
+      }
+    },
+    stopDrag () {
+      if (!this.draggingSide) return
+      this.draggingSide = null
+      document.removeEventListener('mousemove', this.handleDragging)
+      document.removeEventListener('mouseup', this.stopDrag)
+      if (document.body) {
+        document.body.style.userSelect = ''
+        document.body.style.cursor = ''
+      }
+    },
+    async fetchFiles () {
+      this.filesLoadError = ''
+      this.filesLoading = true
+      try {
+        const res = await fetch('/api/dev/files')
+        const data = await res.json().catch(() => ({}))
+        if (res.ok && data && Array.isArray(data.files)) {
+          this.files = data.files
+          this.buildFileTree(data.files)
+          this.error = ''
+        } else {
+          this.filesLoadError = (data && data.message) || '获取文件列表失败'
+        }
+      } catch (e) {
+        this.filesLoadError = e.message || '获取文件列表失败（请确认后端服务已启动，如 npm run server）'
+      } finally {
+        this.filesLoading = false
+      }
+    },
+    buildFileTree (files) {
+      const root = []
+      const map = {}
+      files.forEach(f => {
+        const parts = f.path.split('/')
+        let parent = root
+        let curKey = ''
+        parts.forEach((seg, idx) => {
+          curKey = curKey ? `${curKey}/${seg}` : seg
+          if (!map[curKey]) {
+            const node = {
+              id: curKey,
+              label: seg,
+              children: [],
+              isDir: idx !== parts.length - 1
+            }
+            // 最后一段是文件，挂上 path 方便点击
+            if (idx === parts.length - 1) {
+              node.path = f.path
+              node.isDir = false
+              const dotIndex = f.path.lastIndexOf('.')
+              if (dotIndex !== -1) {
+                node.ext = f.path.slice(dotIndex + 1)
+              }
+            }
+            map[curKey] = node
+            parent.push(node)
+          }
+          parent = map[curKey].children
+        })
+      })
+      // 递归排序：目录在前，之后文件，按名称排序
+      const sortNodes = nodes => {
+        if (!Array.isArray(nodes)) return
+        nodes.sort((a, b) => {
+          const aDir = !!a.isDir
+          const bDir = !!b.isDir
+          if (aDir !== bDir

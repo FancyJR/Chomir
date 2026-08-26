@@ -1,0 +1,400 @@
+<template>
+  <div class="page-orchestration">
+    <!-- 顶部工具栏 -->
+    <div class="orch-toolbar">
+      <div class="toolbar-left">
+        <span class="toolbar-title">
+          <i class="el-icon-connection"></i>
+          编排设计器
+        </span>
+        <el-divider direction="vertical" />
+        <el-input
+          v-model="flowName"
+          size="small"
+          placeholder="编排名称"
+          class="flow-name-input"
+        />
+      </div>
+      <div class="toolbar-right">
+        <el-button size="small" icon="el-icon-refresh-left" :disabled="!undoStack.length" @click="undo">撤销</el-button>
+        <el-button size="small" icon="el-icon-refresh-right" :disabled="!redoStack.length" @click="redo">重做</el-button>
+        <el-divider direction="vertical" />
+        <el-button size="small" icon="el-icon-refresh" @click="resetCanvas">重置画布</el-button>
+        <el-button size="small" icon="el-icon-download" @click="exportJson">导出 JSON</el-button>
+        <el-button size="small" icon="el-icon-upload2" @click="importJson">导入 JSON</el-button>
+        <el-divider direction="vertical" />
+        <el-button size="small" icon="el-icon-video-play" type="success" @click="runFlow">运行</el-button>
+        <el-button size="small" icon="el-icon-check" type="primary" @click="saveFlow">保存</el-button>
+      </div>
+    </div>
+
+    <div class="orch-body">
+      <!-- 左侧节点面板 -->
+      <div class="node-palette">
+        <div class="palette-header">
+          <span>节点组件</span>
+        </div>
+        <div class="palette-search">
+          <el-input
+            v-model="paletteKeyword"
+            size="mini"
+            placeholder="搜索节点"
+            prefix-icon="el-icon-search"
+            clearable
+          />
+        </div>
+        <div class="palette-groups">
+          <div
+            v-for="group in filteredPaletteGroups"
+            :key="group.name"
+            class="palette-group"
+          >
+            <div class="group-title">{{ group.name }}</div>
+            <div
+              v-for="node in group.nodes"
+              :key="node.type"
+              class="palette-node"
+              draggable="true"
+              @dragstart="onDragStart($event, node)"
+              @click="addNodeFromPalette(node)"
+            >
+              <span :class="['node-dot', node.color]"></span>
+              <span class="node-label">{{ node.label }}</span>
+              <i class="el-icon-plus node-add-icon"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 中间画布 -->
+      <div
+        class="canvas-wrap"
+        ref="canvasWrap"
+        @dragover.prevent
+        @drop="onDrop"
+        @mousedown="onCanvasMouseDown"
+        @mousemove="onCanvasMouseMove"
+        @mouseup="onCanvasMouseUp"
+        @click="onCanvasClick"
+      >
+        <!-- 网格背景 -->
+        <div class="grid-bg" :style="gridStyle"></div>
+
+        <!-- SVG 连线层 -->
+        <svg class="edge-layer" :width="canvasW" :height="canvasH">
+          <defs>
+            <marker
+              id="arrowhead"
+              markerWidth="10"
+              markerHeight="7"
+              refX="10"
+              refY="3.5"
+              orient="auto"
+            >
+              <polygon points="0 0, 10 3.5, 0 7" fill="#409EFF" />
+            </marker>
+          </defs>
+          <!-- 已保存的连线 -->
+          <g v-for="edge in edges" :key="edge.id">
+            <!-- 透明加宽命中层，便于点击/双击 -->
+            <path
+              :d="edgePath(edge)"
+              class="edge-path-hit"
+              @mousedown.stop="selectEdge(edge)"
+              @dblclick.stop="deleteEdge(edge)"
+            />
+            <!-- 可视连线 -->
+            <path
+              :d="edgePath(edge)"
+              class="edge-path"
+              :class="{ 'is-selected': selectedEdgeId === edge.id }"
+            />
+            <!-- 连线条件标签 -->
+            <text
+              v-if="edge.label"
+              :x="edgeLabelPos(edge).x"
+              :y="edgeLabelPos(edge).y"
+              class="edge-label"
+            >{{ edge.label }}</text>
+          </g>
+          <!-- 正在拖拽的连线 -->
+          <path
+            v-if="draggingEdge"
+            :d="draggingEdgePath"
+            class="edge-path is-dragging"
+          />
+        </svg>
+
+        <!-- 节点层 -->
+        <div
+          v-for="node in nodes"
+          :key="node.id"
+          class="flow-node"
+          :class="{
+            'is-selected': selectedNodeId === node.id,
+            'is-running': runningNodeId === node.id
+          }"
+          :style="nodeStyle(node)"
+          @mousedown.stop="onNodeMouseDown($event, node)"
+          @dblclick.stop="openNodeEditor(node)"
+          @click.stop="selectNode(node)"
+        >
+          <div class="node-header" :class="node.color">
+            <span class="node-icon"><i :class="node.icon"></i></span>
+            <span class="node-title">{{ node.label }}</span>
+            <span class="node-del" @click.stop="deleteNode(node)">
+              <i class="el-icon-close"></i>
+            </span>
+          </div>
+          <div class="node-body">
+            <div class="node-desc">{{ node.description || '双击编辑节点配置' }}</div>
+            <!-- 绑定能力徽章 -->
+            <div class="node-bind" v-if="node.bind && node.bind.resourceName">
+              <span class="bind-badge" :class="'bind-' + node.bind.kind">
+                <i :class="bindIcon(node.bind.kind)"></i>
+                <span class="bind-name">{{ node.bind.resourceName }}</span>
+                <span class="bind-ver" v-if="node.bind.resourceVersion">{{ node.bind.resourceVersion }}</span>
+              </span>
+            </div>
+            <div class="node-config" v-if="node.config && node.config.length">
+              <div
+                v-for="cfg in node.config"
+                :key="cfg.key"
+                class="config-item"
+              >
+                <span class="config-key">{{ cfg.label }}:</span>
+                <span class="config-val">{{ cfg.value }}</span>
+              </div>
+            </div>
+          </div>
+          <!-- 连接点 -->
+          <div
+            class="port port-in"
+            :data-node-id="node.id"
+            @mousedown.stop="startEdge($event, node, 'in')"
+          ></div>
+          <div
+            class="port port-out"
+            :data-node-id="node.id"
+            @mousedown.stop="startEdge($event, node, 'out')"
+          ></div>
+        </div>
+
+        <!-- 空状态 -->
+        <div v-if="!nodes.length" class="canvas-empty">
+          <i class="el-icon-connection"></i>
+          <p>从左侧拖拽节点到画布，或点击节点添加</p>
+          <p class="sub">拖动节点右下角连接点可建立连线</p>
+        </div>
+
+        <!-- 缩放控制 -->
+        <div class="zoom-controls">
+          <el-button-group size="mini">
+            <el-button icon="el-icon-zoom-out" @click.stop="zoomOut" />
+            <el-button class="zoom-percent" @click.stop="zoomReset">{{ Math.round(zoom * 100) }}%</el-button>
+            <el-button icon="el-icon-zoom-in" @click.stop="zoomIn" />
+          </el-button-group>
+          <el-button size="mini" icon="el-icon-full-screen" title="适应画布" @click.stop="fitCanvas" />
+        </div>
+
+        <!-- 小地图 -->
+        <div class="minimap" v-if="minimapVisible && nodes.length">
+          <div class="minimap-header">
+            <span>导航</span>
+            <i class="el-icon-close" @click.stop="minimapVisible = false"></i>
+          </div>
+          <div class="minimap-body" ref="minimapBody" @click.stop="onMinimapClick">
+            <svg :width="minimapW" :height="minimapH">
+              <rect
+                v-for="node in nodes"
+                :key="'mm-' + node.id"
+                :x="node.x * minimapScale"
+                :y="node.y * minimapScale"
+                :width="160 * minimapScale"
+                :height="60 * minimapScale"
+                :fill="NODE_COLORS[node.color] || '#409EFF'"
+                :opacity="selectedNodeId === node.id ? 1 : 0.7"
+                rx="2"
+              />
+              <line
+                v-for="edge in edges"
+                :key="'mme-' + edge.id"
+                :x1="(nodeById(edge.from).x + 160) * minimapScale"
+                :y1="(nodeById(edge.from).y + 30) * minimapScale"
+                :x2="nodeById(edge.to).x * minimapScale"
+                :y2="(nodeById(edge.to).y + 30) * minimapScale"
+                stroke="#409EFF"
+                stroke-width="1"
+                opacity="0.5"
+              />
+            </svg>
+            <!-- 视口框 -->
+            <div
+              class="minimap-viewport"
+              :style="minimapViewportStyle"
+            ></div>
+          </div>
+        </div>
+
+        <!-- 底部统计栏 -->
+        <div class="canvas-stats">
+          <span class="stat-chip"><i class="el-icon-s-grid"></i> 节点 {{ nodes.length }}</span>
+          <span class="stat-chip"><i class="el-icon-connection"></i> 连线 {{ edges.length }}</span>
+          <span class="stat-chip" :class="{ 'has-warn': orphanNodes.length }">
+            <i class="el-icon-warning-outline"></i>
+            {{ orphanNodes.length ? orphanNodes.length + ' 个未连接节点' : '拓扑完整' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- 右侧属性面板 -->
+      <div class="property-panel">
+        <div class="panel-header">
+          <span>属性配置</span>
+        </div>
+        <div v-if="selectedNode" class="panel-body">
+          <div class="prop-section">
+            <div class="prop-title">节点信息</div>
+            <el-form label-width="70px" size="mini">
+              <el-form-item label="名称">
+                <el-input v-model="selectedNode.label" />
+              </el-form-item>
+              <el-form-item label="类型">
+                <el-input :value="selectedNode.type" disabled />
+              </el-form-item>
+              <el-form-item label="描述">
+                <el-input
+                  v-model="selectedNode.description"
+                  type="textarea"
+                  :rows="2"
+                />
+              </el-form-item>
+            </el-form>
+          </div>
+          <div class="prop-section" v-if="selectedNode.bind">
+            <div class="prop-title">能力绑定</div>
+            <el-form label-width="70px" size="mini">
+              <el-form-item :label="bindLabel(selectedNode)">
+                <el-select
+                  v-model="selectedNode.bind.resourceId"
+                  placeholder="请选择"
+                  style="width: 100%"
+                  @change="onBindChange(selectedNode, $event)"
+                >
+                  <el-option
+                    v-for="opt in bindOptions(selectedNode)"
+                    :key="opt.id"
+                    :label="opt.name"
+                    :value="opt.id"
+                  >
+                    <span>{{ opt.name }}</span>
+                    <span class="bind-opt-desc">{{ opt.desc }}</span>
+                  </el-option>
+                </el-select>
+              </el-form-item>
+              <div class="bind-detail" v-if="boundResource(selectedNode)">
+                <div class="bind-detail-row">
+                  <span class="bind-detail-label">版本</span>
+                  <span class="bind-detail-val">{{ boundResource(selectedNode).version }}</span>
+                </div>
+                <div class="bind-detail-row" v-if="boundResource(selectedNode).server">
+                  <span class="bind-detail-label">Server</span>
+                  <span class="bind-detail-val">{{ boundResource(selectedNode).server }}</span>
+                </div>
+                <div class="bind-detail-row">
+                  <span class="bind-detail-label">说明</span>
+                  <span class="bind-detail-val">{{ boundResource(selectedNode).desc }}</span>
+                </div>
+              </div>
+            </el-form>
+          </div>
+          <div class="prop-section" v-if="selectedNode.config && selectedNode.config.length">
+            <div class="prop-title">参数配置</div>
+            <el-form label-width="70px" size="mini">
+              <el-form-item
+                v-for="cfg in selectedNode.config"
+                :key="cfg.key"
+                :label="cfg.label"
+              >
+                <el-input v-model="cfg.value" />
+              </el-form-item>
+            </el-form>
+          </div>
+          <div class="prop-actions">
+            <el-button size="mini" type="danger" plain @click="deleteNode(selectedNode)">
+              删除节点
+            </el-button>
+          </div>
+        </div>
+        <div v-else-if="selectedEdge" class="panel-body">
+          <div class="prop-section">
+            <div class="prop-title">连线信息</div>
+            <el-form label-width="70px" size="mini">
+              <el-form-item label="来源">
+                <el-input :value="nodeName(selectedEdge.from)" disabled />
+              </el-form-item>
+              <el-form-item label="目标">
+                <el-input :value="nodeName(selectedEdge.to)" disabled />
+              </el-form-item>
+              <el-form-item label="条件">
+                <el-input v-model="selectedEdge.label" placeholder="连线条件（可选）" />
+              </el-form-item>
+            </el-form>
+          </div>
+          <div class="prop-actions">
+            <el-button size="mini" type="danger" plain @click="deleteEdge(selectedEdge)">
+              删除连线
+            </el-button>
+          </div>
+        </div>
+        <div v-else class="panel-body panel-empty">
+          <i class="el-icon-mouse"></i>
+          <p>选中节点或连线后<br />在此编辑属性</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 节点编辑弹窗 -->
+    <el-dialog
+      title="编辑节点"
+      :visible.sync="editorVisible"
+      width="480px"
+      custom-class="node-editor-dialog"
+    >
+      <el-form v-if="editingNode" label-width="80px" size="small">
+        <el-form-item label="节点名称">
+          <el-input v-model="editingNode.label" />
+        </el-form-item>
+        <el-form-item label="节点类型">
+          <el-input :value="editingNode.type" disabled />
+        </el-form-item>
+        <el-form-item label="描述">
+          <el-input v-model="editingNode.description" type="textarea" :rows="3" />
+        </el-form-item>
+        <el-form-item v-if="editingNode.bind" :label="bindLabel(editingNode)">
+          <el-select
+            v-model="editingNode.bind.resourceId"
+            placeholder="请选择"
+            style="width: 100%"
+            @change="onBindChange(editingNode, $event)"
+          >
+            <el-option
+              v-for="opt in bindOptions(editingNode)"
+              :key="opt.id"
+              :label="opt.name"
+              :value="opt.id"
+            >
+              <span>{{ opt.name }}</span>
+              <span class="bind-opt-desc">{{ opt.desc }}</span>
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <template v-if="editingNode.config && editingNode.config.length">
+          <el-form-item
+            v-for="cfg in editingNode.config"
+            :key="cfg.key"
+            :label="cfg.label"
+          >
+            <el-input v-model="cfg.value" />
+          </el-form-item>
+        </template>

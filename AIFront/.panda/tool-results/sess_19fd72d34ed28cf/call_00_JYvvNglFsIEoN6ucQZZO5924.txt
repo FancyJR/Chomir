@@ -1,0 +1,441 @@
+浏览器控制台最近 40 条：
+1. [error/console.error] 2026-08-06T13:47:10.182Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_Gvv4r50BFyuW4TV2O0VN1141'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+2. [error/console.error] 2026-08-06T13:47:10.182Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_bGNdpuqgODCQMvP8hT429854'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+3. [error/console.error] 2026-08-06T13:47:10.182Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_Ka3n1cVrqgB6dwkEz3Du3944'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+4. [error/console.error] 2026-08-06T13:47:10.182Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_7eOF8E8RFzdvOYU7uUur7832'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+5. [error/console.error] 2026-08-06T13:47:10.182Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_AEjwVOafKyN0zaV8JkZC0968'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+6. [error/console.error] 2026-08-06T13:47:10.182Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_58UweJZBtPAyICkXM9006126'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+7. [error/console.error] 2026-08-06T13:47:10.182Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_hOSnUn3d7qBLfj6v35AK0724'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+8. [error/console.error] 2026-08-06T13:47:10.182Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_LueEmgEwHMg2ndJmZr4S3337'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+9. [error/console.error] 2026-08-06T13:47:10.182Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_jPkSwrZ6o6I1caKCG8w85893'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+10. [error/console.error] 2026-08-06T13:47:10.182Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_Gjh1pc75w6BGA4qemVLN5972'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+11. [error/console.error] 2026-08-06T13:47:10.561Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_fcZ7jzQl6SQOGP2OdfiO0639'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+12. [error/console.error] 2026-08-06T13:47:10.561Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_ppo6yG1u6sv5s8wwDxK32426'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+13. [error/console.error] 2026-08-06T13:47:10.670Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_c2VZWemHg4voq9pFYpZp3911'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+14. [error/console.error] 2026-08-06T13:47:11.264Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_sGkUI01jek73JjCVhCmQ0472'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+15. [error/console.error] 2026-08-06T13:47:11.402Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_FwZx3ukXLwWkqfVtM2Up3534'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+16. [error/console.error] 2026-08-06T13:47:11.403Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_R3oZbDhnIKTOfcoQXMhB0996'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+17. [error/console.error] 2026-08-06T13:47:11.578Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_HrHcnPOzj3hdEpmEeAVJ8373'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+18. [error/console.error] 2026-08-06T13:47:11.762Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_HozjyBJpdEa1MOl1hVpw7444'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+19. [error/console.error] 2026-08-06T13:47:12.482Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_eL9mq84KGmZvKJKMROju7557'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+20. [error/console.error] 2026-08-06T13:47:12.602Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_TF4V6DJzAiIPzvFf2zzi5399'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+21. [error/console.error] 2026-08-06T13:47:12.723Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_j98tCRImv008ljAkru135707'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+22. [error/console.error] 2026-08-06T13:47:12.723Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_r76YvS9T6UnBKYD5BB3C0071'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+23. [error/console.error] 2026-08-06T13:47:12.723Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_HpVUsqAY1BpB9FWgZxsu3802'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+24. [error/console.error] 2026-08-06T13:47:12.723Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_3OL1rZIF5CEA6pUBFf7l3583'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+25. [error/console.error] 2026-08-06T13:47:12.723Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_cWz9UOOSNK6MjiLDPmqW0676'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+26. [error/console.error] 2026-08-06T13:47:12.723Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_9hCz4Li7j6zAKtqVJekf7957'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+27. [error/console.error] 2026-08-06T13:47:12.723Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_QG61KoH9Rot2VZ8wfFZ98116'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+28. [error/console.error] 2026-08-06T13:47:12.723Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_Gvv4r50BFyuW4TV2O0VN1141'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+29. [error/console.error] 2026-08-06T13:47:12.723Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_bGNdpuqgODCQMvP8hT429854'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+30. [error/console.error] 2026-08-06T13:47:12.723Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_Ka3n1cVrqgB6dwkEz3Du3944'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+31. [error/console.error] 2026-08-06T13:47:12.723Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_7eOF8E8RFzdvOYU7uUur7832'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+32. [error/console.error] 2026-08-06T13:47:12.724Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_AEjwVOafKyN0zaV8JkZC0968'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+33. [error/console.error] 2026-08-06T13:47:12.724Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_58UweJZBtPAyICkXM9006126'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+34. [error/console.error] 2026-08-06T13:47:12.724Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_hOSnUn3d7qBLfj6v35AK0724'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+35. [error/console.error] 2026-08-06T13:47:12.724Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_LueEmgEwHMg2ndJmZr4S3337'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+36. [error/console.error] 2026-08-06T13:47:12.724Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_jPkSwrZ6o6I1caKCG8w85893'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+37. [error/console.error] 2026-08-06T13:47:12.724Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_Gjh1pc75w6BGA4qemVLN5972'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+38. [error/console.error] 2026-08-06T13:47:13.070Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_fcZ7jzQl6SQOGP2OdfiO0639'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+39. [error/console.error] 2026-08-06T13:47:13.070Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_ppo6yG1u6sv5s8wwDxK32426'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw
+40. [error/console.error] 2026-08-06T13:47:13.176Z route=/claw
+   [Vue warn]: Duplicate keys detected: 'call_00_c2VZWemHg4voq9pFYpZp3911'. This may cause an update error.
+
+found in
+
+---> <ClawWorkbench> at src/views/ClawWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/claw

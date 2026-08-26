@@ -1,0 +1,129 @@
+import Vue from 'vue'
+import Router from 'vue-router'
+
+Vue.use(Router)
+
+const Dashboard = () => import('@/views/Dashboard.vue')
+const TablePage = () => import('@/views/TablePage.vue')
+const CommandMarket = () => import('@/views/CommandMarket.vue')
+const NoCodeBuilder = () => import('@/views/NoCodeBuilder.vue')
+const NoCodePreview = () => import('@/views/NoCodePreview.vue')
+const DevEditor = () => import('@/views/DevEditor.vue')
+const PandaWorkbench = () => import('@/views/PandaWorkbench.vue')
+
+const FootballGoalsChart = () => import('@/views/FootballGoalsChart.vue')
+const BasketballChart = () => import('@/views/BasketballChart.vue')
+const BadmintonChart = () => import('@/views/BadmintonChart.vue')
+const TodayStockRecommendation = () => import('@/views/TodayStockRecommendation.vue')
+const FuturesPrediction = () => import('@/views/FuturesPrediction.vue')
+const CommandDetail = () => import('@/views/CommandDetail.vue')
+const OrchestrationBuilder = () => import('@/views/OrchestrationBuilder.vue')
+const LongTermMemory = () => import('@/views/LongTermMemory.vue')
+const TankBattle = () => import('@/views/TankBattle.vue')
+const RiverCityRansom = () => import('@/views/RiverCityRansom.vue')
+
+const router = new Router({
+  mode: 'history',
+  routes: [
+    {
+      path: '/',
+      redirect: '/dashboard'
+    },
+    {
+      path: '/dashboard',
+      component: Dashboard,
+      meta: { title: '仪表盘' }
+    },
+    {
+      path: '/table',
+      component: TablePage,
+      meta: { title: '表格示例' }
+    },
+    {
+      path: '/command-market',
+      component: CommandMarket,
+      meta: { title: '指令市场' }
+    },
+    {
+      path: '/no-code',
+      component: NoCodeBuilder,
+      meta: { title: '无代码开发' }
+    },
+    {
+      path: '/no-code/preview/:id',
+      component: NoCodePreview,
+      meta: { title: '页面预览' }
+    },
+    {
+      path: '/dev/editor',
+      component: DevEditor,
+      meta: { title: '云编译器（内部）' }
+    },
+    {
+      path: '/panda',
+      component: PandaWorkbench,
+      meta: { title: 'Panda 工作台' }
+    },
+    {
+      path: '/claw',
+      redirect: '/panda'
+    },
+    {
+      path: '/football-goals-chart',
+      component: FootballGoalsChart,
+      meta: { title: '足球进球统计' }
+    },
+  
+    {
+      path: '/basketball-chart',
+      component: BasketballChart,
+      meta: { title: '篮球统计' }
+    },
+    {
+      path: '/badminton-chart',
+      component: BadmintonChart,
+      meta: { title: '羽毛球数据统计' }
+    },
+    {
+      path: '/today-stock-recommendation',
+      component: TodayStockRecommendation,
+      meta: { title: '今日股票推荐' }
+    },
+    {
+      path: '/futures-prediction',
+      component: FuturesPrediction,
+      meta: { title: '期货预测' }
+    },
+    {
+      path: '/command/detail/:id',
+      component: CommandDetail,
+      meta: { title: '指令详情' }
+    },
+    {
+      path: '/orchestration',
+      component: OrchestrationBuilder,
+      meta: { title: '编排' }
+    },
+    {
+      path: '/long-term-memory',
+      component: LongTermMemory,
+      meta: { title: '长期记忆' }
+    },
+    {
+      path: '/tank-battle',
+      component: TankBattle,
+      meta: { title: '坦克大战' }
+    }
+  ]
+})
+
+router.afterEach((to) => {
+  try {
+    if (typeof window !== 'undefined') {
+      window.__VUE_ROUTER_ROUTE__ = to && to.fullPath ? to.fullPath : ''
+    }
+  } catch (e) { /* ignore */ }
+})
+
+export default router
+

@@ -1,0 +1,14 @@
+# Claw Agent 运行时数据
+.claw/
+
+# 本地环境
+.env.local
+.DS_Store
+node_modules/
+dist/
+release/
+.npm-cache/
+*.AppImage
+*.deb
+*.dmg
+*.exe

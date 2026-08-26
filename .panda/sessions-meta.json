@@ -1,0 +1,79 @@
+{
+  "aifront_sub_1a0398ae269": {
+    "title": "你好",
+    "lastMessage": "你好！有什么可以帮你的吗？\n\n我看到你打开了 `extensions/aifront-agent/src/streamMapper.ts` 这个文件，需要我帮你",
+    "id": "aifront_sub_1a0398ae269",
+    "updatedAt": "2026-08-25T15:30:02.580Z",
+    "createdAt": "2026-08-25T15:30:00.739Z",
+    "changedCount": 0
+  },
+  "aifront_sub_1a0398dbcd4": {
+    "title": "你好，你用的是我写的aifront吗",
+    "lastMessage": "你好！我是运行在 AIFront 环境里的 Panda Code 交互式软件工程 Agent。\n\n关于你的问题——我运行在 AIFront 这个前端框架栈（Vu",
+    "id": "aifront_sub_1a0398dbcd4",
+    "updatedAt": "2026-08-25T15:33:11.374Z",
+    "createdAt": "2026-08-25T15:33:08.453Z",
+    "changedCount": 0
+  },
+  "aifront_sub_1a0399047a4": {
+    "title": "当前项目介绍一下",
+    "lastMessage": "我已经掌握了这个项目的全貌。下面给你介绍。\n\n## 项目概览\n\n这个仓库是 **VS Code 源码仓库**（`microsoft/vscode`），但当前工作",
+    "id": "aifront_sub_1a0399047a4",
+    "updatedAt": "2026-08-25T15:36:07.729Z",
+    "createdAt": "2026-08-25T15:35:52.949Z",
+    "changedCount": 0
+  },
+  "sess_1a039987062": {
+    "title": "你现在有写代码能力了吗",
+    "lastMessage": "是的，我有完整的写代码能力。我可以：\n\n- **读取/编辑文件**：`read_file`、`edit_file`、`apply_patch`、`write_f",
+    "id": "sess_1a039987062",
+    "updatedAt": "2026-08-25T15:45:20.258Z",
+    "createdAt": "2026-08-25T15:44:48.815Z",
+    "changedCount": 0
+  },
+  "sess_1a0399a57c6": {
+    "title": "你有写代码能力了吗",
+    "lastMessage": "是的，我有完整的写代码能力。我可以：\n\n- **读写文件**：`read_file` / `write_file` / `edit_file` / `apply",
+    "id": "sess_1a0399a57c6",
+    "updatedAt": "2026-08-25T15:46:56.297Z",
+    "createdAt": "2026-08-25T15:46:53.746Z",
+    "changedCount": 0
+  },
+  "sess_1a039a01613": {
+    "title": "你有写代码能力了吗",
+    "lastMessage": "是的，我有完整的写代码能力。我可以：\n\n- **读文件**：`read_file` 查看代码\n- **改文件**：`edit_file` / `apply_pa",
+    "id": "sess_1a039a01613",
+    "updatedAt": "2026-08-25T15:53:11.977Z",
+    "createdAt": "2026-08-25T15:53:10.149Z",
+    "changedCount": 0
+  },
+  "sess_1a039aa618852da": {
+    "title": "你好",
+    "lastMessage": "你好",
+    "id": "sess_1a039aa618852da",
+    "updatedAt": "2026-08-26T01:53:52.341Z",
+    "createdAt": "2026-08-25T16:04:24.821Z"
+  },
+  "sess_1a03be6f37f4086": {
+    "title": "13",
+    "lastMessage": "需要先和您确认：\n\n你只发来了一批候选文件路径（chat 相关改动）和数字 13，但没有说明要做什么。请问你的目标是？",
+    "id": "sess_1a03be6f37f4086",
+    "updatedAt": "2026-08-26T02:29:52.412Z",
+    "createdAt": "2026-08-26T02:29:49.135Z"
+  },
+  "sess_1a03bf49d390003": {
+    "title": "123",
+    "lastMessage": "123",
+    "id": "sess_1a03bf49d390003",
+    "updatedAt": "2026-08-26T03:18:50.967Z",
+    "createdAt": "2026-08-26T02:44:43.881Z"
+  },
+  "sess_1a03c13ed458e9e": {
+    "title": "提交代码到远端",
+    "lastMessage": "提交代码到远端",
+    "id": "sess_1a03c13ed458e9e",
+    "updatedAt": "2026-08-26T09:23:48.981Z",
+    "createdAt": "2026-08-26T03:18:55.199Z",
+    "changedCount": 0
+  }
+}

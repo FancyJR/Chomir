@@ -1,0 +1,899 @@
+<template>
+  <div class="river-city">
+    <div class="game-header">
+      <div class="game-title">
+        <i class="el-icon-video-game"></i>
+        <span>热血物语</span>
+      </div>
+      <div class="game-stats">
+        <div class="stat">
+          <span class="stat-label">得分</span>
+          <span class="stat-value score">{{ score }}</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">生命</span>
+          <span class="stat-value lives">{{ lives }}</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">关卡</span>
+          <span class="stat-value level">{{ level }}</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">剩余敌人</span>
+          <span class="stat-value enemies">{{ enemiesOnField }}/{{ remainingEnemies }}</span>
+        </div>
+      </div>
+      <div class="game-controls">
+        <el-button size="small" type="primary" @click="startGame">开始</el-button>
+        <el-button size="small" @click="togglePause">{{ paused ? '继续' : '暂停' }}</el-button>
+        <el-button size="small" type="danger" plain @click="resetGame">重置</el-button>
+      </div>
+    </div>
+
+    <div class="game-body">
+      <div class="canvas-wrap">
+        <canvas
+          ref="gameCanvas"
+          :width="canvasW"
+          :height="canvasH"
+        ></canvas>
+        <div v-if="!started" class="overlay">
+          <div class="overlay-box">
+            <h2>热血物语</h2>
+            <p class="subtitle">横版清版格斗 · 国夫出击</p>
+            <p>← → 移动 · ↑ 跳跃 · J 拳击 · K 脚踢</p>
+            <p>空格 暂停 · 击败所有敌人过关</p>
+            <el-button type="primary" @click="startGame">开始游戏</el-button>
+          </div>
+        </div>
+        <div v-else-if="gameOver" class="overlay">
+          <div class="overlay-box">
+            <h2>游戏结束</h2>
+            <p class="result-lose">国夫倒下了…</p>
+            <p class="result-score">最终得分：{{ score }} · 击败 {{ kills }} 人</p>
+            <el-button type="primary" @click="startGame">再来一局</el-button>
+          </div>
+        </div>
+        <div v-else-if="levelClear" class="overlay">
+          <div class="overlay-box">
+            <h2>关卡通过！</h2>
+            <p class="result-win">第 {{ level }} 关完成</p>
+            <p class="result-score">得分：{{ score }}</p>
+            <el-button type="primary" @click="nextLevel">进入下一关</el-button>
+          </div>
+        </div>
+        <div v-else-if="paused" class="overlay">
+          <div class="overlay-box">
+            <h2>已暂停</h2>
+            <el-button type="primary" @click="togglePause">继续</el-button>
+          </div>
+        </div>
+      </div>
+
+      <div class="side-panel">
+        <div class="panel-section">
+          <div class="panel-title">操作说明</div>
+          <ul class="help-list">
+            <li><b>← →</b> 左右移动</li>
+            <li><b>↑</b> 跳跃</li>
+            <li><b>J</b> 拳击</li>
+            <li><b>K</b> 脚踢</li>
+            <li><b>空格</b> 暂停/继续</li>
+          </ul>
+        </div>
+        <div class="panel-section">
+          <div class="panel-title">图例</div>
+          <div class="legend">
+            <div class="legend-item"><span class="legend-box player"></span> 国夫（玩家）</div>
+            <div class="legend-item"><span class="legend-box enemy"></span> 敌人</div>
+            <div class="legend-item"><span class="legend-box boss"></span> 头目</div>
+            <div class="legend-item"><span class="legend-box heart"></span> 生命补给</div>
+          </div>
+        </div>
+        <div class="panel-section">
+          <div class="panel-title">游戏提示</div>
+          <p class="tip-text">连续拳击可连击，脚踢范围更大。击败敌人会掉落补给，注意躲避头目的重拳。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'RiverCityRansom',
+  data () {
+    return {
+      canvasW: 900,
+      canvasH: 500,
+      started: false,
+      paused: false,
+      gameOver: false,
+      levelClear: false,
+      score: 0,
+      lives: 3,
+      level: 1,
+      kills: 0,
+      enemiesOnField: 0,
+      remainingEnemies: 0,
+      ctx: null,
+      rafId: null,
+      lastTime: 0,
+      keys: {},
+      player: null,
+      enemies: [],
+      items: [],
+      particles: [],
+      groundY: 430,
+      cameraX: 0,
+      worldW: 1400,
+      totalEnemies: 0
+    }
+  },
+  mounted () {
+    this.ctx = this.$refs.gameCanvas.getContext('2d')
+    window.addEventListener('keydown', this.onKeyDown)
+    window.addEventListener('keyup', this.onKeyUp)
+    this.resetGame()
+  },
+  beforeDestroy () {
+    window.removeEventListener('keydown', this.onKeyDown)
+    window.removeEventListener('keyup', this.onKeyUp)
+    if (this.rafId) cancelAnimationFrame(this.rafId)
+  },
+  methods: {
+    onKeyDown (e) {
+      this.keys[e.code] = true
+      if (e.code === 'Space') {
+        e.preventDefault()
+        if (this.started && !this.gameOver && !this.levelClear) this.togglePause()
+      }
+      if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space'].includes(e.code)) {
+        e.preventDefault()
+      }
+    },
+    onKeyUp (e) {
+      this.keys[e.code] = false
+    },
+    resetGame () {
+      this.score = 0
+      this.lives = 3
+      this.level = 1
+      this.kills = 0
+      this.started = false
+      this.gameOver = false
+      this.levelClear = false
+      this.paused = false
+      this.setupLevel(1)
+    },
+    startGame () {
+      this.resetGame()
+      this.started = true
+      this.lastTime = performance.now()
+      this.loop(this.lastTime)
+    },
+    nextLevel () {
+      this.level += 1
+      this.levelClear = false
+      this.setupLevel(this.level)
+      this.paused = false
+      this.lastTime = performance.now()
+      this.loop(this.lastTime)
+    },
+    togglePause () {
+      if (!this.started || this.gameOver || this.levelClear) return
+      this.paused = !this.paused
+      if (!this.paused) {
+        this.lastTime = performance.now()
+        this.loop(this.lastTime)
+      }
+    },
+    setupLevel (lv) {
+      this.worldW = 1200 + lv * 150
+      this.groundY = 430
+      this.cameraX = 0
+      this.player = {
+        x: 120,
+        y: this.groundY,
+        w: 34,
+        h: 56,
+        vx: 0,
+        vy: 0,
+        facing: 1,
+        hp: 100,
+        maxHp: 100,
+        onGround: true,
+        attacking: 0,
+        attackType: 0,
+        attackCd: 0,
+        hurt: 0,
+        invincible: 0,
+        anim: 0
+      }
+      this.enemies = []
+      this.items = []
+      this.particles = []
+      this.totalEnemies = 4 + lv * 2
+      this.remainingEnemies = this.totalEnemies
+      this.enemiesOnField = 0
+      this.spawnEnemies()
+    },
+    spawnEnemies () {
+      const count = Math.min(this.totalEnemies, 3 + this.level)
+      for (let i = 0; i < count; i++) {
+        const isBoss = this.level >= 3 && i === count - 1
+        const x = 400 + Math.random() * (this.worldW - 600)
+        this.enemies.push(this.makeEnemy(x, isBoss))
+      }
+      this.enemiesOnField = this.enemies.length
+    },
+    makeEnemy (x, isBoss) {
+      const hp = isBoss ? 120 + this.level * 20 : 40 + this.level * 8
+      return {
+        x,
+        y: this.groundY,
+        w: isBoss ? 44 : 32,
+        h: isBoss ? 66 : 52,
+        vx: 0,
+        vy: 0,
+        facing: -1,
+        hp,
+        maxHp: hp,
+        onGround: true,
+        attacking: 0,
+        attackCd: 0,
+        hurt: 0,
+        isBoss,
+        speed: isBoss ? 1.2 : 0.8 + this.level * 0.1,
+        anim: 0,
+        state: 'idle',
+        stateTimer: 0
+      }
+    },
+    loop (t) {
+      if (!this.started || this.paused || this.gameOver || this.levelClear) return
+      const dt = Math.min((t - this.lastTime) / 1000, 0.05)
+      this.lastTime = t
+      this.update(dt)
+      this.render()
+      this.rafId = requestAnimationFrame(this.loop)
+    },
+    update (dt) {
+      const p = this.player
+      // 玩家移动
+      const move = (this.keys['ArrowRight'] ? 1 : 0) - (this.keys['ArrowLeft'] ? 1 : 0)
+      if (move !== 0) p.facing = move
+      p.vx = move * 220
+      if (this.keys['ArrowUp'] && p.onGround) {
+        p.vy = -420
+        p.onGround = false
+      }
+      // 攻击
+      if (p.attackCd > 0) p.attackCd -= dt
+      if (this.keys['KeyJ'] && p.attackCd <= 0) {
+        this.doAttack(p, 'punch')
+        p.attackCd = 0.28
+      }
+      if (this.keys['KeyK'] && p.attackCd <= 0) {
+        this.doAttack(p, 'kick')
+        p.attackCd = 0.45
+      }
+      // 物理
+      p.vy += 900 * dt
+      p.x += p.vx * dt
+      p.y += p.vy * dt
+      if (p.y >= this.groundY) {
+        p.y = this.groundY
+        p.vy = 0
+        p.onGround = true
+      }
+      p.x = Math.max(20, Math.min(this.worldW - 20, p.x))
+      if (p.attacking > 0) p.attacking -= dt
+      if (p.hurt > 0) p.hurt -= dt
+      if (p.invincible > 0) p.invincible -= dt
+      p.anim += dt * 8
+
+      // 敌人
+      this.enemies.forEach((e) => {
+        if (e.hp <= 0) return
+        e.stateTimer -= dt
+        if (e.attackCd > 0) e.attackCd -= dt
+        if (e.hurt > 0) e.hurt -= dt
+        const dist = Math.abs(e.x - p.x)
+        const dir = p.x > e.x ? 1 : -1
+        e.facing = dir
+        if (e.state === 'idle' && e.stateTimer <= 0) {
+          e.state = Math.random() > 0.4 ? 'chase' : 'idle'
+          e.stateTimer = 1 + Math.random() * 2
+        }
+        if (e.state === 'chase') {
+          if (dist > 60) {
+            e.vx = dir * e.speed * 60
+          } else {
+            e.vx = 0
+            if (e.attackCd <= 0) {
+              this.doAttack(e, e.isBoss ? 'kick' : 'punch')
+              e.attackCd = e.isBoss ? 1.2 : 1.6
+            }
+          }
+          if (dist > 300) e.state = 'idle'
+        } else {
+          e.vx = 0
+        }
+        e.vy += 900 * dt
+        e.x += e.vx * dt
+        e.y += e.vy * dt
+        if (e.y >= this.groundY) {
+          e.y = this.groundY
+          e.vy = 0
+          e.onGround = true
+        }
+        e.x = Math.max(20, Math.min(this.worldW - 20, e.x))
+        if (e.attacking > 0) e.attacking -= dt
+        e.anim += dt * 6
+      })
+
+      // 攻击判定
+      this.checkAttacks()
+
+      // 物品
+      this.items.forEach((it) => {
+        it.vy += 600 * dt
+        it.y += it.vy * dt
+        if (it.y > this.groundY) {
+          it.y = this.groundY
+          it.vy = 0
+        }
+        if (it.life > 0) it.life -= dt
+        const dx = Math.abs(it.x - p.x)
+        const dy = Math.abs(it.y - p.y)
+        if (dx < 30 && dy < 40) {
+          if (it.type === 'heart') {
+            p.hp = Math.min(p.maxHp, p.hp + 30)
+            this.score += 50
+          } else if (it.type === 'coin') {
+            this.score += 100
+          }
+          it.dead = true
+        }
+      })
+      this.items = this.items.filter((it) => !it.dead && it.life > 0)
+
+      // 粒子
+      this.particles.forEach((pt) => {
+        pt.x += pt.vx * dt
+        pt.y += pt.vy * dt
+        pt.vy += 400 * dt
+        pt.life -= dt
+      })
+      this.particles = this.particles.filter((pt) => pt.life > 0)
+
+      // 相机
+      const target = p.x - this.canvasW * 0.35
+      this.cameraX += (target - this.cameraX) * 0.1
+      this.cameraX = Math.max(0, Math.min(this.worldW - this.canvasW, this.cameraX))
+
+      // 敌人死亡
+      const alive = this.enemies.filter((e) => e.hp > 0)
+      this.enemiesOnField = alive.length
+      this.remainingEnemies = alive.length
+      if (alive.length === 0 && this.enemies.length > 0) {
+        this.levelClear = true
+        this.score += 500 + this.level * 100
+      }
+    },
+    doAttack (who, type) {
+      who.attacking = type === 'punch' ? 0.18 : 0.25
+      who.attackType = type
+    },
+    checkAttacks () {
+      const p = this.player
+      // 玩家攻击敌人
+      if (p.attacking > 0) {
+        const range = p.attackType === 'punch' ? 46 : 60
+        const hitX = p.x + p.facing * range
+        this.enemies.forEach((e) => {
+          if (e.hp <= 0 || e.hurt > 0) return
+          const dx = Math.abs(e.x - hitX)
+          if (dx < 40 && Math.abs(e.y - p.y) < 50) {
+            const dmg = p.attackType === 'punch' ? 12 : 18
+            e.hp -= dmg
+            e.hurt = 0.2
+            e.vx = p.facing * 120
+            this.spawnHit(e.x, e.y - 20)
+            this.score += 10
+            if (e.hp <= 0) {
+              this.kills++
+              this.score += e.isBoss ? 300 : 100
+              this.dropItem(e.x, e.y)
+              this.spawnBurst(e.x, e.y)
+            }
+          }
+        })
+      }
+      // 敌人攻击玩家
+      this.enemies.forEach((e) => {
+        if (e.hp <= 0 || e.attacking <= 0 || p.invincible > 0) return
+        const range = e.isBoss ? 60 : 46
+        const hitX = e.x + e.facing * range
+        const dx = Math.abs(p.x - hitX)
+        if (dx < 42 && Math.abs(e.y - p.y) < 50) {
+          const dmg = e.isBoss ? 18 : 8
+          p.hp -= dmg
+          p.hurt = 0.2
+          p.invincible = 0.8
+          p.vx = e.facing * 100
+          this.spawnHit(p.x, p.y - 20)
+          if (p.hp <= 0) {
+            this.lives--
+            if (this.lives <= 0) {
+              this.gameOver = true
+            } else {
+              p.hp = p.maxHp
+              p.x = 120
+              p.y = this.groundY
+              p.invincible = 1.5
+            }
+          }
+        }
+      })
+    },
+    dropItem (x, y) {
+      const r = Math.random()
+      if (r < 0.3) {
+        this.items.push({ x, y, vy: -200, type: 'heart', life: 8, dead: false })
+      } else if (r < 0.7) {
+        this.items.push({ x, y, vy: -200, type: 'coin', life: 8, dead: false })
+      }
+    },
+    spawnHit (x, y) {
+      for (let i = 0; i < 6; i++) {
+        this.particles.push({
+          x, y,
+          vx: (Math.random() - 0.5) * 200,
+          vy: -Math.random() * 200,
+          life: 0.3,
+          color: '#ffd54a'
+        })
+      }
+    },
+    spawnBurst (x, y) {
+      for (let i = 0; i < 14; i++) {
+        this.particles.push({
+          x, y,
+          vx: (Math.random() - 0.5) * 300,
+          vy: -Math.random() * 300,
+          life: 0.5,
+          color: i % 2 ? '#ff6b6b' : '#ffd54a'
+        })
+      }
+    },
+    render () {
+      const ctx = this.ctx
+      const cam = this.cameraX
+      ctx.clearRect(0, 0, this.canvasW, this.canvasH)
+
+      // 天空
+      const sky = ctx.createLinearGradient(0, 0, 0, this.canvasH)
+      sky.addColorStop(0, '#87ceeb')
+      sky.addColorStop(0.7, '#c8e6f5')
+      sky.addColorStop(1, '#e8f4e8')
+      ctx.fillStyle = sky
+      ctx.fillRect(0, 0, this.canvasW, this.canvasH)
+
+      // 云
+      ctx.fillStyle = 'rgba(255,255,255,0.8)'
+      for (let i = 0; i < 5; i++) {
+        const cx = ((i * 260 + 60) - cam * 0.2) % (this.canvasW + 200) - 100
+        const cy = 40 + i * 25
+        ctx.beginPath()
+        ctx.arc(cx, cy, 22, 0, Math.PI * 2)
+        ctx.arc(cx + 24, cy - 8, 18, 0, Math.PI * 2)
+        ctx.arc(cx + 48, cy, 20, 0, Math.PI * 2)
+        ctx.fill()
+      }
+
+      // 远景建筑
+      ctx.fillStyle = '#9db8d6'
+      for (let i = 0; i < 8; i++) {
+        const bx = i * 180 - cam * 0.4
+        const bh = 60 + (i % 3) * 40
+        ctx.fillRect(bx, this.groundY - bh, 90, bh)
+        ctx.fillStyle = '#8aa8c8'
+        ctx.fillRect(bx + 20, this.groundY - bh + 20, 20, 20)
+        ctx.fillRect(bx + 50, this.groundY - bh + 20, 20, 20)
+        ctx.fillStyle = '#9db8d6'
+      }
+
+      // 地面
+      ctx.fillStyle = '#7cb342'
+      ctx.fillRect(0, this.groundY, this.canvasW, this.canvasH - this.groundY)
+      ctx.fillStyle = '#689f38'
+      ctx.fillRect(0, this.groundY, this.canvasW, 6)
+      // 地面纹理
+      ctx.fillStyle = 'rgba(0,0,0,0.08)'
+      for (let i = 0; i < 20; i++) {
+        const gx = ((i * 70) - cam) % (this.canvasW + 100) - 50
+        ctx.fillRect(gx, this.groundY + 20 + (i % 3) * 15, 30, 4)
+      }
+
+      // 物品
+      this.items.forEach((it) => {
+        const sx = it.x - cam
+        if (sx < -50 || sx > this.canvasW + 50) return
+        if (it.type === 'heart') {
+          ctx.fillStyle = '#e53935'
+          ctx.beginPath()
+          ctx.arc(sx, it.y - 8, 8, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.fillStyle = '#fff'
+          ctx.font = 'bold 10px sans-serif'
+          ctx.textAlign = 'center'
+          ctx.fillText('+30', sx, it.y - 16)
+        } else {
+          ctx.fillStyle = '#ffd54a'
+          ctx.beginPath()
+          ctx.arc(sx, it.y - 8, 7, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.strokeStyle = '#f9a825'
+          ctx.lineWidth = 2
+          ctx.stroke()
+        }
+      })
+
+      // 敌人
+      this.enemies.forEach((e) => {
+        if (e.hp <= 0) return
+        this.drawCharacter(e, e.isBoss ? '#e53935' : '#fb8c00', e.isBoss)
+      })
+
+      // 玩家
+      if (this.player.hp > 0) this.drawCharacter(this.player, '#1e88e5', false)
+
+      // 粒子
+      this.particles.forEach((pt) => {
+        ctx.globalAlpha = Math.max(0, pt.life / 0.5)
+        ctx.fillStyle = pt.color
+        ctx.fillRect(pt.x - cam, pt.y, 4, 4)
+        ctx.globalAlpha = 1
+      })
+
+      // 血条
+      this.drawHpBar(this.player, '#1e88e5')
+      this.enemies.forEach((e) => {
+        if (e.hp > 0 && e.hp < e.maxHp) this.drawHpBar(e, e.isBoss ? '#e53935' : '#fb8c00')
+      })
+    },
+    drawHpBar (who, color) {
+      const ctx = this.ctx
+      const cam = this.cameraX
+      const sx = who.x - cam
+      const w = who.isBoss ? 60 : 40
+      const ratio = Math.max(0, who.hp / who.maxHp)
+      ctx.fillStyle = 'rgba(0,0,0,0.5)'
+      ctx.fillRect(sx - w / 2, who.y - who.h - 14, w, 6)
+      ctx.fillStyle = color
+      ctx.fillRect(sx - w / 2, who.y - who.h - 14, w * ratio, 6)
+    },
+    drawCharacter (who, color, isBoss) {
+      const ctx = this.ctx
+      const cam = this.cameraX
+      const sx = who.x - cam
+      if (sx < -80 || sx > this.canvasW + 80) return
+      const f = who.facing
+      const w = who.w
+      const h = who.h
+      const y = who.y - h
+      const hurt = who.hurt > 0
+      const attacking = who.attacking > 0
+      const inv = who.invincible > 0 && Math.floor(who.invincible * 10) % 2 === 0
+
+      ctx.save()
+      ctx.translate(sx, y)
+      ctx.scale(f, 1)
+
+      if (inv) ctx.globalAlpha = 0.4
+
+      // 阴影
+      ctx.fillStyle = 'rgba(0,0,0,0.2)'
+      ctx.beginPath()
+      ctx.ellipse(0, h + 4, w * 0.6, 5, 0, 0, Math.PI * 2)
+      ctx.fill()
+
+      // 腿
+      const legSwing = Math.sin(who.anim) * 4
+      ctx.fillStyle = '#37474f'
+      ctx.fillRect(-w / 2 + 2, h - 18, 10, 18)
+      ctx.fillRect(w / 2 - 12 + legSwing, h - 18, 10, 18)
+
+      // 身体
+      ctx.fillStyle = color
+      ctx.fillRect(-w / 2, h - 42, w, 24)
+
+      // 攻击手臂
+      if (attacking) {
+        ctx.fillStyle = '#ffd54a'
+        const armLen = who.attackType === 'kick' ? 0 : 22
+        ctx.fillRect(w / 2, h - 40, armLen, 8)
+      }
+
+      // 头
+      ctx.fillStyle = '#ffcc80'
+      ctx.beginPath()
+      ctx.arc(0, h - 50, 10, 0, Math.PI * 2)
+      ctx.fill()
+      // 头发
+      ctx.fillStyle = '#263238'
+      ctx.beginPath()
+      ctx.arc(0, h - 54, 10, Math.PI, Math.PI * 2)
+      ctx.fill()
+
+      // 眼睛
+      ctx.fillStyle = '#000'
+      ctx.fillRect(4, h - 50, 3, 3)
+
+      // 受伤红闪
+      if (hurt) {
+        ctx.globalAlpha = 0.5
+        ctx.fillStyle = '#ff0000'
+        ctx.fillRect(-w / 2, h - 42, w, 24)
+      }
+
+      ctx.restore()
+    }
+  }
+}
+</script>
+
+<style scoped>
+.river-city {
+  padding: 20px;
+  min-height: 100vh;
+  background: linear-gradient(160deg, #f3f4f6 0%, #f9fafb 50%, #f1f5f9 100%);
+}
+
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 4px 20px rgba(31, 56, 88, 0.08);
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.game-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2d3d;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.game-title i {
+  color: #e53935;
+  font-size: 22px;
+}
+
+.game-stats {
+  display: flex;
+  gap: 24px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #8c8c8c;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2d3d;
+}
+
+.stat-value.score {
+  color: #f9a825;
+}
+
+.stat-value.lives {
+  color: #e53935;
+}
+
+.stat-value.level {
+  color: #1e88e5;
+}
+
+.stat-value.enemies {
+  color: #fb8c00;
+}
+
+.game-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.game-body {
+  display: flex;
+  gap: 16px;
+}
+
+.canvas-wrap {
+  flex: 1;
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(31, 56, 88, 0.12);
+  background: #87ceeb;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+}
+
+.overlay-box {
+  background: #fff;
+  border-radius: 12px;
+  padding: 32px 40px;
+  text-align: center;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  max-width: 420px;
+}
+
+.overlay-box h2 {
+  margin: 0 0 8px;
+  font-size: 28px;
+  color: #e53935;
+}
+
+.overlay-box .subtitle {
+  color: #8c8c8c;
+  margin: 0 0 16px;
+}
+
+.overlay-box p {
+  margin: 6px 0;
+  color: #4b5563;
+  font-size: 14px;
+}
+
+.result-lose {
+  color: #e53935 !important;
+  font-weight: 700;
+  font-size: 18px !important;
+}
+
+.result-win {
+  color: #67c23a !important;
+  font-weight: 700;
+  font-size: 18px !important;
+}
+
+.result-score {
+  color: #f9a825 !important;
+  font-weight: 600;
+}
+
+.side-panel {
+  width: 240px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.panel-section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 10px rgba(31, 56, 88, 0.06);
+}
+
+.panel-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2d3d;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.panel-title::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  background: #e53935;
+}
+
+.help-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.help-list li {
+  font-size: 13px;
+  color: #4b5563;
+  padding: 4px 0;
+}
+
+.help-list b {
+  color: #1f2d3d;
+  background: #f3f4f6;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #4b5563;
+}
+
+.legend-box {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.legend-box.player {
+  background: #1e88e5;
+}
+
+.legend-box.enemy {
+  background: #fb8c00;
+}
+
+.legend-box.boss {
+  background: #e53935;
+}
+
+.legend-box.heart {
+  background: #e53935;
+  border-radius: 50%;
+}
+
+.tip-text {
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.6;
+  margin: 0;
+}
+</style>

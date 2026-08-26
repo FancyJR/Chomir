@@ -1,0 +1,239 @@
+<template>
+  <div class="page-stock-recommend">
+    <el-card class="page-card">
+      <div class="page-header">
+        <div class="page-title-block">
+          <div class="page-title">今日股票推荐</div>
+          <div class="page-subtitle">
+            基于量价与资金面模型，为您筛选 30 只明日具备强势上攻预期的标的，涵盖代码、名称及涨停概率预测等核心信息
+          </div>
+        </div>
+        <div class="header-actions">
+          <el-button type="primary" icon="el-icon-refresh" :loading="loading" @click="loadStockData">
+            刷新推荐
+          </el-button>
+        </div>
+      </div>
+
+      <el-table
+        :data="stockList"
+        stripe
+        border
+        style="width: 100%"
+        class="stock-table"
+        :default-sort="{ prop: 'limitUpProbability', order: 'descending' }"
+      >
+        <el-table-column prop="code" label="股票代码" width="120" sortable />
+        <el-table-column prop="name" label="股票名称" width="150" />
+        <el-table-column prop="price" label="当前价格" width="120" sortable>
+          <template slot-scope="scope">
+            <span :class="['price', scope.row.change > 0 ? 'price-up' : scope.row.change < 0 ? 'price-down' : '']">
+              {{ scope.row.price }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="change" label="涨跌幅" width="120" sortable>
+          <template slot-scope="scope">
+            <span :class="scope.row.change > 0 ? 'price-up' : scope.row.change < 0 ? 'price-down' : ''">
+              {{ scope.row.change > 0 ? '+' : '' }}{{ scope.row.change }}%
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="limitUpProbability" label="预测涨停概率" width="160" sortable>
+          <template slot-scope="scope">
+            <span class="limit-up-probability">
+              {{ scope.row.limitUpProbability }}%
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="industry" label="行业" width="140" />
+        <el-table-column prop="marketValue" label="市值(亿)" width="130" sortable />
+        <el-table-column prop="pe" label="市盈率(PE)" width="120" sortable />
+        <el-table-column prop="recommendReason" label="推荐理由" min-width="220" show-overflow-tooltip />
+        <el-table-column label="操作" width="120">
+          <template slot-scope="scope">
+            <el-button type="text" size="small" @click="handleStockClick(scope.row)">
+              查看详情
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-card>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'TodayStockRecommendation',
+  data () {
+    return {
+      loading: false,
+      stockList: []
+    }
+  },
+  created () {
+    this.loadStockData()
+  },
+  methods: {
+    loadStockData () {
+      this.loading = true
+      try {
+        const stocks = []
+        const industries = ['科技', '金融', '消费', '医药', '新能源', '制造', '地产', '通信']
+        const reasons = [
+          '业绩持续增长，估值合理',
+          '行业龙头，竞争优势明显',
+          '政策支持，发展前景广阔',
+          '技术突破，产品竞争力强',
+          '市场份额提升，成长性高',
+          '现金流充裕，分红稳定',
+          '管理层优秀，战略清晰',
+          '研发投入大，创新驱动'
+        ]
+        // 为示例页面提供 30 个「股票代码 → 中文名称」的对应关系，用中文公司名而不是「股票3」这类占位符
+        const baseNames = [
+          '浦发银行', '白云机场', '华夏银行', '宝钢股份', '中国石化',
+          '中信证券', '中国国航', '上海机场', '万科A', '招商银行',
+          '中国平安', '贵州茅台', '五粮液', '伊利股份', '中国中免',
+          '宁德时代', '比亚迪', '隆基绿能', '海天味业', '迈瑞医疗',
+          '海康威视', '汇川技术', '立讯精密', '三一重工', '中国建筑',
+          '中国联通', '中国电信', '中国移动', '紫金矿业', '东方财富'
+        ]
+
+        for (let i = 1; i <= 30; i++) {
+          const code = `600${i.toString().padStart(3, '0')}`
+          // 股票名称使用与代码一一对应的中文公司名，避免「股票3」这类占位符
+          const name = baseNames[i - 1] || `示例股票${i}`
+          const price = (Math.random() * 100 + 10).toFixed(2)
+          const change = (Math.random() * 10 - 5).toFixed(2)
+          const limitUpProbability = (Math.random() * 40 + 30).toFixed(1)
+          const industry = industries[Math.floor(Math.random() * industries.length)]
+          const marketValue = (Math.random() * 1000 + 100).toFixed(0)
+          const pe = (Math.random() * 50 + 10).toFixed(1)
+          const reason = reasons[Math.floor(Math.random() * reasons.length)]
+
+          stocks.push({
+            code,
+            name,
+            price: parseFloat(price),
+            change: parseFloat(change),
+            limitUpProbability: parseFloat(limitUpProbability),
+            industry,
+            marketValue: parseFloat(marketValue),
+            pe: parseFloat(pe),
+            recommendReason: reason
+          })
+        }
+
+        this.stockList = stocks
+      } finally {
+        this.loading = false
+      }
+    },
+    handleStockClick (stock) {
+      this.$message({
+        message: `查看股票详情：${stock.name} (${stock.code})`,
+        type: 'info'
+      })
+      // 如需后续扩展，可在此处跳转到股票详情页，例如：
+      // this.$router.push(`/stock/detail/${stock.code}`)
+    }
+  }
+}
+</script>
+
+<style scoped>
+.page-stock-recommend {
+  padding: 36px 48px;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.page-card {
+  padding: 0 32px 32px;
+  border-radius: 24px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+  background-color: #ffffff;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28px 0 20px;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 20px;
+}
+
+.page-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.page-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.page-subtitle {
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.6;
+  max-width: 640px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stock-table {
+  margin-top: 24px;
+}
+
+.stock-table >>> .el-table__header-wrapper {
+  background: #f8fafc;
+}
+
+.stock-table >>> .el-table th {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+  padding: 16px 0;
+}
+
+.stock-table >>> .el-table__row {
+  transition: background-color 0.25s ease;
+}
+
+.stock-table >>> .el-table__row:hover {
+  background-color: #f1f5f9;
+}
+
+.stock-table >>> .el-table td {
+  padding: 14px 0;
+}
+
+.price {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.price-up {
+  color: #10b981;
+}
+
+.price-down {
+  color: #ef4444;
+}
+
+.limit-up-probability {
+  color: #f59e0b;
+  font-weight: 700;
+}</style>

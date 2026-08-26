@@ -1,0 +1,40 @@
+{
+  "_comment": "复制需要的条目到 hooks.json。command hook：stdin=JSON；exit 0 通过；exit 2 拦截（stderr 给模型）；其它 exit 记笔记不拦截。",
+  "PreToolUse": [
+    {
+      "matcher": "bash|Bash",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "python3 -c \"import json,sys; d=json.load(sys.stdin); cmd=(d.get('tool_input') or {}).get('command',''); sys.stderr.write('blocked dangerous rm\\n') if 'rm -rf /' in cmd else None; sys.exit(2 if 'rm -rf /' in cmd else 0)\"",
+          "timeout": 10
+        }
+      ]
+    },
+    {
+      "matcher": "write_file|edit_file",
+      "type": "command",
+      "command": "node -e \"const d=JSON.parse(require('fs').readFileSync(0,'utf8')); const p=(d.tool_input&&d.tool_input.path)||''; if(/\\.env($|\\\\.|\\\\/)/.test(p)){console.error('deny .env write'); process.exit(2)} process.exit(0)\"",
+      "timeout": 10
+    }
+  ],
+  "PostToolUse": [
+    {
+      "matcher": "edit_file|write_file",
+      "type": "command",
+      "command": "echo \"PostToolUse: files changed — consider Agent(Verify)\"",
+      "timeout": 5
+    }
+  ],
+  "Stop": [
+    {
+      "type": "command",
+      "command": "node -e \"const d=JSON.parse(require('fs').readFileSync(0,'utf8')); if(d.changed_files&&d.changed_files.length&&!d.did_verify){console.error('Stop: verify before finish'); process.exit(2)} process.exit(0)\"",
+      "timeout": 10
+    },
+    {
+      "blockIfNoVerify": true,
+      "message": "Stop blocked: files changed but agent_verify not run."
+    }
+  ]
+}

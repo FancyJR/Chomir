@@ -1,0 +1,718 @@
+220|</template>
+221|
+222|<script>
+223|import { generateNoCodePage } from '@/api/nocode'
+224|import { saveNoCodePage, listNoCodePages } from '@/utils/nocodeStorage'
+225|
+226|function readAsDataUrl (file) {
+227|  return new Promise((resolve, reject) => {
+228|    const reader = new FileReader()
+229|    reader.onload = () => resolve(reader.result)
+230|    reader.onerror = reject
+231|    reader.readAsDataURL(file)
+232|  })
+233|}
+234|
+235|export default {
+236|  name: 'NoCodeBuilder',
+237|  data () {
+238|    return {
+239|      generating: false,
+240|      latestId: '',
+241|      fileList: [],
+242|      images: [],
+243|      form: {
+244|        description: ''
+245|      },
+246|      chatMessages: [
+247|        {
+248|          id: 'sys-1',
+249|          role: 'system',
+250|          text: '通过右侧对话逐步描述页面需求，并可上传原型图 / 设计图。每次发送后都会根据当前对话生成最新预览。',
+251|          collapsed: false
+252|        }
+253|      ],
+254|      chatInput: '',
+255|      history: [],
+256|      inlineSrcdoc: '',
+257|      latestVueCode: '',
+258|      applyDialogVisible: false,
+259|      applyLoading: false,
+260|      applyForm: {
+261|        viewName: '',
+262|        routePath: '',
+263|        routeTitle: ''
+264|      },
+265|      // 自动应用目标：始终覆盖同一个工程视图和路由，保证每次生成都有真实落盘页面
+266|      autoApplyTarget: {
+267|        viewName: 'GeneratedPage',
+268|        routePath: '/generated/latest',
+269|        routeTitle: 'AI 生成页面'
+270|      }
+271|    }
+272|  },
+273|  created () {
+274|    this.refreshHistory()
+275|  },
+276|  methods: {
+277|    async handleFileChange (file, fileList) {
+278|      this.fileList = fileList
+279|      // 转为 base64（用于预览和生成）
+280|      try {
+281|        const raw = file.raw || file
+282|        const dataUrl = await readAsDataUrl(raw)
+283|        const idx = this.images.findIndex(i => i.uid === file.uid)
+284|        const item = { uid: file.uid, name: file.name, dataUrl }
+285|        if (idx >= 0) this.images.splice(idx, 1, item)
+286|        else this.images.push(item)
+287|      } catch (e) {
+288|        this.$message.error('读取图片失败，请重试')
+289|      }
+290|    },
+291|    handleFileRemove (file, fileList) {
+292|      this.fileList = fileList
+293|      this.images = this.images.filter(i => i.uid !== file.uid)
+294|    },
+295|    async generateFromCurrentInput () {
+296|      if (!this.form.description && !this.images.length) {
+297|        this.$message.warning('请先通过对话描述需求或上传至少一张图片')
+298|        return
+299|      }
+300|      this.generating = true
+301|      try {
+302|        const title = this.deriveTitleFromDescription()
+303|        const payload = {
+304|          title,
+305|          description: this.form.description || '',
+306|          images: this.images.map(i => ({ name: i.name, dataUrl: i.dataUrl }))
+307|        }
+308|        const res = await generateNoCodePage(payload)
+309|        const saved = saveNoCodePage({
+310|          name: payload.title,
+311|          input: payload,
+312|          html: res.html,
+313|          css: res.css,
+314|          vueCode: res.vueCode || '',
+315|          meta: res.meta
+316|        })
+317|        this.latestId = saved.id
+318|        this.latestVueCode = saved.vueCode || ''
+319|        this.inlineSrcdoc = this.buildSrcdoc(saved)
+320|        // 1）自动写入工程一个固定的生成页面视图，保证每次生成都有真实代码文件
+321|        await this.autoApplyLatestSilently()
+322|        // 2）尝试自动将新生成的页面与现有列表页（例如 CommandMarket）关联起来
+323|        await this.autoAssociateLatestDetail()
+324|        if (res.meta && res.meta.provider === 'deepseek-chat') {
+325|          this.chatMessages.push({
+326|            id: `sys-${Date.now()}`,
+327|            role: 'system',
+328|            text: '已根据当前对话内容生成最新预览页面。'
+329|          })
+330|        } else if (res._error) {
+331|          this.$message.warning('大模型未返回数据：' + res._error + '。当前为本地模板预览。')
+332|        } else {
+333|          this.$message.warning('未配置大模型 Key，当前为本地模板预览。请在项目根目录创建 .env.local，设置 DEEPSEEK_API_KEY=你的key，重启 npm run server 后再试')
+334|        }
+335|        this.refreshHistory()
+336|      } catch (e) {
+337|        this.$message.error('生成失败，请稍后重试')
+338|      } finally {
+339|        this.generating = false
+340|      }
+341|    },
+342|    async handleSendChat () {
+343|      const text = (this.chatInput || '').trim()
+344|      if (!text) return
+345|      if (this.generating) {
+346|        this.$message.warning('正在生成页面，请稍候再发送')
+347|        return
+348|      }
+349|      const id = `u-${Date.now()}_${Math.random().toString(16).slice(2)}`
+350|      this.chatMessages.push({
+351|        id,
+352|        role: 'user',
+353|        text,
+354|        collapsed: true
+355|      })
+356|      this.form.description = this.form.description
+357|        ? `${this.form.description}\n${text}`
+358|        : text
+359|      this.chatInput = ''
+360|      // 先让后端引擎判断这条输入是生成新页面、修改已有代码还是仅对话
+361|      try {
+362|        const res = await fetch('/api/engine/route-message', {
+363|          method: 'POST',
+364|          headers: { 'Content-Type': 'application/json' },
+365|          body: JSON.stringify({
+366|            message: text,
+367|            context: {
+368|              hasGeneratedPage: !!this.latestVueCode
+369|            }
+370|          })
+371|        })
+372|        const data = await res.json()
+373|        const kind = data && data.route && data.route.kind
+374|        const engineInstruction = data && data.route && data.route.engineInstruction
+375|        const qaHint = data && data.route && data.route.qaHint
+376|
+377|        if (kind === 'generate_page' || !kind) {
+378|          // 默认行为：按当前描述生成/更新页面
+379|          await this.generateFromCurrentInput()
+380|        } else if (kind === 'modify_existing' && engineInstruction) {
+381|          // 用户在说「和已有页面关联 / 修改行为」，走指令引擎修改现有代码
+382|          await fetch('/api/engine/apply-instruction', {
+383|            method: 'POST',
+384|            headers: { 'Content-Type': 'application/json' },
+385|            body: JSON.stringify({ instruction: engineInstruction })
+386|          })
+387|        } else if (kind === 'qa') {
+388|          // 纯问答：调用后端 QA 接口，返回答案作为助手消息
+389|          const qaRes = await fetch('/api/engine/answer-question', {
+390|            method: 'POST',
+391|            headers: { 'Content-Type': 'application/json' },
+392|            body: JSON.stringify({
+393|              question: text,
+394|              context: {
+395|                hasGeneratedPage: !!this.latestVueCode
+396|              },
+397|              qaHint
+398|            })
+399|          })
+400|          const qaData = await qaRes.json()
+401|          if (qaRes.ok && qaData && qaData.answer) {
+402|            this.chatMessages.push({
+403|              id: `a-${Date.now()}_${Math.random().toString(16).slice(2)}`,
+404|              role: 'system',
+405|              text: qaData.answer,
+406|              collapsed: false
+407|            })
+408|          }
+409|        }
+410|      } catch (e) {
+411|        // 路由失败时回退到生成页面逻辑，保证基本功能可用
+412|        await this.generateFromCurrentInput()
+413|      }
+414|    },
+415|    async handleGenerate () {
+416|      if (!this.form.description && !this.images.length) {
+417|        this.$message.warning('请至少上传一张图片或填写需求描述')
+418|        return
+419|      }
+420|      this.generating = true
+421|      try {
+422|        const title = this.deriveTitleFromDescription()
+423|        const payload = {
+424|          title,
+425|          description: this.form.description || '',
+426|          images: this.images.map(i => ({ name: i.name, dataUrl: i.dataUrl }))
+427|        }
+428|        const res = await generateNoCodePage(payload)
+429|        const saved = saveNoCodePage({
+430|          name: payload.title,
+431|          input: payload,
+432|          html: res.html,
+433|          css: res.css,
+434|          vueCode: res.vueCode || '',
+435|          meta: res.meta
+436|        })
+437|        this.latestId = saved.id
+438|        this.latestVueCode = saved.vueCode || ''
+439|        this.inlineSrcdoc = this.buildSrcdoc(saved)
+440|        // 按按钮生成时同样自动写入工程固定视图并做关联
+441|        await this.autoApplyLatestSilently()
+442|        await this.autoAssociateLatestDetail()
+443|        if (res.meta && res.meta.provider === 'deepseek-chat') {
+444|          this.$message.success('已根据您提交的内容调用大模型生成 Vue 2.0 代码与预览')
+445|        } else if (res._error) {
+446|          this.$message.warning('大模型未返回数据：' + res._error + '。当前为本地模板预览。')
+447|        } else {
+448|          this.$message.warning('未配置大模型 Key，当前为本地模板预览。请在项目根目录创建 .env.local，设置 DEEPSEEK_API_KEY=你的key，重启 npm run server 后再试')
+449|        }
+450|        this.refreshHistory()
+451|      } catch (e) {
+452|        this.$message.error('生成失败，请稍后重试')
+453|      } finally {
+454|        this.generating = false
+455|      }
+456|    },
+457|    openPreview (id) {
+458|      const url = `${window.location.origin}/no-code/preview/${id}`
+459|      window.open(url, '_blank')
+460|    },
+461|    handleOpenPreview () {
+462|      if (!this.latestId) return
+463|      this.openPreview(this.latestId)
+464|    },
+465|    handleCopyVueCode () {
+466|      if (!this.latestVueCode) return
+467|      if (navigator.clipboard && navigator.clipboard.writeText) {
+468|        navigator.clipboard.writeText(this.latestVueCode).then(() => {
+469|          this.$message.success('已复制 Vue 代码')
+470|        })
+471|      } else {
+472|        const input = document.createElement('textarea')
+473|        input.value = this.latestVueCode
+474|        document.body.appendChild(input)
+475|        input.select()
+476|        document.execCommand('copy')
+477|        document.body.removeChild(input)
+478|        this.$message.success('已复制 Vue 代码')
+479|      }
+480|    },
+481|    handleCopyLink () {
+482|      if (!this.latestId) return
+483|      const url = `${window.location.origin}/no-code/preview/${this.latestId}`
+484|      if (navigator.clipboard && navigator.clipboard.writeText) {
+485|        navigator.clipboard.writeText(url).then(() => {
+486|          this.$message.success('已复制预览链接')
+487|        })
+488|      } else {
+489|        // 兼容兜底
+490|        const input = document.createElement('input')
+491|        input.value = url
+492|        document.body.appendChild(input)
+493|        input.select()
+494|        document.execCommand('copy')
+495|        document.body.removeChild(input)
+496|        this.$message.success('已复制预览链接')
+497|      }
+498|    },
+499|    refreshHistory () {
+500|      this.history = listNoCodePages().slice(0, 10)
+501|    },
+502|    toggleMessage (msg) {
+503|      this.$set(msg, 'collapsed', !msg.collapsed)
+504|    },
+505|    deriveTitleFromDescription () {
+506|      const desc = (this.form.description || '').trim()
+507|      if (!desc) return '生成页面'
+508|      const lines = desc.split('\n').map(l => l.trim()).filter(Boolean)
+509|      const first = lines[0] || '生成页面'
+510|      return first.length > 20 ? first.slice(0, 20) : first
+511|    },
+512|    async autoApplyLatestSilently () {
+513|      if (!this.latestVueCode) return
+514|      try {
+515|        const title = this.deriveTitleFromDescription() || this.autoApplyTarget.routeTitle
+516|        await fetch('/api/nocode/apply', {
+517|          method: 'POST',
+518|          headers: { 'Content-Type': 'application/json' },
+519|          body: JSON.stringify({
+520|            vueCode: this.latestVueCode,
+521|            viewName: this.autoApplyTarget.viewName,
+522|            routePath: this.autoApplyTarget.routePath,
+523|            routeTitle: title
+524|          })
+525|        })
+526|        // 为避免打扰，不在这里弹 toast，失败情况让用户看 server 日志即可
+527|      } catch (e) {
+528|        // 静默失败
+529|        // console.warn('[nocode] auto apply failed', e)
+530|      }
+531|    },
+532|    async autoAssociateLatestDetail () {
+533|      // 基于当前工程结构和固定路由 /generated/latest，尝试自动将其视为「详情页」
+534|      // 并让指令列表等页面在合适位置跳转到此详情页
+535|      try {
+536|        const desc = (this.form.description || '').trim()
+537|        const hint = desc ? `当前对话描述的大致内容：${desc.slice(0, 200)}` : ''
+538|        const instruction = [
+539|          '把最新生成并自动挂到 /generated/latest 的页面，视为本项目中的一个详情页（例如自定义指令详情）。',
+540|          '请分析当前工程的路由与视图结构（尤其是 src/views/CommandMarket.vue 自定义指令列表页等），',
+541|          '在不破坏现有逻辑的前提下，选择一个最合适的列表/卡片点击入口，添加跳转逻辑到 this.$router.push("/generated/latest")。',
+542|          '若已有类似详情跳转逻辑，请尽量复用或微调，而不要重复新增多个入口。',
+543|          hint
+544|        ].filter(Boolean).join('\n')
+545|
+546|        await fetch('/api/engine/apply-instruction', {
+547|          method: 'POST',
+548|          headers: { 'Content-Type': 'application/json' },
+549|          body: JSON.stringify({ instruction })
+550|        })
+551|      } catch (e) {
+552|        // 静默失败，必要时查看 server 日志
+553|      }
+554|    },
+555|    openApplyDialog () {
+556|      if (!this.latestVueCode) {
+557|        this.$message.warning('当前没有可应用的 Vue 代码')
+558|        return
+559|      }
+560|      const baseTitle = this.deriveTitleFromDescription()
+561|      const slug = baseTitle.replace(/\s+/g, '').replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '')
+562|      const safeName = slug || 'GeneratedPage'
+563|      this.applyForm.viewName = `Generated${safeName}`
+564|      this.applyForm.routePath = `/generated/${Date.now()}`
+565|      this.applyForm.routeTitle = baseTitle
+566|      this.applyDialogVisible = true
+567|    },
+568|    async handleApplyToProject () {
+569|      if (!this.latestVueCode) {
+570|        this.$message.warning('当前没有可应用的 Vue 代码')
+571|        return
+572|      }
+573|      const viewName = (this.applyForm.viewName || '').trim()
+574|      const routePath = (this.applyForm.routePath || '').trim()
+575|      const routeTitle = (this.applyForm.routeTitle || '').trim()
+576|      if (!viewName) {
+577|        this.$message.warning('请填写视图文件名')
+578|        return
+579|      }
+580|      this.applyLoading = true
+581|      try {
+582|        const res = await fetch('/api/nocode/apply', {
+583|          method: 'POST',
+584|          headers: { 'Content-Type': 'application/json' },
+585|          body: JSON.stringify({
+586|            vueCode: this.latestVueCode,
+587|            viewName,
+588|            routePath,
+589|            routeTitle
+590|          })
+591|        })
+592|        const data = await res.json()
+593|        if (!res.ok || !data || data.error) {
+594|          this.$message.error(data && data.message ? data.message : '应用失败，请稍后重试')
+595|          return
+596|        }
+597|        this.$message.success('已写入工程文件' + (data.routePath ? `，并注册路由 ${data.routePath}` : ''))
+598|        this.applyDialogVisible = false
+599|      } catch (e) {
+600|        this.$message.error('应用失败，请检查本地服务日志')
+601|      } finally {
+602|        this.applyLoading = false
+603|      }
+604|    },
+605|    buildSrcdoc (page) {
+606|      const css = (page.css || '').trim()
+607|      const html = (page.html || '').trim()
+608|      const vueCode = (page.vueCode || '').trim()
+609|      const title = page.name || '生成页面预览'
+610|      const scriptEnd = '</' + 'script>'
+611|      const hasVueCode = vueCode && vueCode.includes('<template>') && vueCode.includes(scriptEnd)
+612|      const htmlIsPlaceholder = !html || html.length < 120 || /^<div\s+id=["']?app["']?\s*>\s*<\/div>\s*$/i.test(html.replace(/\s+/g, ' '))
+613|      if (hasVueCode && (!html || htmlIsPlaceholder)) {
+614|        return this.buildSrcdocFromVueCode(title, vueCode, css)
+615|      }
+616|      if (html && !htmlIsPlaceholder) {
+617|        return this.buildSrcdocHtmlOnly(title, html, css)
+618|      }
+619|      if (hasVueCode) {
+620|        return this.buildSrcdocFromVueCode(title, vueCode, css)
+621|      }
+622|      return this.buildSrcdocHtmlOnly(title, '<div style="padding:24px;color:#666;font-size:14px;">本次生成未包含可预览内容，请查看下方 Vue 代码或点击「新窗口打开」。</div>', css)
+623|    },
+624|    buildSrcdocHtmlOnly (title, html, css) {
+625|      return `
+626|<!doctype html>
+627|<html lang="zh-CN">
+628|  <head>
+629|    <meta charset="UTF-8" />
+630|    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+631|    <title>${title}</title>
+632|    <link rel="stylesheet" href="https://unpkg.com/element-ui@2.15.14/lib/theme-chalk/index.css" />
+633|    <style scoped>
+634|/* 卡片容器整体布局优化 */
+635|.card-container {
+636|  padding: 20px;
+637|  background-color: #f8f9fa;
+638|  min-height: 100vh;
+639|  box-sizing: border-box;
+640|}
+641|
+642|/* 标题区域优化 */
+643|.title {
+644|  font-size: 28px;
+645|  font-weight: 700;
+646|  color: #2c3e50;
+647|  margin-bottom: 30px;
+648|  padding-bottom: 15px;
+649|  border-bottom: 2px solid #eaeaea;
+650|  text-align: center;
+651|}
+652|
+653|/* 网格布局优化 */
+654|.el-row {
+655|  display: flex;
+656|  flex-wrap: wrap;
+657|  gap: 24px;
+658|  justify-content: center;
+659|  margin: 0 auto;
+660|  max-width: 1400px;
+661|}
+662|
+663|.el-col {
+664|  display: flex;
+665|  flex-direction: column;
+666|  flex: 1 0 auto;
+667|}
+668|
+669|/* 卡片整体样式优化 */
+670|.card {
+671|  background: #ffffff;
+672|  border-radius: 16px;
+673|  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+674|  padding: 24px;
+675|  transition: all 0.3s ease;
+676|  height: 100%;
+677|  display: flex;
+678|  flex-direction: column;
+679|  border: 1px solid #f0f0f0;
+680|  min-height: 320px;
+681|  box-sizing: border-box;
+682|}
+683|
+684|.card:hover {
+685|  transform: translateY(-6px);
+686|  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+687|  border-color: #d0e6ff;
+688|}
+689|
+690|/* 卡片头部优化 */
+691|.card-header {
+692|  display: flex;
+693|  align-items: center;
+694|  margin-bottom: 20px;
+695|  padding-bottom: 16px;
+696|  border-bottom: 1px solid #f0f0f0;
+697|  flex-shrink: 0;
+698|}
+699|
+700|.card-icon {
+701|  width: 48px;
+702|  height: 48px;
+703|  border-radius: 12px;
+704|  background: linear-gradient(135deg, #6a8eff, #3d6eff);
+705|  display: flex;
+706|  align-items: center;
+707|  justify-content: center;
+708|  margin-right: 16px;
+709|  color: white;
+710|  font-size: 22px;
+711|  flex-shrink: 0;
+712|}
+713|
+714|/* 名称行优化 */
+715|.name-row {
+716|  display: flex;
+717|  flex-direction: column;
+718|  gap: 6px;
+719|  flex-grow: 1;
+720|}
+721|
+722|.name-zh {
+723|  font-size: 20px;
+724|  font-weight: 600;
+725|  color: #1a1a1a;
+726|  line-height: 1.3;
+727|  word-break: break-word;
+728|}
+729|
+730|.name-en {
+731|  font-size: 14px;
+732|  color: #666;
+733|  font-weight: 500;
+734|  letter-spacing: 0.5px;
+735|  word-break: break-word;
+736|}
+737|
+738|/* 描述区域优化 */
+739|.description {
+740|  color: #555;
+741|  font-size: 15px;
+742|  line-height: 1.6;
+743|  margin-bottom: 20px;
+744|  flex-grow: 1;
+745|  overflow-wrap: break-word;
+746|}
+747|
+748|/* 标签区域优化 */
+749|.tags {
+750|  display: flex;
+751|  flex-wrap: wrap;
+752|  gap: 10px;
+753|  margin-bottom: 24px;
+754|  flex-shrink: 0;
+755|}
+756|
+757|.tag {
+758|  background: #f0f7ff;
+759|  color: #3d6eff;
+760|  padding: 6px 14px;
+761|  border-radius: 20px;
+762|  font-size: 13px;
+763|  font-weight: 500;
+764|  border: 1px solid #d0e6ff;
+765|  transition: background 0.2s;
+766|  white-space: nowrap;
+767|}
+768|
+769|.tag:hover {
+770|  background: #e1eeff;
+771|}
+772|
+773|/* 底部操作区域优化 */
+774|.card-footer {
+775|  display: flex;
+776|  justify-content: space-between;
+777|  align-items: center;
+778|  margin-top: auto;
+779|  padding-top: 20px;
+780|  border-top: 1px solid #f0f0f0;
+781|  flex-shrink: 0;
+782|  gap: 12px;
+783|}
+784|
+785|/* 按钮样式优化 */
+786|.el-button {
+787|  border-radius: 8px;
+788|  font-weight: 500;
+789|  padding: 10px 20px;
+790|  transition: all 0.2s;
+791|  flex-shrink: 0;
+792|  white-space: nowrap;
+793|}
+794|
+795|.el-button--primary {
+796|  background: linear-gradient(135deg, #3d6eff, #6a8eff);
+797|  border: none;
+798|}
+799|
+800|.el-button--primary:hover {
+801|  background: linear-gradient(135deg, #2a5cff, #5a7eff);
+802|  box-shadow: 0 4px 12px rgba(61, 110, 255, 0.3);
+803|}
+804|
+805|.el-button--default {
+806|  border-color: #d9d9d9;
+807|  color: #666;
+808|}
+809|
+810|.el-button--default:hover {
+811|  border-color: #3d6eff;
+812|  color: #3d6eff;
+813|  background-color: #f9fbff;
+814|}
+815|
+816|/* 响应式调整 */
+817|@media (max-width: 768px) {
+818|  .card-container {
+819|    padding: 16px;
+820|  }
+821|  
+822|  .el-row {
+823|    gap: 20px;
+824|  }
+825|  
+826|  .card {
+827|    padding: 20px;
+828|    min-height: 300px;
+829|  }
+830|  
+831|  .card-icon {
+832|    width: 42px;
+833|    height: 42px;
+834|    font-size: 20px;
+835|  }
+836|  
+837|  .name-zh {
+838|    font-size: 18px;
+839|  }
+840|  
+841|  .card-footer {
+842|    flex-wrap: wrap;
+843|    justify-content: center;
+844|  }
+845|  
+846|  .el-button {
+847|    flex: 1;
+848|    min-width: 120px;
+849|    text-align: center;
+850|  }
+851|}
+852|
+853|@media (max-width: 480px) {
+854|  .title {
+855|    font-size: 24px;
+856|    margin-bottom: 24px;
+857|  }
+858|  
+859|  .card {
+860|    padding: 18px;
+861|    min-height: 280px;
+862|  }
+863|  
+864|  .card-header {
+865|    flex-direction: column;
+866|    align-items: flex-start;
+867|    gap: 12px;
+868|  }
+869|  
+870|  .card-icon {
+871|    margin-right: 0;
+872|    margin-bottom: 12px;
+873|  }
+874|  
+875|  .name-row {
+876|    align-items: flex-start;
+877|    width: 100%;
+878|  }
+879|  
+880|  .card-footer {
+881|    flex-direction: column;
+882|    width: 100%;
+883|  }
+884|  
+885|  .el-button {
+886|    width: 100%;
+887|  }
+888|}
+889|
+890|/* 引擎保护：保证卡片名称横向 */
+891|.name-row, .name-zh, .name-en {
+892|  writing-mode: horizontal-tb !important;
+893|}</style>
+894|  </head>
+895|  <body style="margin:0;min-height:100%;">
+896|    ${html}
+897|  </body>
+898|</html>
+899|      `.trim()
+900|    },
+901|    buildSrcdocFromVueCode (title, vueCode, extraCss) {
+902|      const scriptClose = '<' + '/script>'
+903|      const reTemplate = /<template[^>]*>([\s\S]*?)<\/template>/i
+904|      const reScript = new RegExp('<script[^>]*>([\\s\\S]*?)' + scriptClose.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
+905|      const reStyle = /<style[^>]*>([\s\S]*?)<\/style>/i
+906|      const templateMatch = vueCode.match(reTemplate)
+907|      const scriptMatch = vueCode.match(reScript)
+908|      const styleMatch = vueCode.match(reStyle)
+909|      const template = (templateMatch && templateMatch[1] ? templateMatch[1].trim() : '') || '<div>无模板</div>'
+910|      let scriptBody = (scriptMatch && scriptMatch[1] ? scriptMatch[1].trim() : '') || '{}'
+911|      const styleContent = (styleMatch && styleMatch[1] ? styleMatch[1].trim() : '') || ''
+912|      scriptBody = scriptBody.replace(/^\s*import\s+[\s\S]*?['"]\s*;?\s*$/gm, '').replace(/\bexport\s+default\s+/, 'window.__VUE_COMPONENT__ = ')
+913|      const scriptEscaped = scriptBody.replace(new RegExp(scriptClose.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), '<\\/script>')
+914|      let templateEscaped = template.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '').replace(new RegExp(scriptClose.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), '\\x3c/script>')
+915|      const parts = [
+916|        '<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>',
+917|        '<title>', title, '</title>',
+918|        '<link rel="stylesheet" href="https://unpkg.com/element-ui@2.15.14/lib/theme-chalk/index.css"/><style>', styleContent, '</style><style>', extraCss, '</style></head>',
+919|        '<body style="margin:0;min-height:100%;"><div id="app"></div>',
+920|        '<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.7.16/vue.min.js">', scriptClose,
+921|        '<script src="https://cdnjs.cloudflare.com/ajax/libs/element-ui/2.15.14/index.js">', scriptClose,
+922|        '<script>window.__VUE_TEMPLATE__ = \'', templateEscaped, '\';', scriptClose,
+923|        '<script>', scriptEscaped, scriptClose,
+924|        '<script>(function(){if(typeof Vue==="undefined"||typeof ELEMENT==="undefined")return;Vue.use(ELEMENT);var opts=window.__VUE_COMPONENT__||{};new Vue(Object.assign({},opts,{el:"#app",template:window.__VUE_TEMPLATE__}));})();', scriptClose,
+925|        '</body></html>'
+926|      ]
+927|      return parts.join('')
+928|    },
+929|    formatTime (iso) {
+930|      if (!iso) return ''
+931|      // 简单格式化：YYYY-MM-DD HH:mm
+932|      const d = new Date(iso)
+933|      const yyyy = d.getFullYear()
+934|      const mm = String(d.getMonth() + 1).padStart(2, '0')
+935|      const dd = String(d.getDate()).padStart(2, '0')
+936|      const hh = String(d.getHours()).padStart(2, '0')
+937|      const mi = Strin

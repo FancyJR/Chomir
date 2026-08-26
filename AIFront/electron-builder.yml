@@ -1,0 +1,71 @@
+appId: com.aifront.desktop
+productName: AIFront
+executableName: AIFront
+copyright: Copyright © AIFront
+asar: true
+directories:
+  output: release
+  buildResources: build
+files:
+  - electron/**/*
+  - server/**/*
+  - dist/**/*
+  - bin/**/*
+  - package.json
+  - "!**/*.{map,md,markdown}"
+  - "!**/deepseek-harness*/**"
+  - "!**/packages/**"
+  - "!**/.claw/**"
+  - "!**/.panda/**"
+  - "!**/.env.local"
+extraMetadata:
+  main: electron/main.js
+mac:
+  category: public.app-category.developer-tools
+  icon: build/icon-mac.png
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+    - target: dir
+      arch:
+        - x64
+        - arm64
+  hardenedRuntime: false
+  gatekeeperAssess: false
+win:
+  icon: build/icon.png
+  target:
+    - target: nsis
+      arch:
+        - x64
+nsis:
+  oneClick: false
+  perMachine: false
+  allowElevation: true
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: AIFront
+  artifactName: AIFront-${version}-${arch}-Setup.${ext}
+linux:
+  category: Development
+  icon: build/icon.png
+  executableName: AIFront
+  synopsis: AIFront desktop client
+  description: AIFront local coding workbench (Vue UI + Express engine)
+  target:
+    - AppImage
+    - deb
+  artifactName: AIFront-${version}-x64.${ext}
+deb:
+  depends:
+    - libgtk-3-0
+    - libnotify4
+    - libnss3
+    - libxss1
+    - libxtst6
+    - xdg-utils
+    - libatspi2.0-0
+    - libuuid1

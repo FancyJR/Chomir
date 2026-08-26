@@ -1,0 +1,40 @@
+{
+  "servers": {
+    "typescript": {
+      "command": "npx",
+      "args": ["--yes", "typescript-language-server", "--stdio"],
+      "extensionToLanguage": {
+        ".ts": "typescript",
+        ".tsx": "typescriptreact",
+        ".js": "javascript",
+        ".jsx": "javascriptreact",
+        ".mjs": "javascript",
+        ".cjs": "javascript"
+      },
+      "initializationOptions": {
+        "tsserver": {
+          "path": "node_modules/typescript/lib/tsserver.js"
+        }
+      },
+      "startupTimeout": 90,
+      "maxRestarts": 3
+    }
+  },
+  "_comment": "已启用 typescript-language-server（需本仓库 typescript 依赖）。.vue 可另加 @vue/language-server，见 _example.vue。",
+  "_example": {
+    "vue": {
+      "command": "npx",
+      "args": ["--yes", "@vue/language-server", "--stdio"],
+      "extensionToLanguage": {
+        ".vue": "vue"
+      },
+      "initializationOptions": {
+        "typescript": {
+          "tsdk": "node_modules/typescript/lib"
+        }
+      },
+      "startupTimeout": 90,
+      "maxRestarts": 3
+    }
+  }
+}

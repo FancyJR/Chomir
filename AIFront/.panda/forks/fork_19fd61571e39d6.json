@@ -1,0 +1,11 @@
+{
+  "id": "fork_19fd61571e39d6",
+  "type": "plan",
+  "goal": "用三句话说明如何改按钮颜色",
+  "parentSessionId": null,
+  "status": "done",
+  "createdAt": "2026-08-06T07:59:17.475Z",
+  "result": "计划生成失败：NO_MODEL_CONFIG",
+  "messages": [],
+  "finishedAt": "2026-08-06T07:59:17.476Z"
+}

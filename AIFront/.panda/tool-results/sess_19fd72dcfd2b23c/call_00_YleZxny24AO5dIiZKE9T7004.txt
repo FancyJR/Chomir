@@ -1,0 +1,791 @@
+1|<template>
+2|  <div class="page-command-market">
+3|    <el-card class="page-card">
+4|      <!-- 标题区 -->
+5|      <div class="page-header">
+6|        <div class="page-title-block">
+7|          <div class="page-title">指令市场AI</div>
+8|          <div class="page-subtitle">浏览、订阅和管理团队共享的指令</div>
+9|        </div>
+10|      </div>
+11|
+12|      <!-- 状态 Tab 区域 -->
+13|      <div class="status-tabs">
+14|        <button
+15|          v-for="tab in statusTabs"
+16|          :key="tab.value"
+17|          :class="['status-tab-btn', { 'is-active': currentStatusTab === tab.value }]"
+18|          @click="handleStatusChange(tab.value)"
+19|        >
+20|          <span class="tab-label">{{ tab.label }}</span>
+21|          <span class="tab-count">{{ tab.count }}</span>
+22|        </button>
+23|      </div>
+24|
+25|      <!-- 工具栏 -->
+26|      <div class="toolbar">
+27|        <div class="toolbar-left">
+28|          <span class="toolbar-label">类型筛选：</span>
+29|          <el-select
+30|            v-model="filters.type"
+31|            size="small"
+32|            class="type-select"
+33|            @change="handleFilterChange"
+34|          >
+35|            <el-option
+36|              v-for="item in commandTypes"
+37|              :key="item.value"
+38|              :label="item.label"
+39|              :value="item.value"
+40|            />
+41|          </el-select>
+42|          <span class="toolbar-label" style="margin-left: 16px;">状态：</span>
+43|          <el-select
+44|            v-model="filters.status"
+45|            size="small"
+46|            class="status-select"
+47|            @change="handleFilterChange"
+48|          >
+49|            <el-option
+50|              v-for="item in statusOptions"
+51|              :key="item.value"
+52|              :label="item.label"
+53|              :value="item.value"
+54|            />
+55|          </el-select>
+56|        </div>
+57|        <div class="toolbar-right">
+58|          <el-input
+59|            v-model="filters.keyword"
+60|            size="small"
+61|            placeholder="搜索指令名称"
+62|            class="search-input"
+63|            clearable
+64|            @keyup.enter.native="handleSearch"
+65|          >
+66|            <el-button slot="append" icon="el-icon-search" class="search-btn" @click="handleSearch" />
+67|          </el-input>
+68|          <el-button type="primary" size="small" class="create-btn" @click="handleCreate">
+69|            新建指令
+70|          </el-button>
+71|        </div>
+72|      </div>
+73|
+74|      <!-- 卡片网格 -->
+75|      <div class="card-grid" v-loading="loading">
+76|        <el-row>
+77|          <el-col
+78|            v-for="item in commandList"
+79|            :key="item.id"
+80|            :xs="24"
+81|            :sm="12"
+82|            :md="8"
+83|            :lg="5"
+84|            :xl="5"
+85|          >
+86|            <div class="command-card" @click="handleCardClick(item.id)">
+87|              <div class="command-card-main">
+88|                <div class="command-card-top">
+89|                  <div :class="['command-icon', getIconColorClass(item)]">
+90|                    <span class="icon-text">{{ getIconText(item) }}</span>
+91|                  </div>
+92|                  <div class="card-actions">
+93|                    <el-button
+94|                      type="text"
+95|                      icon="el-icon-edit-outline"
+96|                      @click.stop="handleEdit(item)"
+97|                    />
+98|                  </div>
+99|                </div>
+100|                <div class="command-content">
+101|                  <div class="name-row">
+102|                    <el-tooltip :content="item.nameZh" placement="top" :open-delay="300">
+103|                      <div class="name-zh">{{ item.nameZh }}</div>
+104|                    </el-tooltip>
+105|                    <el-tooltip :content="item.nameEn" placement="top" :open-delay="300">
+106|                      <div class="name-en">{{ item.nameEn }}</div>
+107|                    </el-tooltip>
+108|                  </div>
+109|                  <div class="description-wrap">
+110|                    <el-tooltip :content="item.description" placement="top" :open-delay="300" effect="light" popper-class="command-description-tooltip">
+111|                      <div class="description">
+112|                        {{ item.description }}
+113|                      </div>
+114|                    </el-tooltip>
+115|                  </div>
+116|                  <div class="tags-row">
+117|                    <el-tag
+118|                      v-for="tag in item.tags"
+119|                      :key="tag"
+120|                      size="mini"
+121|                      class="tag-item"
+122|                    >
+123|                      {{ tag }}
+124|                    </el-tag>
+125|                  </div>
+126|                </div>
+127|              </div>
+128|              <div class="command-card-footer">
+129|                <div class="meta-left">
+130|                  <span class="creator">{{ item.createdBy }}</span>
+131|                  <span class="created-at">{{ item.createdAt }}</span>
+132|                </div>
+133|                <div class="meta-right">
+134|                  <span class="subscribe">
+135|                    <i class="el-icon-user" />
+136|                    <span class="number">{{ item.subscribeCount }}</span>
+137|                  </span>
+138|                  <span :class="['status', getStatusClass(item)]">{{ getStatusText(item) }}</span>
+139|                </div>
+140|              </div>
+141|            </div>
+142|          </el-col>
+143|        </el-row>
+144|
+145|        <div v-if="!commandList.length" class="empty-block">
+146|          <el-empty description="暂无指令，请点击右上角“新建指令”创建。" />
+147|        </div>
+148|      </div>
+149|
+150|      <!-- 分页 -->
+151|      <div class="pagination-wrapper" v-if="pagination.total > 0">
+152|        <span class="total-text">共 {{ pagination.total }} 条</span>
+153|        <el-pagination
+154|          background
+155|          layout="prev, pager, next, sizes"
+156|          :page-sizes="[10, 20, 50]"
+157|          :page-size="pagination.pageSize"
+158|          :current-page="pagination.pageNum"
+159|          :total="pagination.total"
+160|          @size-change="handleSizeChange"
+161|          @current-change="handlePageChange"
+162|        />
+163|      </div>
+164|    </el-card>
+165|
+166|    <!-- 新建 / 编辑弹窗 -->
+167|    <el-dialog
+168|      :title="isEdit ? '编辑指令' : '新建指令'"
+169|      :visible.sync="dialogVisible"
+170|      width="520px"
+171|      @close="handleDialogClose"
+172|      custom-class="command-dialog"
+173|    >
+174|      <el-form
+175|        ref="commandFormRef"
+176|        :model="form"
+177|        :rules="rules"
+178|        label-width="90px"
+179|        class="command-form"
+180|      >
+181|        <el-form-item label="中文名称" prop="nameZh">
+182|          <el-input v-model="form.nameZh" placeholder="请输入中文名称" />
+183|        </el-form-item>
+184|        <el-form-item label="英文名称" prop="nameEn">
+185|          <el-input v-model="form.nameEn" placeholder="请输入英文名称" />
+186|        </el-form-item>
+187|        <el-form-item label="指令类型" prop="type">
+188|          <el-select v-model="form.type" placeholder="请选择指令类型">
+189|            <el-option
+190|              v-for="item in commandTypes.filter(t => t.value)"
+191|              :key="item.value"
+192|              :label="item.label"
+193|              :value="item.value"
+194|            />
+195|          </el-select>
+196|        </el-form-item>
+197|        <el-form-item label="标签" prop="tags">
+198|          <el-select
+199|            v-model="form.tags"
+200|            multiple
+201|            collapse-tags
+202|            :multiple-limit="5"
+203|            placeholder="请选择标签（最多 5 个）"
+204|          >
+205|            <el-option
+206|              v-for="tag in commandTags"
+207|              :key="tag.value"
+208|              :label="tag.label"
+209|              :value="tag.value"
+210|            />
+211|          </el-select>
+212|        </el-form-item>
+213|        <el-form-item label="描述" prop="description">
+214|          <el-input
+215|            v-model="form.description"
+216|            type="textarea"
+217|            :rows="3"
+218|            maxlength="200"
+219|            show-word-limit
+220|            placeholder="请输入指令功能描述"
+221|          />
+222|        </el-form-item>
+223|      </el-form>
+224|
+225|      <div slot="footer" class="dialog-footer">
+226|        <el-button @click="dialogVisible = false">取 消</el-button>
+227|        <el-button type="primary" :loading="submitLoading" @click="handleSubmit">
+228|          保 存
+229|        </el-button>
+230|      </div>
+231|    </el-dialog>
+232|  </div>
+233|</template>
+234|
+235|<script>
+236|import { fetchCommandList, createCommand, updateCommand } from '@/api/command'
+237|import { COMMAND_TAGS, COMMAND_TYPES } from '@/constants/command'
+238|
+239|export default {
+240|  name: 'CommandMarket',
+241|  data () {
+242|    const validateTags = (rule, value, callback) => {
+243|      if (Array.isArray(value) && value.length > 5) {
+244|        callback(new Error('最多选择 5 个标签'))
+245|      } else {
+246|        callback()
+247|      }
+248|    }
+249|
+250|    return {
+251|      loading: false,
+252|      commandList: [],
+253|      commandTags: COMMAND_TAGS,
+254|      commandTypes: COMMAND_TYPES,
+255|      currentStatusTab: 'all',
+256|      subscribedCount: 0,
+257|      statusTabs: [
+258|        { label: '全部', value: 'all', count: 0 },
+259|        { label: '我创建的', value: 'mine', count: 0 },
+260|        { label: '已订阅指令', value: 'subscribed', count: 0 },
+261|        { label: '未订阅指令', value: 'unsubscribed', count: 0 }
+262|      ],
+263|      filters: {
+264|        type: '',
+265|        keyword: '',
+266|        status: ''
+267|      },
+268|      statusOptions: [
+269|        { label: '全部状态', value: '' },
+270|        { label: '已启用', value: 'enabled' },
+271|        { label: '已禁用', value: 'disabled' },
+272|        { label: '草稿', value: 'draft' }
+273|      ],
+274|      pagination: {
+275|        pageNum: 1,
+276|        pageSize: 10,
+277|        total: 0
+278|      },
+279|      dialogVisible: false,
+280|      isEdit: false,
+281|      currentEditId: null,
+282|      submitLoading: false,
+283|      form: {
+284|        nameZh: '',
+285|        nameEn: '',
+286|        type: '',
+287|        tags: [],
+288|        description: '',
+289|        createdBy: 'Admin'
+290|      },
+291|      rules: {
+292|        nameZh: [{ required: true, message: '请输入中文名称', trigger: 'blur' }],
+293|        type: [{ required: true, message: '请选择指令类型', trigger: 'change' }],
+294|        tags: [{ validator: validateTags, trigger: 'change' }]
+295|      }
+296|    }
+297|  },
+298|  created () {
+299|    this.loadData()
+300|  },
+301|  methods: {
+302|    async loadData () {
+303|      this.loading = true
+304|      try {
+305|        const { pageNum, pageSize } = this.pagination
+306|        const params = {
+307|          pageNum,
+308|          pageSize,
+309|          type: this.filters.type,
+310|          keyword: this.filters.keyword,
+311|          status: this.filters.status,
+312|          statusTab: this.currentStatusTab,
+313|          currentUser: 'Admin'
+314|        }
+315|        const res = await fetchCommandList(params)
+316|        const records = res.records || []
+317|        // 如果不足5条，补充假数据
+318|        const mockData = [
+319|          {
+320|            id: 'mock-command-1',
+321|            nameZh: '代码格式化工具',
+322|            nameEn: 'Code Formatter',
+323|            type: '代码质量',
+324|            description: '自动格式化代码风格，确保团队代码规范统一，提高代码可读性与可维护性，减少人工排版工作量。',
+325|            tags: ['质量', '规范'],
+326|            createdBy: 'Admin',
+327|            createdAt: '2024-03-15 10:30:00',
+328|            subscribeCount: 128,
+329|            subscribed: true
+330|          }
+331|        ]
+332|        this.commandList = records.length >= 5 ? records : [...records, ...mockData]
+333|        this.pagination.total = Math.max(res.total || 0, 5)
+334|        this.updateStatusCounts()
+335|      } catch (e) {
+336|        this.$message.error('获取指令列表失败，请稍后重试')
+337|      } finally {
+338|        this.loading = false
+339|      }
+340|    },
+341|    updateStatusCounts () {
+342|      const allList = this.commandList
+343|      const mineCount = allList.filter(item => item.createdBy === 'Admin').length
+344|      const subCount = allList.filter(item => item.subscribed).length
+345|      const unsubscribedCount = allList.filter(item => !item.subscribed).length
+346|
+347|      this.subscribedCount = subCount
+348|
+349|      this.statusTabs = [
+350|        { label: '全部', value: 'all', count: allList.length },
+351|        { label: '我创建的', value: 'mine', count: mineCount },
+352|        { label: '已订阅指令', value: 'subscribed', count: subCount },
+353|        { label: '未订阅指令', value: 'unsubscribed', count: unsubscribedCount }
+354|      ]
+355|    },
+356|    handleStatusChange (value) {
+357|      if (this.currentStatusTab === value) return
+358|      this.currentStatusTab = value
+359|      this.pagination.pageNum = 1
+360|      this.loadData()
+361|    },
+362|    handleFilterChange () {
+363|      this.pagination.pageNum = 1
+364|      this.loadData()
+365|    },
+366|    handleSearch () {
+367|      this.handleFilterChange()
+368|    },
+369|    handleSizeChange (size) {
+370|      this.pagination.pageSize = size
+371|      this.pagination.pageNum = 1
+372|      this.loadData()
+373|    },
+374|    handlePageChange (page) {
+375|      this.pagination.pageNum = page
+376|      this.loadData()
+377|    },
+378|    handleCardClick (commandId) {
+379|      this.$router.push('/command/detail/' + commandId)
+380|    },
+381|    handleCreate () {
+382|      this.isEdit = false
+383|      this.currentEditId = null
+384|      this.resetForm()
+385|      this.dialogVisible = true
+386|    },
+387|    handleEdit (row) {
+388|      this.isEdit = true
+389|      this.currentEditId = row.id
+390|      this.form = {
+391|        nameZh: row.nameZh,
+392|        nameEn: row.nameEn,
+393|        type: row.type,
+394|        tags: (row.tags && row.tags.slice()) || [],
+395|        description: row.description,
+396|        createdBy: row.createdBy
+397|      }
+398|      this.dialogVisible = true
+399|    },
+400|    handleDialogClose () {
+401|      this.resetForm()
+402|    },
+403|    resetForm () {
+404|      this.$nextTick(() => {
+405|        if (this.$refs.commandFormRef) {
+406|          this.$refs.commandFormRef.resetFields()
+407|        }
+408|      })
+409|      this.form = {
+410|        nameZh: '',
+411|        nameEn: '',
+412|        type: '',
+413|        tags: [],
+414|        description: '',
+415|        createdBy: 'Admin'
+416|      }
+417|      this.submitLoading = false
+418|    },
+419|    async handleSubmit () {
+420|      if (!this.$refs.commandFormRef) return
+421|      this.$refs.commandFormRef.validate(async valid => {
+422|        if (!valid) return
+423|        this.submitLoading = true
+424|        try {
+425|          if (this.isEdit && this.currentEditId != null) {
+426|            await updateCommand(this.currentEditId, this.form)
+427|            this.$message.success('更新成功')
+428|          } else {
+429|            await createCommand(this.form)
+430|            this.$message.success('创建成功')
+431|          }
+432|          this.dialogVisible = false
+433|          this.pagination.pageNum = 1
+434|          this.loadData()
+435|        } catch (e) {
+436|          this.$message.error('保存失败，请稍后重试')
+437|        } finally {
+438|          this.submitLoading = false
+439|        }
+440|      })
+441|    },
+442|    getStatusText (item) {
+443|      const map = {
+444|        enabled: '已启用',
+445|        disabled: '已禁用',
+446|        draft: '草稿'
+447|      }
+448|      return map[item.status] || '已启用'
+449|    },
+450|    getStatusClass (item) {
+451|      const map = {
+452|        enabled: 'enabled',
+453|        disabled: 'disabled',
+454|        draft: 'draft'
+455|      }
+456|      return map[item.status] || 'enabled'
+457|    },
+458|    getIconText (item) {
+459|      if (item.nameEn) {
+460|        return item.nameEn[0].toUpperCase()
+461|      }
+462|      if (item.nameZh) {
+463|        return item.nameZh[0]
+464|      }
+465|      return '?'
+466|    },
+467|    getIconColorClass (item) {
+468|      const map = {
+469|        代码质量: 'color-purple',
+470|        前端开发: 'color-green',
+471|        后端开发: 'color-blue',
+472|        单元测试: 'color-indigo',
+473|        数据库操作: 'color-orange',
+474|        脚本开发: 'color-cyan',
+475|        其他: 'color-red'
+476|      }
+477|      return map[item.type] || 'color-purple'
+478|    },
+479|  }
+480|}
+481|</script>
+482|
+483|<style scoped>
+484|.page-command-market {
+485|  padding: 32px 40px;
+486|  background:
+487|    radial-gradient(1200px 400px at 10% -10%, rgba(59, 130, 246, 0.18), transparent 60%),
+488|    radial-gradient(1000px 400px at 90% 0%, rgba(99, 102, 241, 0.16), transparent 60%),
+489|    linear-gradient(160deg, #eef4ff 0%, #e0ecff 40%, #d6e6ff 100%);
+490|  min-height: 100vh;
+491|  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+492|  color: #1e293b;
+493|  box-sizing: border-box;
+494|}
+495|
+496|.page-card {
+497|  padding: 0 32px 32px;
+498|  border-radius: 20px;
+499|  border: 1px solid rgba(59, 130, 246, 0.2);
+500|  box-shadow: 0 12px 40px rgba(59, 130, 246, 0.12);
+501|  background-color: rgba(255, 255, 255, 0.92);
+502|  backdrop-filter: blur(8px);
+503|  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+504|  margin-bottom: 32px;
+505|  min-height: 0;
+506|}
+507|
+508|.page-card:hover {
+509|  box-shadow: 0 16px 48px rgba(59, 130, 246, 0.18);
+510|  border-color: rgba(59, 130, 246, 0.35);
+511|}
+512|.page-header {
+513|  display: flex;
+514|  align-items: center;
+515|  justify-content: space-between;
+516|  padding: 28px 0 22px;
+517|  border-bottom: 1px solid rgba(59, 130, 246, 0.15);
+518|  margin-bottom: 16px;
+519|  min-height: 0;
+520|  position: relative;
+521|}
+522|
+523|.page-header::before {
+524|  content: '';
+525|  position: absolute;
+526|  left: 0;
+527|  top: 28px;
+528|  bottom: 22px;
+529|  width: 4px;
+530|  border-radius: 4px;
+531|  background: linear-gradient(180deg, #3b82f6, #2563eb);
+532|}
+533|
+534|.page-title-block {
+535|  display: flex;
+536|  flex-direction: column;
+537|  gap: 6px;
+538|  min-height: 0;
+539|  padding-left: 16px;
+540|}
+541|
+542|.page-title {
+543|  font-size: 26px;
+544|  font-weight: 700;
+545|  color: #1e3a8a;
+546|  margin-bottom: 0;
+547|  letter-spacing: -0.3px;
+548|  line-height: 1.3;
+549|  background: linear-gradient(135deg, #1e3a8a, #2563eb);
+550|  -webkit-background-clip: text;
+551|  -webkit-text-fill-color: transparent;
+552|  background-clip: text;
+553|}
+554|
+555|.page-subtitle {
+556|  font-size: 14px;
+557|  color: #64748b;
+558|  line-height: 1.6;
+559|  font-weight: 400;
+560|  max-width: 680px;
+561|}
+562|
+563|.status-tabs {
+564|  padding: 20px 0 16px;
+565|  display: inline-flex;
+566|  flex-wrap: wrap;
+567|  min-height: 0;
+568|  background: rgba(255, 255, 255, 0.7);
+569|  border: 1px solid rgba(59, 130, 246, 0.2);
+570|  border-radius: 12px;
+571|  padding: 4px;
+572|  gap: 0;
+573|}
+574|
+575|.status-tab-btn {
+576|  min-width: 0;
+577|  text-align: center;
+578|  border-radius: 9px;
+579|  margin-right: 0;
+580|  font-weight: 500;
+581|  transition: all 0.25s ease;
+582|  border: none;
+583|  padding: 8px 20px;
+584|  font-size: 14px;
+585|  color: #64748b;
+586|  background-color: transparent;
+587|  cursor: pointer;
+588|  display: inline-flex;
+589|  align-items: center;
+590|  gap: 8px;
+591|  white-space: nowrap;
+592|}
+593|
+594|.status-tab-btn + .status-tab-btn {
+595|  margin-left: 2px;
+596|}
+597|
+598|.status-tab-btn .tab-count {
+599|  display: inline-flex;
+600|  align-items: center;
+601|  justify-content: center;
+602|  min-width: 20px;
+603|  height: 20px;
+604|  padding: 0 6px;
+605|  border-radius: 10px;
+606|  background: #e0eaff;
+607|  color: #3b82f6;
+608|  font-size: 12px;
+609|  font-weight: 600;
+610|  line-height: 1;
+611|}
+612|
+613|.status-tab-btn:hover {
+614|  color: #2563eb;
+615|  background-color: rgba(59, 130, 246, 0.1);
+616|}
+617|
+618|.status-tab-btn.is-active {
+619|  background: linear-gradient(135deg, #3b82f6, #2563eb);
+620|  color: #ffffff;
+621|  font-weight: 600;
+622|  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+623|}
+624|
+625|.status-tab-btn.is-active .tab-count {
+626|  background: rgba(255, 255, 255, 0.25);
+627|  color: #ffffff;
+628|}
+629|
+630|.toolbar {
+631|  display: flex;
+632|  align-items: center;
+633|  justify-content: space-between;
+634|  padding: 16px 0;
+635|  flex-wrap: wrap;
+636|  gap: 16px;
+637|  min-height: 0;
+638|}
+639|
+640|.toolbar-left {
+641|  display: flex;
+642|  align-items: center;
+643|  flex-wrap: wrap;
+644|  gap: 12px;
+645|  min-height: 0;
+646|}
+647|.toolbar-label {
+648|  font-size: 14px;
+649|  color: #64748b;
+650|  margin-right: 0;
+651|  font-weight: 500;
+652|  white-space: nowrap;
+653|}
+654|
+655|.type-select {
+656|  width: 180px;
+657|}
+658|
+659|.status-select {
+660|  width: 160px;
+661|}
+662|
+663|.toolbar-right {
+664|  display: flex;
+665|  align-items: center;
+666|  gap: 12px;
+667|  flex-wrap: wrap;
+668|  min-height: 0;
+669|}
+670|
+671|.search-input {
+672|  width: 280px;
+673|}
+674|
+675|.search-input >>> .el-input-group__append {
+676|  background-color: #3b82f6;
+677|  border: 1px solid #3b82f6;
+678|  border-left: none;
+679|  border-radius: 0 8px 8px 0;
+680|  padding: 0;
+681|  overflow: hidden;
+682|  transition: background-color 0.25s ease, border-color 0.25s ease;
+683|}
+684|
+685|.search-input >>> .el-input-group__append:hover {
+686|  background-color: #2563eb;
+687|  border-color: #2563eb;
+688|}
+689|
+690|.search-input >>> .search-btn {
+691|  display: flex;
+692|  align-items: center;
+693|  justify-content: center;
+694|  height: 100%;
+695|  width: 100%;
+696|  padding: 0 16px;
+697|  margin: 0;
+698|  border: none;
+699|  background: transparent;
+700|  color: #ffffff;
+701|  font-size: 16px;
+702|}
+703|
+704|.search-input >>> .search-btn:hover,
+705|.search-input >>> .search-btn:focus {
+706|  background: transparent;
+707|  color: #ffffff;
+708|}
+709|
+710|.search-input >>> .el-input__inner {
+711|  border-radius: 8px 0 0 8px;
+712|  border: 1px solid rgba(59, 130, 246, 0.25);
+713|  border-right: none;
+714|  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+715|  padding: 8px 14px;
+716|  font-size: 14px;
+717|  background-color: #ffffff;
+718|  color: #1e293b;
+719|}
+720|
+721|.search-input >>> .el-input__inner:focus {
+722|  border-color: #3b82f6;
+723|  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+724|}
+725|
+726|.search-input >>> .el-input__inner::placeholder {
+727|  color: #94a3b8;
+728|}
+729|
+730|.create-btn {
+731|  margin-left: 0;
+732|  border-radius: 8px;
+733|  font-weight: 600;
+734|  padding: 10px 20px;
+735|  background: linear-gradient(135deg, #3b82f6, #2563eb);
+736|  border: 1px solid #2563eb;
+737|  transition: all 0.25s ease;
+738|  font-size: 14px;
+739|  letter-spacing: 0.3px;
+740|  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+741|}
+742|
+743|.create-btn:hover {
+744|  transform: translateY(-2px);
+745|  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+746|}
+747|
+748|.card-grid {
+749|  padding-top: 12px;
+750|  min-height: 0;
+751|}
+752|
+753|.command-card {
+754|  background: #ffffff;
+755|  border-radius: 16px;
+756|  border: 1px solid rgba(59, 130, 246, 0.18);
+757|  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+758|  overflow: hidden;
+759|  cursor: pointer;
+760|  height: 100%;
+761|  display: flex;
+762|  flex-direction: column;
+763|  box-sizing: border-box;
+764|  box-shadow: 0 2px 10px rgba(59, 130, 246, 0.08);
+765|  position: relative;
+766|}
+767|
+768|.command-card::before {
+769|  content: '';
+770|  position: absolute;
+771|  top: 0;
+772|  left: 0;
+773|  right: 0;
+774|  height: 3px;
+775|  background: linear-gradient(90deg, #3b82f6, #2563eb, #06b6d4);
+776|  opacity: 0;
+777|  transition: opacity 0.35s ease;
+778|}
+779|
+780|.command-card:hover {
+781|  box-shadow: 0 16px 36px rgba(59, 130, 246, 0.2);
+782|  transform: translateY(-5px);
+783|  border-color: #3b82f6;
+784|  background: #ffffff;
+785|}
+786|
+787|.command-card:hover::before {
+788|  opacity: 1;
+789|}
+790|
+791|.command

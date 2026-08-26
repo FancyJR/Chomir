@@ -1,0 +1,364 @@
+cwd=/Users/shiyun/workspace/AIFront
+exit=0
+stdout:
+     1	<template>
+     2	  <div class="token-screen">
+     3	    <!-- 背景粒子画布 -->
+     4	    <canvas ref="bgCanvas" class="bg-canvas"></canvas>
+     5	
+     6	    <!-- 顶部标题栏 -->
+     7	    <header class="screen-header">
+     8	      <div class="header-side left">
+     9	        <div class="deco-line"></div>
+    10	        <span class="header-sub">AI CODING TOKEN ANALYTICS</span>
+    11	      </div>
+    12	      <h1 class="screen-title">
+    13	        <span class="title-glow">AI 编码 Token 使用量统计</span>
+    14	      </h1>
+    15	      <div class="header-side right">
+    16	        <div class="time-switch">
+    17	          <button
+    18	            v-for="t in timeOptions"
+    19	            :key="t.value"
+    20	            :class="['time-btn', { active: timeRange === t.value }]"
+    21	            @click="switchTime(t.value)"
+    22	          >{{ t.label }}</button>
+    23	        </div>
+    24	      </div>
+    25	    </header>
+    26	
+    27	    <!-- 顶部指标卡 -->
+    28	    <section class="metric-row">
+    29	      <div class="metric-card" v-for="m in metrics" :key="m.label">
+    30	        <div class="metric-icon" :style="{ background: m.color }">
+    31	          <i :class="m.icon"></i>
+    32	        </div>
+    33	        <div class="metric-body">
+    34	          <div class="metric-label">{{ m.label }}</div>
+    35	          <div class="metric-value">
+    36	            <span class="num">{{ m.value }}</span>
+    37	            <span class="unit">{{ m.unit }}</span>
+    38	          </div>
+    39	          <div class="metric-trend" :style="{ color: m.trendColor }">
+    40	            <i :class="m.trendIcon"></i> {{ m.trend }}
+    41	          </div>
+    42	        </div>
+    43	        <div class="metric-glow" :style="{ background: m.color }"></div>
+    44	      </div>
+    45	    </section>
+    46	
+    47	    <!-- 主体三栏 -->
+    48	    <section class="main-grid">
+    49	      <!-- 左：机构维度 -->
+    50	      <div class="panel panel-left">
+    51	        <div class="panel-header">
+    52	          <span class="panel-title"><i class="el-icon-office-building"></i> 机构维度</span>
+    53	          <span class="panel-tag">ORG</span>
+    54	        </div>
+    55	        <div class="panel-body">
+    56	          <div ref="orgChart" class="d3-chart"></div>
+    57	          <div class="rank-list" id="orgRank"></div>
+    58	        </div>
+    59	      </div>
+    60	
+    61	      <!-- 中：核心趋势图 -->
+    62	      <div class="panel panel-center">
+    63	        <div class="panel-header">
+    64	          <span class="panel-title"><i class="el-icon-data-line"></i> Token 使用趋势</span>
+    65	          <span class="panel-tag">TREND</span>
+    66	        </div>
+    67	        <div class="panel-body">
+    68	          <div ref="trendChart" class="d3-chart trend-chart"></div>
+    69	          <div class="legend-row" id="trendLegend"></div>
+    70	        </div>
+    71	      </div>
+    72	
+    73	      <!-- 右：团队维度 -->
+    74	      <div class="panel panel-right">
+    75	        <div class="panel-header">
+    76	          <span class="panel-title"><i class="el-icon-user"></i> 团队维度</span>
+    77	          <span class="panel-tag">TEAM</span>
+    78	        </div>
+    79	        <div class="panel-body">
+    80	          <div ref="teamChart" class="d3-chart"></div>
+    81	          <div class="rank-list" id="teamRank"></div>
+    82	        </div>
+    83	      </div>
+    84	    </section>
+    85	
+    86	    <!-- 底部：个人维度 -->
+    87	    <section class="bottom-panel">
+    88	      <div class="panel-header">
+    89	        <span class="panel-title"><i class="el-icon-user-solid"></i> 个人维度 TOP 排行</span>
+    90	        <span class="panel-tag">PERSON</span>
+    91	      </div>
+    92	      <div class="bottom-body">
+    93	        <div ref="personChart" class="d3-chart person-chart"></div>
+    94	      </div>
+    95	    </section>
+    96	  </div>
+    97	</template>
+    98	
+    99	<script>
+   100	import * as d3 from 'd3'
+   101	
+   102	export default {
+   103	  name: 'TokenUsageScreen',
+   104	  data () {
+   105	    return {
+   106	      timeRange: 'month',
+   107	      timeOptions: [
+   108	        { label: '年', value: 'year' },
+   109	        { label: '月', value: 'month' },
+   110	        { label: '天', value: 'day' }
+   111	      ],
+   112	      metrics: [],
+   113	      // 模拟数据
+   114	      orgData: [],
+   115	      teamData: [],
+   116	      personData: [],
+   117	      trendData: [],
+   118	      bgCtx: null,
+   119	      bgAnim: null,
+   120	      resizeHandler: null
+   121	    }
+   122	  },
+   123	  mounted () {
+   124	    this.initBackground()
+   125	    this.generateData()
+   126	    this.renderAll()
+   127	    this.resizeHandler = () => this.renderAll()
+   128	    window.addEventListener('resize', this.resizeHandler)
+   129	  },
+   130	  beforeDestroy () {
+   131	    window.removeEventListener('resize', this.resizeHandler)
+   132	    if (this.bgAnim) cancelAnimationFrame(this.bgAnim)
+   133	  },
+   134	  methods: {
+   135	    // ---------- 背景粒子 ----------
+   136	    initBackground () {
+   137	      const canvas = this.$refs.bgCanvas
+   138	      const ctx = canvas.getContext('2d')
+   139	      this.bgCtx = ctx
+   140	      const resize = () => {
+   141	        canvas.width = window.innerWidth
+   142	        canvas.height = window.innerHeight
+   143	      }
+   144	      resize()
+   145	      window.addEventListener('resize', resize)
+   146	      const particles = []
+   147	      const count = 60
+   148	      for (let i = 0; i < count; i++) {
+   149	        particles.push({
+   150	          x: Math.random() * canvas.width,
+   151	          y: Math.random() * canvas.height,
+   152	          r: Math.random() * 2 + 0.5,
+   153	          vx: (Math.random() - 0.5) * 0.4,
+   154	          vy: (Math.random() - 0.5) * 0.4,
+   155	          a: Math.random() * 0.5 + 0.2
+   156	        })
+   157	      }
+   158	      const draw = () => {
+   159	        ctx.clearRect(0, 0, canvas.width, canvas.height)
+   160	        particles.forEach(p => {
+   161	          p.x += p.vx
+   162	          p.y += p.vy
+   163	          if (p.x < 0 || p.x > canvas.width) p.vx *= -1
+   164	          if (p.y < 0 || p.y > canvas.height) p.vy *= -1
+   165	          ctx.beginPath()
+   166	          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
+   167	          ctx.fillStyle = `rgba(56, 189, 248, ${p.a})`
+   168	          ctx.fill()
+   169	        })
+   170	        // 连线
+   171	        for (let i = 0; i < particles.length; i++) {
+   172	          for (let j = i + 1; j < particles.length; j++) {
+   173	            const dx = particles[i].x - particles[j].x
+   174	            const dy = particles[i].y - particles[j].y
+   175	            const dist = Math.sqrt(dx * dx + dy * dy)
+   176	            if (dist < 120) {
+   177	              ctx.beginPath()
+   178	              ctx.moveTo(particles[i].x, particles[i].y)
+   179	              ctx.lineTo(particles[j].x, particles[j].y)
+   180	              ctx.strokeStyle = `rgba(56, 189, 248, ${0.15 * (1 - dist / 120)})`
+   181	              ctx.lineWidth = 0.6
+   182	              ctx.stroke()
+   183	            }
+   184	          }
+   185	        }
+   186	        this.bgAnim = requestAnimationFrame(draw)
+   187	      }
+   188	      draw()
+   189	    },
+   190	
+   191	    // ---------- 数据生成 ----------
+   192	    generateData () {
+   193	      const orgs = ['星辰科技', '云启集团', '蓝海网络', '极光数据', '天穹智能']
+   194	      const teams = ['前端组', '后端组', '算法组', '测试组', '运维组', '数据组']
+   195	      const persons = ['张伟', '李娜', '王强', '刘洋', '陈静', '杨帆', '赵磊', '孙悦', '周杰', '吴敏']
+   196	
+   197	      this.orgData = orgs.map((name, i) => ({
+   198	        name,
+   199	        value: Math.round(1200000 + Math.random() * 3800000),
+   200	        color: d3.interpolateTurbo(0.15 + i * 0.15)
+   201	      }))
+   202	      this.teamData = teams.map((name, i) => ({
+   203	        name,
+   204	        value: Math.round(400000 + Math.random() * 1600000),
+   205	        color: d3.interpolateCool(0.2 + i * 0.12)
+   206	      }))
+   207	      this.personData = persons.map((name, i) => ({
+   208	        name,
+   209	        value: Math.round(80000 + Math.random() * 420000),
+   210	        color: d3.interpolateRainbow(i / persons.length)
+   211	      })).sort((a, b) => b.value - a.value)
+   212	
+   213	      // 趋势数据（按时间维度生成不同粒度）
+   214	      const points = this.timeRange === 'year' ? 12 : this.timeRange === 'month' ? 30 : 24
+   215	      this.trendData = Array.from({ length: points }, (_, i) => ({
+   216	        label: this.timeRange === 'year' ? `${i + 1}月` : this.timeRange === 'month' ? `${i + 1}日` : `${i}时`,
+   217	        value: Math.round(300000 + Math.random() * 900000 + Math.sin(i / 3) * 200000)
+   218	      }))
+   219	
+   220	      // 指标
+   221	      const total = this.orgData.reduce((s, d) => s + d.value, 0)
+   222	      this.metrics = [
+   223	        { label: '总 Token 消耗', value: this.fmt(total), unit: '', icon: 'el-icon-data-analysis', color: '#3b82f6', trend: '↑ 12.5%', trendColor: '#34d399', trendIcon: 'el-icon-top' },
+   224	        { label: '输入 Token', value: this.fmt(Math.round(total * 0.62)), unit: '', icon: 'el-icon-upload2', color: '#06b6d4', trend: '↑ 8.3%', trendColor: '#34d399', trendIcon: 'el-icon-top' },
+   225	        { label: '输出 Token', value: this.fmt(Math.round(total * 0.38)), unit: '', icon: 'el-icon-download', color: '#8b5cf6', trend: '↓ 3.1%', trendColor: '#f87171', trendIcon: 'el-icon-bottom' },
+   226	        { label: '活跃用户', value: '1,286', unit: '人', icon: 'el-icon-user', color: '#f59e0b', trend: '↑ 5.7%', trendColor: '#34d399', trendIcon: 'el-icon-top' }
+   227	      ]
+   228	    },
+   229	
+   230	    fmt (n) {
+   231	      return Number(n).toLocaleString('en-US')
+   232	    },
+   233	    renderAll () {
+   234	      this.$nextTick(() => {
+   235	        this.renderOrg()
+   236	        this.renderTrend()
+   237	        this.renderTeam()
+   238	        this.renderPerson()
+   239	      })
+   240	    },
+   241	
+   242	    renderOrg () {
+   243	      const el = this.$refs.orgChart
+   244	      if (!el) return
+   245	      el.innerHTML = ''
+   246	      const w = el.clientWidth || 300
+   247	      const h = el.clientHeight || 220
+   248	      const svg = d3.select(el).append('svg').attr('width', w).attr('height', h)
+   249	      const g = svg.append('g').attr('transform', `translate(${w / 2},${h / 2})`)
+   250	      const radius = Math.min(w, h) / 2 - 20
+   251	      const pie = d3.pie().value(d => d.value).sort(null)
+   252	      const arc = d3.arc().innerRadius(radius * 0.55).outerRadius(radius)
+   253	      const arcHover = d3.arc().innerRadius(radius * 0.55).outerRadius(radius + 8)
+   254	
+   255	      const defs = svg.append('defs')
+   256	      this.orgData.forEach((d, i) => {
+   257	        const grad = defs.append('linearGradient').attr('id', `orgGrad${i}`)
+   258	        grad.append('stop').attr('offset', '0%').attr('stop-color', d.color).attr('stop-opacity', 0.9)
+   259	        grad.append('stop').attr('offset', '100%').attr('stop-color', d.color).attr('stop-opacity', 0.4)
+   260	      })
+   261	
+   262	      const arcs = g.selectAll('.arc').data(pie(this.orgData)).enter().append('g').attr('class', 'arc')
+   263	      arcs.append('path')
+   264	        .attr('d', arc)
+   265	        .attr('fill', (d, i) => `url(#orgGrad${i})`)
+   266	        .attr('stroke', '#0b1e3a')
+   267	        .attr('stroke-width', 2)
+   268	        .on('mouseover', function (event, d) {
+   269	          d3.select(this).transition().duration(200).attr('d', arcHover(d))
+   270	        })
+   271	        .on('mouseout', function (event, d) {
+   272	          d3.select(this).transition().duration(200).attr('d', arc(d))
+   273	        })
+   274	
+   275	      // 中心文字
+   276	      const total = d3.sum(this.orgData, d => d.value)
+   277	      g.append('text').attr('text-anchor', 'middle').attr('y', -8).attr('class', 'center-label').text('机构总数')
+   278	      g.append('text').attr('text-anchor', 'middle').attr('y', 18).attr('class', 'center-value').text(this.fmt(total))
+   279	
+   280	      // 排名列表
+   281	      const rankEl = document.getElementById('orgRank')
+   282	      if (rankEl) {
+   283	        rankEl.innerHTML = this.orgData.slice(0, 5).map((d, i) => `
+   284	          <div class="rank-item">
+   285	            <span class="rank-num" style="color:${d.color}">${i + 1}</span>
+   286	            <span class="rank-name">${d.name}</span>
+   287	            <div class="rank-bar"><div class="rank-bar-fill" style="width:${(d.value / this.orgData[0].value) * 100}%;background:${d.color}"></div></div>
+   288	            <span class="rank-value">${this.fmt(d.value)}</span>
+   289	          </div>`).join('')
+   290	      }
+   291	    },
+   292	
+   293	    renderTrend () {
+   294	      const el = this.$refs.trendChart
+   295	      if (!el) return
+   296	      el.innerHTML = ''
+   297	      const w = el.clientWidth || 500
+   298	      const h = el.clientHeight || 260
+   299	      const margin = { top: 20, right: 20, bottom: 30, left: 50 }
+   300	      const innerW = w - margin.left - margin.right
+   301	      const innerH = h - margin.top - margin.bottom
+   302	
+   303	      const svg = d3.select(el).append('svg').attr('width', w).attr('height', h)
+   304	      const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`)
+   305	
+   306	      const x = d3.scaleBand().domain(this.trendData.map(d => d.label)).range([0, innerW]).padding(0.3)
+   307	      const y = d3.scaleLinear().domain([0, d3.max(this.trendData, d => d.value) * 1.1]).range([innerH, 0])
+   308	
+   309	      // 渐变
+   310	      const defs = svg.append('defs')
+   311	      const grad = defs.append('linearGradient').attr('id', 'trendGrad')
+   312	      grad.append('stop').attr('offset', '0%').attr('stop-color', '#38bdf8').attr('stop-opacity', 0.9)
+   313	      grad.append('stop').attr('offset', '100%').attr('stop-color', '#3b82f6').attr('stop-opacity', 0.3)
+   314	
+   315	      // 网格
+   316	      g.append('g').attr('class', 'grid')
+   317	        .call(d3.axisLeft(y).ticks(5).tickSize(-innerW).tickFormat(d => this.fmt(d)))
+   318	        .selectAll('line').attr('stroke', 'rgba(56,189,248,0.15)')
+   319	      g.selectAll('.domain').attr('stroke', 'rgba(56,189,248,0.3)')
+   320	      g.selectAll('text').attr('fill', '#7dd3fc').attr('font-size', '10px')
+   321	
+   322	      // 柱
+   323	      g.selectAll('.bar').data(this.trendData).enter().append('rect')
+   324	        .attr('class', 'bar')
+   325	        .attr('x', d => x(d.label))
+   326	        .attr('width', x.bandwidth())
+   327	        .attr('y', innerH)
+   328	        .attr('height', 0)
+   329	        .attr('fill', 'url(#trendGrad)')
+   330	        .attr('rx', 3)
+   331	        .transition().duration(800).delay((d, i) => i * 30)
+   332	        .attr('y', d => y(d.value))
+   333	        .attr('height', d => innerH - y(d.value))
+   334	
+   335	      // 流动折线
+   336	      const line = d3.line()
+   337	        .x((d, i) => x(d.label) + x.bandwidth() / 2)
+   338	        .y(d => y(d.value))
+   339	        .curve(d3.curveMonotoneX)
+   340	      const path = g.append('path').datum(this.trendData)
+   341	        .attr('d', line)
+   342	        .attr('fill', 'none')
+   343	        .attr('stroke', '#22d3ee')
+   344	        .attr('stroke-width', 2.5)
+   345	        .attr('stroke-linecap', 'round')
+   346	      const totalLen = path.node().getTotalLength()
+   347	      path.attr('stroke-dasharray', totalLen + ' ' + totalLen)
+   348	        .attr('stroke-dashoffset', totalLen)
+   349	        .transition().duration(1500).ease(d3.easeLinear)
+   350	        .attr('stroke-dashoffset', 0)
+   351	
+   352	      // 面积渐变
+   353	      const area = d3.area()
+   354	        .x((d, i) => x(d.label) + x.bandwidth() / 2)
+   355	        .y0(innerH)
+   356	        .y1(d => y(d.value))
+   357	        .curve(d3.curveMonotoneX)
+   358	      g.append('path').datum(this.trendData)
+   359	        .attr('d', area)
+   360	        .attr('f
+…[截断，共 29363 字符]

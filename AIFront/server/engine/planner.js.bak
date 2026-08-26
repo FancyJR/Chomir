@@ -1,0 +1,358 @@
+/**
+ * 规划器（planner）
+ *
+ * 职责：
+ * - 将「自然语言指令 + 项目信息」转换为结构化的 actions 计划
+ *   例如：add_view / modify_view
+ * - 部分高频场景（比如优化指令市场样式）优先用本地规则生成 actions，避免额外的大模型调用
+ * - 内置能力：换描述/改文案/副标题 → 直接产出「相同语义换一种说法、仅改 .page-subtitle」的 modify_view（见 isChangeTextIntent）
+ */
+
+const { callDeepseekJson } = require('./shared-llm')
+
+// 规则优先：对常见简单场景直接生成 actions，避免每次都请求 LLM
+function ruleBasedPlan (instruction, projectInfo, context = {}) {
+  const text = (instruction || '').trim()
+  if (!text) return null
+
+  // 目标文件：优先使用前端上下文传来的当前激活文件（activeFile），否则回退到指令市场视图
+  const activeFile = context && typeof context.activeFile === 'string' ? context.activeFile : ''
+  let defaultFile = activeFile && activeFile.endsWith('.vue') ? activeFile : ''
+  if (!defaultFile) {
+    // 回退：默认使用指令市场页面，保证老逻辑仍然可用
+    defaultFile = 'src/views/CommandMarket.vue'
+  }
+
+  // 通用：任意「X改成Y」/「X改为Y」（可有可无空格）——直接产出 modify_view，由 codegen 做全文查找替换
+  if (/.+\s*改成\s*.+/.test(text) || /.+\s*改为\s*.+/.test(text)) {
+    return {
+      actions: [
+        {
+          type: 'modify_view',
+          file: defaultFile,
+          reason: text,
+          description: '用户要求将指定文字或代码替换为另一处，仅做此处替换。'
+        }
+      ]
+    }
+  }
+
+  // 优先识别「只改某处文案」：听懂用户是在让某几个字/某段话换一种描述，不是要生成页面
+  // 1) 明确提到「指令类型」：只改工具栏「指令类型：」该处文案
+  const isChangeInstructionTypeLabel = /指令类型.*[换改]|[换改].*指令类型|指令类型.*(这几个字|这段|换一种描述|换说法)/.test(text)
+  if (isChangeInstructionTypeLabel) {
+    return {
+      actions: [
+        {
+          type: 'modify_view',
+          file: defaultFile,
+          reason: text,
+          description: '用户要求将页面工具栏中的「指令类型：」该处文案换一种说法，仅改该处文字，不动其他'
+        }
+      ]
+    }
+  }
+
+  // 2.5) hover 时展示全部：用户说 hover/悬停 时展示全部、没展示全部 等 → 为卡片内截断文案加 el-tooltip（含 thinker  refine 后的说法）
+  const isHoverShowFullIntent = (
+    (/(hover|悬停)/i.test(text) && /(展示全部|显示全部|显示完整|没展示全部)/.test(text)) ||
+    /(el-tooltip|悬停时展示完整|展示完整内容)/.test(text)
+  )
+  if (isHoverShowFullIntent) {
+    return {
+      actions: [
+        {
+          type: 'modify_view',
+          file: defaultFile,
+          reason: text,
+          description: '用户希望 hover 被截断的文案时展示全部内容（通用能力，适用于任意页面）。请根据当前文件的 template 与 style，找出所有被省略的文案区块（含 text-overflow:ellipsis、-webkit-line-clamp 的 class 或内联样式），为每个区块外包 el-tooltip，:content 绑定该区块当前展示的数据（如 v-for 的 item 的对应字段、或单条数据的属性），placement="top"，:open-delay="300"；多行描述类区块可使用 effect="light"、popper-class（如 full-text-tooltip）及非 scoped 样式（max-width:360px; white-space:pre-wrap; word-break:break-word）；移除这些区块上原有的 title、@mouseenter、@mouseleave。仅做以上修改。'
+        }
+      ]
+    }
+  }
+
+  // 通用能力：超出省略号
+  if (/(超出|长文本|省略(号)?|单行|多行)\s*省略/.test(text) || /text_ellipsis|省略样式/.test(text)) {
+    return { actions: [{ type: 'modify_view', file: defaultFile, reason: text, description: '用户希望长文案超出时显示省略号（通用）。请根据当前文件为需要截断的文案区块添加单行（overflow:hidden;text-overflow:ellipsis;white-space:nowrap）或多行（-webkit-line-clamp;overflow:hidden）样式，仅改 style 或最小 template。' }] }
+  }
+  // 通用能力：空状态
+  if (/(没有数据|列表为空|空状态|空数据|空占位)/.test(text) || /empty_state|el-empty/.test(text)) {
+    return { actions: [{ type: 'modify_view', file: defaultFile, reason: text, description: '用户希望无数据时显示空状态（通用）。请在列表/表格容器上根据数据长度用 v-if/v-else 展示 el-empty 或「暂无数据」占位，保留有数据时的结构。' }] }
+  }
+  // 通用能力：加载中
+  if (/(加载|loading|加载中)/.test(text) && /(显示|加)/.test(text) || /loading_state|v-loading/.test(text)) {
+    return { actions: [{ type: 'modify_view', file: defaultFile, reason: text, description: '用户希望加载时显示 loading（通用）。请在列表/表格或主内容容器上使用 v-loading 或 el-skeleton，绑定 loading 变量，在请求前 true、结束后 false。' }] }
+  }
+  // 通用能力：表格斑马纹
+  if (/(表格|el-table).*斑马纹|斑马纹|隔行\s*变/.test(text) || /table_stripe/.test(text)) {
+    return { actions: [{ type: 'modify_view', file: defaultFile, reason: text, description: '用户希望表格斑马纹或隔行变色（通用）。请为 el-table 添加 stripe 属性或 :row-class-name 实现隔行背景。' }] }
+  }
+  // 通用能力：按钮防重复点击
+  if (/(防重复|防止重复|禁止重复).*点击|按钮.*防重复/.test(text) || /button_prevent_double/.test(text)) {
+    return { actions: [{ type: 'modify_view', file: defaultFile, reason: text, description: '用户希望提交按钮防重复点击（通用）。请为提交/确认按钮增加 :loading 或点击后 disabled，在请求期间禁用。' }] }
+  }
+  // 通用能力：危险操作前确认
+  if (/(删除|操作).*确认|确认.*删除|二次确认/.test(text) || /confirm_before_danger/.test(text)) {
+    return { actions: [{ type: 'modify_view', file: defaultFile, reason: text, description: '用户希望删除或危险操作前二次确认（通用）。请在执行前使用 this.$confirm 弹出确认框，用户确认后再执行原有逻辑。' }] }
+  }
+  // 通用能力：卡片/列表 hover 效果
+  if (/(卡片|列表).*(hover|悬停).*(阴影|高亮)|card_hover_effect/.test(text)) {
+    return { actions: [{ type: 'modify_view', file: defaultFile, reason: text, description: '用户希望卡片或列表项 hover 时有阴影/高亮（通用）。请在对应 class 的 :hover 中增加 box-shadow 或 background 变化，仅改 style。' }] }
+  }
+  // 通用能力：图片懒加载
+  if (/图片?.*懒加载|懒加载|image_lazy/.test(text)) {
+    return { actions: [{ type: 'modify_view', file: defaultFile, reason: text, description: '用户希望图片懒加载（通用）。请为 img/el-image 添加 lazy 或 loading="lazy"，仅改图片相关属性。' }] }
+  }
+  // 通用能力：响应式栅格
+  if (/(小屏|移动端).*一排|响应式.*栅格|responsive_grid/.test(text)) {
+    return { actions: [{ type: 'modify_view', file: defaultFile, reason: text, description: '用户希望小屏/移动端栅格一排一个或响应式（通用）。请为 el-col 设置 :xs="24" 等响应式属性。' }] }
+  }
+  // 通用能力：点击复制、回到顶部、表单校验、分页、搜索筛选、排序、骨架屏、错误重试、刷新、禁用只读、占位文案、图标 tooltip、tabs、弹窗抽屉、行内编辑、全选、清空重置、导出、面包屑、吸顶
+  if (/复制|clipboard|copy/i.test(text)) return { actions: [{ type: 'modify_view', file: defaultFile, reason: text, description: '用户希望某处可点击复制到剪贴板（通用）。用 clipboard API 或 execCommand，复制成功可 message 提示。' }] }
+  if (/回到顶部|返回顶部|backtop/i.test(text)) return { actions: [{ type: 'modify_view', file: defaultFile, reason: text, description: '用户希望有回到顶部（通用）。加 el-backtop 或按钮 scrollTo(0,0)。' }] }
+  if (/表单.*校验|必填|校验.*通过|rules|required/.test(text)) return { actions: [{ type: 'modify_view', file: defaultFile, reason: text, description: '用户希望表单校验/必填（通用）。el-form 的 :rules，提交前 validate。' }] }
+  if (/分页|pagination/i.test(text)) return { actions: [{ type: 'modify_view', file: defaultFile, reason: text, description: '用户希望列表分页（通用）。el-pagination 绑定 current-page、page-size、total 与 change 事件。' }] }
+  if (/搜索|筛选|filter/.test(text) && !/指令类型/.test(text)) return { actions: [{ type: 'modify_view', file: defaultFile, reason: text, description: '用户希望搜索或筛选（通用）。输入/选择绑定条件，请求或前端 filter。' }] }
+  if (/排序|sortable|sort-order/.test(text)) return { actions: [{ type: 'modify_view', file: defaultFile, reason: text, description: '用户希望表格/列表排序（通用）。el-table 列 sortable 或 sort-change。' }] }
+  if (/骨架屏|skeleton/.test(text)) return { actions: [{ type: 'modify_view', file: defaultFile, reason: text, description: '用户希望加载时骨架屏（通用）。el-skeleton，v-if loading 时显示。' }] }
+  if (/(错误|失败).*提示|重试|error.*message/i.test(text)) return { actions: [{ type: 'modify_view', file: defaultFile, reason: text, description: '用户希望失败提示或重试（通用）。catch 里 message.error，可选重试按钮。' }] }
+  if (/刷新|重新加载|reload/.test(text)) return { actions: [{ type: 'modify_view', file: defaultFile, reason: text, description: '用户希望刷新/重新加载（通用）。按钮点击重新请求数据。' }] }
+  if (/禁用|只读|disabled|readonly/.test(text)) return { actions: [{ type: 'modify_view', file: defaultFile, reason: text, description: '用户希望某处禁用或只读（通用）。:disabled 或 :readonly 绑定。' }] }
+  if (/占位|placeholder/.test(text)) return { actions: [{ type: 'modify_view', file: defaultFile, reason: text, description: '用户希望改占位文案（通用）。修改对应 placeholder。' }] }
+  if (/(图标|按钮).*提示|tooltip.*包/.test(text)) return { actions: [{ type: 'modify_view', file: defaultFile, reason: text, description: '用户希望图标/按钮悬停提示（通用）。外包 el-tooltip。' }] }
+  if (/标签页|tab\s*切换|el-tabs/.test(text)) return { actions: [{ type: 'modify_view', file: defaultFile, reason: text, description: '用户希望标签页/Tabs（通用）。el-tabs，tab 与内容对应。' }] }
+  if (/弹窗|抽屉|dialog|drawer|modal/.test(text)) return { actions: [{ type: 'modify_view', file: defaultFile, reason: text, description: '用户希望弹窗/抽屉（通用）。el-dialog/el-drawer，visible 控制。' }] }
+  if (/行内编辑|可编辑|inline\s*edit/.test(text)) return { actions: [{ type: 'modify_view', file: defaultFile, reason: text, description: '用户希望行内/可编辑（通用）。点击切 input，保存更新。' }] }
+  if (/全选|批量|多选|selection/.test(text)) return { actions: [{ type: 'modify_view', file: defaultFile, reason: text, description: '用户希望全选/批量选择（通用）。el-table selection 或 checkbox 全选。' }] }
+  if (/清空|重置|reset/.test(text)) return { actions: [{ type: 'modify_view', file: defaultFile, reason: text, description: '用户希望清空/重置（通用）。resetFields 或置空条件后重请求。' }] }
+  if (/导出|export/i.test(text)) return { actions: [{ type: 'modify_view', file: defaultFile, reason: text, description: '用户希望导出（通用）。按钮触发导出接口或前端 xlsx 等。' }] }
+  if (/面包屑|breadcrumb/.test(text)) return { actions: [{ type: 'modify_view', file: defaultFile, reason: text, description: '用户希望面包屑（通用）。el-breadcrumb 展示路径。' }] }
+  if (/吸顶|固定表头|sticky/.test(text)) return { actions: [{ type: 'modify_view', file: defaultFile, reason: text, description: '用户希望吸顶/固定表头（通用）。position:sticky 或 table fixed。' }] }
+
+  // 2) 换描述/副标题/好听一点：只改 .page-subtitle
+  const isChangeTextIntent = (
+    /(描述|文案|副标题|说明|标题|文字|句子|说法).*[换改]|[换改].*(描述|文案|副标题|说明|标题|文字|句子|说法)/.test(text) ||
+    /不好听|不好看|不顺口|好听一点|好听些|换一句|换一个(描述|文案)?|换个说法|换一种说法|改一下说法|顺口一点/.test(text)
+  )
+  if (isChangeTextIntent) {
+    return {
+      actions: [
+        {
+          type: 'modify_view',
+          file: defaultFile,
+          reason: text,
+          description: '用户要求更换页面副标题（.page-subtitle）文案：相同语义换一种说法，仅改该处描述文字，不改主标题(.page-title)、不动样式与结构'
+        }
+      ]
+    }
+  }
+
+  // 3) 标签间距：用户说 tag/标签 左右距离挨着 → 只改 CommandMarket 标签样式
+  const isTagSpacingIntent = (
+    /(tag|标签).*(距离|间距|挨着|挨在一起)/i.test(text) ||
+    /(左右).*(tag|标签).*(距离|间距|挨着)/i.test(text)
+  )
+  if (isTagSpacingIntent) {
+    return {
+      actions: [
+        {
+          type: 'modify_view',
+          file: defaultFile,
+          reason: text,
+          description: '用户要求调整指令卡片内标签的左右间距，仅修改 <style> 中与 .tags-row / .tag-item 相关的样式，不改模板与业务逻辑'
+        }
+      ]
+    }
+  }
+
+  // 4) 工具栏与卡片间距：筛选框/搜索框这一行和下面卡片距离太远/近一点 → 只改当前页工具栏与卡片间距
+  const isToolbarCardSpacingIntent = (
+    (/(筛选框|筛选|搜索框|工具栏|这一行)/.test(text) &&
+      /卡片/.test(text) &&
+      /(距离|间距|太远|太近|近一点|靠近)/.test(text))
+  )
+  if (isToolbarCardSpacingIntent) {
+    return {
+      actions: [
+        {
+          type: 'modify_view',
+          file: defaultFile,
+          reason: text,
+          description: '用户希望缩短筛选工具栏与卡片列表之间的垂直间距，仅调整 <style> 中 .toolbar 的 padding-bottom 和 .card-grid 的 padding-top，不改模板与业务逻辑'
+        }
+      ]
+    }
+  }
+
+  // 5) 卡片高度：「卡片高度太高」「卡片高度还是太高」「指令市场卡片高度矮一点」等 → 只调当前页卡片高度样式
+  const isCardHeightIntent = (
+    /(卡片.*高度.*(太高|矮|低|小|短)|高度.*(太高|矮|低|小|短).*卡片|卡片高度还是太高|卡片太高|太高.*卡片|卡片.*太高|指令市场卡片高度.*(矮|低|小|短))/.test(text)
+  )
+  if (isCardHeightIntent) {
+    return {
+      actions: [
+        {
+          type: 'modify_view',
+          file: defaultFile,
+          reason: text,
+          description: '用户觉得指令市场卡片高度太高，希望整体降低卡片高度，仅修改 <style> 中与 .command-card / .card-grid .command-card 相关的 min-height 等样式，不改模板与逻辑'
+        }
+      ]
+    }
+  }
+
+  // 6) 按钮颜色柔和一点 / 太刺眼 → 调整当前文件主按钮颜色
+  const isButtonColorSoftIntent =
+    /按钮/.test(text) &&
+    /(颜色|太亮|太刺眼|柔和|淡一点|浅一点|不那么亮|不要这么亮)/.test(text)
+  if (isButtonColorSoftIntent) {
+    return {
+      actions: [
+        {
+          type: 'modify_view',
+          file: defaultFile,
+          reason: text,
+          description: '用户希望当前页面主按钮颜色更柔和，调整 .el-button--primary 等主按钮颜色的背景和边框，仅改样式，不改逻辑'
+        }
+      ]
+    }
+  }
+
+  // 7) 标题字号调整：「主标题字号大一点/小一点」
+  const isTitleFontSizeIntent = /(主标题|页面标题|标题).*(大一点|再大|大一号|字号大|字体大|小一点|再小|小一号|字号小|字体小)/.test(text)
+  if (isTitleFontSizeIntent) {
+    return {
+      actions: [
+        {
+          type: 'modify_view',
+          file: defaultFile,
+          reason: text,
+          description: '用户希望调整当前页面主标题的字号大小，仅修改 .page-title 或 h1 的 font-size，不改文案与结构'
+        }
+      ]
+    }
+  }
+
+  // 8) 标题居中：「主标题居中/放中间」
+  const isTitleCenterIntent = /(主标题|页面标题|标题).*(居中|放中间|放到中间)/.test(text)
+  if (isTitleCenterIntent) {
+    return {
+      actions: [
+        {
+          type: 'modify_view',
+          file: defaultFile,
+          reason: text,
+          description: '用户希望将当前页面主标题水平居中，仅调整主标题区域的对齐样式，不改文案与结构'
+        }
+      ]
+    }
+  }
+
+  // 场景：优化指令市场/页面（含仅说「优化页面」）→ 单文件 modify_view，零次 LLM 规划，避免整页重写报错
+  const hasOptimize = text.includes('优化')
+  const hasTarget = text.includes('指令市场') || text.includes('CommandMarket') || text.includes('页面') || text.includes('整体') || text.includes('卡片')
+  const styleLike = (
+    text.includes('样式') || text.includes('颜色') || text.includes('布局') || text.includes('美观') ||
+    text.includes('卡片') || text.includes('高度') || text.includes('间距') || text.includes('视觉') || text.includes('统一') ||
+    text.includes('靠边框') || text.includes('贴边') || text.includes('靠边') || text.includes('贴边框')
+  )
+  // 「优化页面」「优化一下」等短句也命中，避免走 LLM 整页重写导致报错
+  if (hasOptimize && (hasTarget || styleLike)) {
+    return {
+      actions: [
+        {
+          type: 'modify_view',
+          file: defaultFile,
+          reason: text,
+          description: '整体优化页面卡片高度与样式；若涉及卡片内贴边/靠边框，为 .command-card-footer 等增加合适 padding（仅调整 <style>，保持业务逻辑和 template 结构不变）'
+        }
+      ]
+    }
+  }
+
+  // 兜底：未命中任何规则时，仍产出一条 modify_view；若用户明确要「新增/新建页面」则交给 LLM 规划（可能产出 add_view）
+  if (/新(建|增)?\s*(一个)?\s*页面|新(建|增).*页(面)?|新增\s*视图|新建\s*视图/.test(text)) {
+    return null
+  }
+  return {
+    actions: [
+      {
+        type: 'modify_view',
+        file: defaultFile,
+        reason: text,
+        description: '根据用户描述对当前页面做最小必要修改，严格按用户意图实现，不要扩大范围、不要整页重写。'
+      }
+    ]
+  }
+}
+
+/**
+ * 主入口：根据用户指令 + 项目信息规划改动 actions
+ *
+ * 流程：
+ * 1. 先跑 ruleBasedPlan 命中简单场景（零次 LLM 调用）
+ * 2. 若无命中，再调用 DeepSeek，让模型基于项目结构规划 add_view / modify_view 等 actions
+ * 3. 最终只保留支持的 action 类型
+ */
+async function plan (instruction, projectInfo, context = {}) {
+  const rule = ruleBasedPlan(instruction, projectInfo, context)
+  if (rule) return rule
+
+  const systemPrompt = [
+    '你是一个资深前端架构师，负责根据用户的自然语言指令为一个 Vue2 + ElementUI 项目规划代码改动。',
+    '你只输出 JSON，不要任何解释或注释。',
+    '',
+    '项目结构（只读）：',
+    JSON.stringify(projectInfo, null, 2),
+    '',
+    '你需要根据用户的需求，输出一个 "actions" 数组，每个元素描述一个具体改动。',
+    '',
+    '目前优先支持的几种 action 类型：',
+    '1) "add_view"：新增一个视图组件（.vue 文件），并挂载到路由上。',
+    '   结构示例：',
+    '{',
+    '  "type": "add_view",',
+    '  "viewName": "CommandDetail",',
+    '  "routePath": "/command/detail",',
+    '  "routeTitle": "指令详情",',
+    '  "basedOn": "CommandMarket",',
+    '  "description": "指令详情页面，用于展示某条指令的详细信息"',
+    '}',
+    '',
+    '2) "modify_view"：修改现有视图（例如让 CommandMarket 的卡片点击跳到新生成的详情页；或仅改某段文案）。',
+    '   结构示例：',
+    '{',
+    '  "type": "modify_view",',
+    '  "file": "src/views/CommandMarket.vue",',
+    '  "reason": "卡片点击跳转到详情页 /command/detail",',
+    '  "description": "在指令卡片点击时调用 this.$router.push(\\\"/command/detail\\\")，并确保引用了新路由组件"',
+    '}',
+    '   若用户只想改页面上的某段描述/副标题/文案（例如「这个描述不好听，换一个」），则 description 写：用户要求更换页面副标题（.page-subtitle）或某段描述文案，仅修改该处文字，不动样式与结构。',
+    '',
+    '请根据指令尽量给出 0~3 条关键 actions，不要泛滥。',
+    '',
+    '输出 JSON 结构：',
+    '{ "actions": [ ... ] }'
+  ].join('\n')
+
+  const userPrompt = [
+    '用户指令：',
+    instruction
+  ].join('\n')
+
+  const raw = await callDeepseekJson(systemPrompt, userPrompt)
+  if (!raw || typeof raw !== 'object') {
+    return { actions: [] }
+  }
+  if (!Array.isArray(raw.actions)) {
+    return { actions: [] }
+  }
+  // 目前支持 add_view 与 modify_view 两类
+  const actions = raw.actions.filter(a => a && (a.type === 'add_view' || a.type === 'modify_view'))
+  return { actions }
+}
+
+module.exports = {
+  plan
+}
+

@@ -1,0 +1,175 @@
+浏览器控制台最近 10 条：
+1. [error/vue.errorHandler] 2026-08-07T07:15:37.529Z route=/river-city
+   cam is not defined
+   url=http://localhost:8080/river-city
+   stack:
+   ReferenceError: cam is not defined
+       at VueComponent.drawCharacter (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:494:26)
+       at eval (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:462:14)
+       at Array.forEach (<anonymous>)
+       at VueComponent.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:460:20)
+       at VueComponent.loop (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:157:12)
+       at VueComponent.startGame (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:72:12)
+       at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+       at VueComponent.invoker (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:1884:20)
+       at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+2. [error/console.error] 2026-08-07T07:15:37.529Z route=/river-city
+   ReferenceError: cam is not defined
+    at VueComponent.drawCharacter (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:494:26)
+    at eval (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:462:14)
+    at Array.forEach (<anonymous>)
+    at VueComponent.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:460:20)
+    at VueComponent.loop (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:157:12)
+    at VueComponent.startGame (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:72:12)
+    at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+    at VueComponent.invoker (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:1884:20)
+    at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+    at Vue.$emit (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3782:17)
+   url=http://localhost:8080/river-city
+   stack:
+   ReferenceError: cam is not defined
+       at VueComponent.drawCharacter (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:494:26)
+       at eval (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:462:14)
+       at Array.forEach (<anonymous>)
+       at VueComponent.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:460:20)
+       at VueComponent.loop (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:157:12)
+       at VueComponent.startGame (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:72:12)
+       at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+       at VueComponent.invoker (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:1884:20)
+       at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+3. [error/vue.errorHandler] 2026-08-07T07:15:40.350Z route=/river-city
+   cam is not defined
+   url=http://localhost:8080/river-city
+   stack:
+   ReferenceError: cam is not defined
+       at VueComponent.drawCharacter (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:494:26)
+       at eval (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:462:14)
+       at Array.forEach (<anonymous>)
+       at VueComponent.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:460:20)
+       at VueComponent.loop (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:157:12)
+       at VueComponent.startGame (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:72:12)
+       at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+       at VueComponent.invoker (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:1884:20)
+       at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+4. [error/console.error] 2026-08-07T07:15:40.350Z route=/river-city
+   ReferenceError: cam is not defined
+    at VueComponent.drawCharacter (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:494:26)
+    at eval (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:462:14)
+    at Array.forEach (<anonymous>)
+    at VueComponent.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:460:20)
+    at VueComponent.loop (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:157:12)
+    at VueComponent.startGame (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:72:12)
+    at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+    at VueComponent.invoker (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:1884:20)
+    at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+    at Vue.$emit (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3782:17)
+   url=http://localhost:8080/river-city
+   stack:
+   ReferenceError: cam is not defined
+       at VueComponent.drawCharacter (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:494:26)
+       at eval (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:462:14)
+       at Array.forEach (<anonymous>)
+       at VueComponent.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:460:20)
+       at VueComponent.loop (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:157:12)
+       at VueComponent.startGame (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:72:12)
+       at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+       at VueComponent.invoker (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:1884:20)
+       at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+5. [error/vue.errorHandler] 2026-08-07T07:16:18.482Z route=/river-city
+   cam is not defined
+   url=http://localhost:8080/river-city
+   stack:
+   ReferenceError: cam is not defined
+       at VueComponent.drawCharacter (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:494:26)
+       at eval (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:462:14)
+       at Array.forEach (<anonymous>)
+       at VueComponent.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:460:20)
+       at VueComponent.loop (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:157:12)
+       at VueComponent.startGame (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:72:12)
+       at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+       at VueComponent.invoker (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:1884:20)
+       at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+6. [error/console.error] 2026-08-07T07:16:18.482Z route=/river-city
+   ReferenceError: cam is not defined
+    at VueComponent.drawCharacter (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:494:26)
+    at eval (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:462:14)
+    at Array.forEach (<anonymous>)
+    at VueComponent.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:460:20)
+    at VueComponent.loop (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:157:12)
+    at VueComponent.startGame (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:72:12)
+    at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+    at VueComponent.invoker (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:1884:20)
+    at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+    at Vue.$emit (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3782:17)
+   url=http://localhost:8080/river-city
+   stack:
+   ReferenceError: cam is not defined
+       at VueComponent.drawCharacter (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:494:26)
+       at eval (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:462:14)
+       at Array.forEach (<anonymous>)
+       at VueComponent.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:460:20)
+       at VueComponent.loop (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:157:12)
+       at VueComponent.startGame (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:72:12)
+       at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+       at VueComponent.invoker (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:1884:20)
+       at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+7. [error/vue.errorHandler] 2026-08-07T07:16:21.610Z route=/river-city
+   cam is not defined
+   url=http://localhost:8080/river-city
+   stack:
+   ReferenceError: cam is not defined
+       at VueComponent.drawCharacter (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:494:26)
+       at eval (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:462:14)
+       at Array.forEach (<anonymous>)
+       at VueComponent.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:460:20)
+       at VueComponent.loop (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:157:12)
+       at VueComponent.startGame (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:72:12)
+       at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+       at VueComponent.invoker (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:1884:20)
+       at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+8. [error/console.error] 2026-08-07T07:16:21.610Z route=/river-city
+   ReferenceError: cam is not defined
+    at VueComponent.drawCharacter (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:494:26)
+    at eval (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:462:14)
+    at Array.forEach (<anonymous>)
+    at VueComponent.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:460:20)
+    at VueComponent.loop (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:157:12)
+    at VueComponent.startGame (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:72:12)
+    at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+    at VueComponent.invoker (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:1884:20)
+    at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+    at Vue.$emit (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3782:17)
+   url=http://localhost:8080/river-city
+   stack:
+   ReferenceError: cam is not defined
+       at VueComponent.drawCharacter (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:494:26)
+       at eval (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:462:14)
+       at Array.forEach (<anonymous>)
+       at VueComponent.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:460:20)
+       at VueComponent.loop (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:157:12)
+       at VueComponent.startGame (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:72:12)
+       at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+       at VueComponent.invoker (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:1884:20)
+       at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+9. [error/vue.errorHandler] 2026-08-07T07:18:25.154Z route=/river-city
+   cam is not defined
+   url=http://localhost:8080/river-city
+   stack:
+   ReferenceError: cam is not defined
+       at VueComponent.drawCharacter (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:494:26)
+       at eval (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:462:14)
+       at Array.forEach (<anonymous>)
+       at VueComponent.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:460:20)
+       at VueComponent.loop (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:157:12)
+       at VueComponent.startGame (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:72:12)
+       at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+       at VueComponent.invoker (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:1884:20)
+       at invokeWithErrorHandling (webpack-internal:///./node_modules/vue/dist/vue.runtime.esm.js:3083:30)
+10. [error/console.error] 2026-08-07T07:18:25.154Z route=/river-city
+   ReferenceError: cam is not defined
+    at VueComponent.drawCharacter (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:494:26)
+    at eval (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:462:14)
+    at Array.forEach (<anonymous>)
+    at VueComponent.render (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:460:20)
+    at VueComponent.loop (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=script&lang=js:157:12)
+    at VueComponent.startGame (webpack-internal:///./node_modules/babel-loader/lib/index.js??clonedRuleSet-40.use[0]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/views/RiverCityRansom.vue?vue&type=s

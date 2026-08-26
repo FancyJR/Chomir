@@ -1,0 +1,27 @@
+# Profile Bundle 片段：AIFront 子代理
+
+将下面两行插入到 DSH / Kylin Desktop 的 agent preset（或 `cordis.yml` 的 plugins 列表）。
+需先能解析 `@aifront/dsh-subagent-aifront`（yarn link / file: 路径）且 `chomircode-agent` 可用。
+
+```yaml
+- insert:
+    - id: subagent-aifront
+      name: '@aifront/dsh-subagent-aifront'
+      config:
+        # 默认会尝试 AIFront 仓库 bin/chomircode-agent.js；也可显式指定：
+        # command: /usr/local/bin/node
+        # args: ["/absolute/path/to/AIFront/bin/chomircode-agent.js"]
+        env:
+          DEEPSEEK_API_KEY: !!js process.env.DEEPSEEK_API_KEY
+          DEEPSEEK_BASE_URL: !!js process.env.DEEPSEEK_BASE_URL || ''
+          AIFRONT_PERMISSION_MODE: bypassPermissions
+    - id: tool-subagent-aifront
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: aifront
+        toolName: subagent_aifront
+        enableRunInBackground: false
+        maxDepth: provider-managed
+```
+
+父 Agent 将看到工具 `subagent_aifront`。

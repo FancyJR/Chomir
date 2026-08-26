@@ -1,0 +1,441 @@
+浏览器控制台最近 40 条：
+1. [error/console.error] 2026-08-22T04:29:06.571Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_01_4V678rXJZnOpAnMvmjKq7361'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+2. [error/console.error] 2026-08-22T04:29:08.275Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_78qt08CXvH7anIh8pzcl5062'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+3. [error/console.error] 2026-08-22T04:29:09.225Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_01_4V678rXJZnOpAnMvmjKq7361'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+4. [error/console.error] 2026-08-22T04:29:10.812Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_78qt08CXvH7anIh8pzcl5062'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+5. [error/console.error] 2026-08-22T04:29:10.924Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_VZOddgV7yef15feAg4Zy0094'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+6. [error/console.error] 2026-08-22T04:29:11.251Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_lvhlpr1tFBbIq6sXn9YK2018'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+7. [error/console.error] 2026-08-22T04:29:11.618Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_2AQ6ngM2epRHqslVB3aw9475'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+8. [error/console.error] 2026-08-22T04:29:11.745Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_01_4V678rXJZnOpAnMvmjKq7361'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+9. [error/console.error] 2026-08-22T04:29:11.922Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_aIOciO78sOAxYJ5ThC8V8584'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+10. [error/console.error] 2026-08-22T04:29:12.345Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_hHtw8A7KwhBIV7KFqqyj6009'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+11. [error/console.error] 2026-08-22T04:29:12.834Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_AEg3bGltsx58ooA7IwMK5591'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+12. [error/console.error] 2026-08-22T04:29:13.319Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_78qt08CXvH7anIh8pzcl5062'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+13. [error/console.error] 2026-08-22T04:29:13.427Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_VZOddgV7yef15feAg4Zy0094'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+14. [error/console.error] 2026-08-22T04:29:13.795Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_lvhlpr1tFBbIq6sXn9YK2018'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+15. [error/console.error] 2026-08-22T04:29:14.997Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_01_4V678rXJZnOpAnMvmjKq7361'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+16. [error/console.error] 2026-08-22T04:29:14.997Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_2AQ6ngM2epRHqslVB3aw9475'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+17. [error/console.error] 2026-08-22T04:29:14.997Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_aIOciO78sOAxYJ5ThC8V8584'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+18. [error/console.error] 2026-08-22T04:29:14.997Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_hHtw8A7KwhBIV7KFqqyj6009'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+19. [error/console.error] 2026-08-22T04:29:15.058Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_9UeLyGvr85PTnwTRUU2c7147'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+20. [error/console.error] 2026-08-22T04:29:15.659Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_AEg3bGltsx58ooA7IwMK5591'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+21. [error/console.error] 2026-08-22T04:29:15.823Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_78qt08CXvH7anIh8pzcl5062'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+22. [error/console.error] 2026-08-22T04:29:15.940Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_VZOddgV7yef15feAg4Zy0094'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+23. [error/console.error] 2026-08-22T04:29:16.338Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_lvhlpr1tFBbIq6sXn9YK2018'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+24. [error/console.error] 2026-08-22T04:29:17.519Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_01_4V678rXJZnOpAnMvmjKq7361'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+25. [error/console.error] 2026-08-22T04:29:17.519Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_2AQ6ngM2epRHqslVB3aw9475'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+26. [error/console.error] 2026-08-22T04:29:17.519Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_aIOciO78sOAxYJ5ThC8V8584'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+27. [error/console.error] 2026-08-22T04:29:17.520Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_hHtw8A7KwhBIV7KFqqyj6009'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+28. [error/console.error] 2026-08-22T04:29:17.671Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_9UeLyGvr85PTnwTRUU2c7147'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+29. [error/console.error] 2026-08-22T04:29:18.219Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_AEg3bGltsx58ooA7IwMK5591'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+30. [error/console.error] 2026-08-22T04:29:18.340Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_78qt08CXvH7anIh8pzcl5062'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+31. [error/console.error] 2026-08-22T04:29:18.462Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_VZOddgV7yef15feAg4Zy0094'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+32. [error/console.error] 2026-08-22T04:29:19.749Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_lvhlpr1tFBbIq6sXn9YK2018'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+33. [error/console.error] 2026-08-22T04:29:20.456Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_01_4V678rXJZnOpAnMvmjKq7361'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+34. [error/console.error] 2026-08-22T04:29:20.457Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_2AQ6ngM2epRHqslVB3aw9475'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+35. [error/console.error] 2026-08-22T04:29:20.457Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_aIOciO78sOAxYJ5ThC8V8584'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+36. [error/console.error] 2026-08-22T04:29:20.457Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_hHtw8A7KwhBIV7KFqqyj6009'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+37. [error/console.error] 2026-08-22T04:29:20.457Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_9UeLyGvr85PTnwTRUU2c7147'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+38. [error/console.error] 2026-08-22T04:29:21.364Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_78qt08CXvH7anIh8pzcl5062'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+39. [error/console.error] 2026-08-22T04:29:21.364Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_VZOddgV7yef15feAg4Zy0094'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
+40. [error/console.error] 2026-08-22T04:29:21.399Z route=/panda
+   [Vue warn]: Duplicate keys detected: 'call_00_AEg3bGltsx58ooA7IwMK5591'. This may cause an update error.
+
+found in
+
+---> <PandaWorkbench> at src/views/PandaWorkbench.vue
+       <ElMain> at packages/main/src/main.vue
+         <ElContainer> at packages/container/src/main.vue... (1 recursive calls)
+           <App> at src/App.vue
+             <Root>
+   url=http://localhost:8080/panda
