@@ -46,13 +46,76 @@ npm run watch          # 增量编译；也可先 npm run compile
 
 可选：在工作区放 `.panda/mcp.json`、`permissions.json`、`hooks.json`、`skills/` 等，定制 MCP、权限与 Skills。
 
-### macOS 试用包
+## 打包客户端
+
+开发验证通过后，用 gulp 打各平台客户端。产物落在**仓库同级目录**（不是仓库内），例如 `../VSCode-darwin-arm64/`。建议先 `npm install`，并确保 `extensions/copilot` 依赖已装（打包脚本会检查）。
+
+架构取值：`x64` / `arm64`（Linux 另有 `armhf`）。
+
+### macOS
+
+一键试用包（打 `.app`、嵌入写代码引擎、ad-hoc 签名，并生成 zip / dmg）：
 
 ```bash
-./scripts/package-macos-trial.sh   # 可选：arm64 / x64
+./scripts/package-macos-trial.sh         # 本机架构
+./scripts/package-macos-trial.sh arm64
+./scripts/package-macos-trial.sh x64
 ```
 
-产物在 `dist/macos-trial/`。打包后的 `.app` 可直接双击试用（改资源后需脚本内 ad-hoc 签名步骤）。
+| 产物 | 位置 |
+|------|------|
+| `.app` | `../VSCode-darwin-<arch>/Chomir.app` |
+| zip / dmg | `dist/macos-trial/` |
+
+安装提示：拖到「应用程序」后执行 `xattr -cr "/Applications/Chomir.app"`，再右键 → 打开。然后 ⌘⇧P → **ChomirCode: Manage Models** 配置 API Key。
+
+仅打客户端、不走试用脚本时：
+
+```bash
+npm run gulp vscode-darwin-arm64-min   # 或 vscode-darwin-x64-min
+```
+
+### Windows
+
+在 Windows 上打包（或能交叉出 win32 产物的构建环境）：
+
+```bash
+npm run gulp vscode-win32-x64-min      # 或 vscode-win32-arm64-min
+```
+
+目录产物：`../VSCode-win32-<arch>/`（可直接运行其中的 `Chomir.exe`）。
+
+需要安装包时再打 Inno Setup（需本机有 Inno Setup）：
+
+```bash
+npm run gulp vscode-win32-x64-user-setup     # 当前用户
+npm run gulp vscode-win32-x64-system-setup   # 系统级
+# arm64 同理：vscode-win32-arm64-user-setup / system-setup
+```
+
+安装包中间产物在 `.build/win32-<arch>/`。
+
+### Linux
+
+```bash
+npm run gulp vscode-linux-x64-min      # 或 arm64 / armhf
+```
+
+目录产物：`../VSCode-linux-<arch>/`。
+
+可选 deb / rpm（在对应发行版或 CI 环境执行）：
+
+```bash
+npm run gulp vscode-linux-x64-prepare-deb
+npm run gulp vscode-linux-x64-build-deb
+
+npm run gulp vscode-linux-x64-prepare-rpm
+npm run gulp vscode-linux-x64-build-rpm
+```
+
+### 写代码能力一并打进包
+
+macOS 试用脚本会自动把写代码引擎打进 `.app`。Win / Linux 打完 gulp 产物后，需把仓库内引擎目录同步到客户端的 `resources/app/` 下（与 mac 脚本同一相对位置），否则 Chat Agent 无法在正式包里启动。配置模型仍用 **ChomirCode: Manage Models**。
 
 ## 许可
 
