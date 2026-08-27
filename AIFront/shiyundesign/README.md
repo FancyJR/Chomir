@@ -18,8 +18,23 @@ prompts from bundled `assets/`, then delegates execution to `chomircode-agent`.
 | `design-skills/` | **open-codesign** | JSX/HTML pattern references |
 | `scaffolds/` + `frames/` | **open-codesign** | CSS backgrounds, device frames, UI primitives |
 | `prompts/sections/` | **open-codesign** (adapted) | Methodology + HTML delivery workflow |
+| `skills/runtime/` | **ShiyunDesign** | Optional headless CLI extensions (see below) |
 
 Skipped from open-codesign (already covered): `frontend-design-anti-slop`, `craft-polish`, React-host `workflow.md`.
+
+## Runtime extensions (optional, task-triggered)
+
+Headless CLI under `scripts/` — injected into the prompt only when the user task needs them:
+
+| Capability | Script |
+|------------|--------|
+| Brand extract (Tailwind / CSS vars / DTCG JSON) | `scripts/brand-extract.mjs` |
+| AI bitmap assets | `scripts/generate-image.mjs` (needs `OPENAI_API_KEY`) |
+| UI kit handoff + parity verify | `scripts/decompose-ui-kit.mjs`, `verify-ui-kit-parity.mjs` |
+| Pixel preview iteration | `scripts/preview-capture.mjs`, `preview-compare.mjs` |
+| Multi-turn session brief | `.shiyundesign/brief.json` + `design-brief.mjs` |
+
+Default HTML delivery flow is unchanged; runtime tools do not replace craft/web-clone/method skills.
 
 ## Sync assets
 

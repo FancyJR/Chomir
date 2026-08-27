@@ -638,7 +638,6 @@ function normalizeSubagentType (type) {
   if (t === 'implementer' || t === 'implement') return 'implementer'
   if (t === 'fork') return 'fork'
   if (t === 'shiyundesign' || t === 'design' || t === 'opendesign') return 'shiyundesign'
-  if (t === 'shiyunn8n' || t === 'n8n' || t === 'workflow') return 'shiyunn8n'
   return t
 }
 
@@ -709,70 +708,8 @@ async function runShiyunDesignAgent (goal, projectRoot, options = {}) {
 }
 
 /**
- * ShiyunN8n：n8n Instance-AI 资产 + ChomirCode 执行，产出 workflow JSON/TS。
- * @param {string} goal
- * @param {string} projectRoot
- * @param {object} [options]
- */
-async function runShiyunN8nAgent (goal, projectRoot, options = {}) {
-  const path = require('path')
-  const { composeN8nTask } = require('../../../shiyunn8n/lib/compose-n8n-task')
-  const { discoverDeliverableFiles } = require('../../../shiyunn8n/agent-outcome')
-  const { extractTargetDirFromTask, ensureTargetDir } = require('../../../shiyunn8n/subagent-task-cwd')
-  const { runPandaAgent } = require('./agent')
-
-  const userTask = String(goal || '').trim()
-  if (!userTask) return 'ShiyunN8n 失败：prompt 为空'
-
-  const assetsRoot = path.join(__dirname, '../../../shiyunn8n/assets')
-  let composed
-  try {
-    composed = composeN8nTask({ assetsRoot, userTask })
-  } catch (e) {
-    return 'ShiyunN8n 失败：' + (e.message || e)
-  }
-
-  let cwd = projectRoot
-  const taskCwd = extractTargetDirFromTask(userTask)
-  if (taskCwd) {
-    try {
-      cwd = ensureTargetDir(taskCwd, 'shiyunn8n')
-    } catch (e) {
-      return 'ShiyunN8n 失败：' + (e.message || e)
-    }
-  }
-
-  try {
-    const result = await runPandaAgent({
-      message: composed,
-      projectInfo: { root: cwd, name: path.basename(cwd) },
-      context: {
-        sessionId: options.sessionId || ('shiyunn8n_' + Date.now().toString(16)),
-        permissionMode: options.permissionMode || 'bypassPermissions',
-        planMode: false,
-        model: options.model || process.env.DEEPSEEK_MODEL || ''
-      },
-      maxRounds: options.maxRounds ||
-        parseInt(process.env.AIFRONT_MAX_ROUNDS || process.env.PANDA_AGENT_MAX_ROUNDS || '1024', 10),
-      sendEvent: options.sendEvent
-    })
-
-    const changed = (result && result.changed || []).map((c) => c.file).filter(Boolean)
-    const fallback = discoverDeliverableFiles({ cwd })
-    let text = (result && result.text) ? String(result.text) : ''
-    if (result && result.aborted) return text || 'ShiyunN8n 已中断'
-    if (!text && (changed.length || fallback.length)) {
-      text = '已写入：' + (changed.length ? changed : fallback).join(', ')
-    }
-    return text || 'ShiyunN8n 完成'
-  } catch (e) {
-    return 'ShiyunN8n 失败：' + (e.message || e)
-  }
-}
-
-/**
  * 统一 Agent 入口（对齐 panda-code AgentTool + subagent_type）
- * @param {string} type explore|plan|verify|fork|general|implementer|shiyundesign|shiyunn8n
+ * @param {string} type explore|plan|verify|fork|general|implementer
  * @param {string} prompt
  * @param {string} projectRoot
  * @param {object} [options]
@@ -795,9 +732,6 @@ async function runAgent (type, prompt, projectRoot, options = {}) {
   }
   if (t === 'shiyundesign' || t === 'design') {
     return runShiyunDesignAgent(goal, projectRoot, options)
-  }
-  if (t === 'shiyunn8n' || t === 'n8n') {
-    return runShiyunN8nAgent(goal, projectRoot, options)
   }
 
   // fork / general / implementer → sidechain fork
@@ -840,7 +774,6 @@ module.exports = {
   runPlanAgent,
   runVerifyAgent,
   runShiyunDesignAgent,
-  runShiyunN8nAgent,
   runAgent,
   normalizeSubagentType,
   isVerifyAgentCall,

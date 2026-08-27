@@ -2,7 +2,7 @@
 
 /**
  * Compose OpenDesign + open-codesign-guided task text from bundled offline assets.
- * Task-aware: only injects method skills, brand refs, and JSX patterns relevant to the user task.
+ * Task-aware: only injects method skills, brand refs, JSX patterns, and optional runtime extensions.
  */
 
 const { existsSync } = require('node:fs')
@@ -16,7 +16,12 @@ const {
   selectDesignSkillFiles,
   formatBrandIndex,
   readAssetText,
+  selectRuntimeCapabilities,
+  shouldAllowBundledPreviewScripts,
+  shouldUseRuntimeExtensions,
+  formatRuntimeSkill,
 } = require('./select-design-assets')
+const { loadDesignBrief, formatBriefForPrompt } = require('./design-brief')
 
 /** @param {string} text @param {number} max */
 function clip (text, max) {
@@ -26,7 +31,7 @@ function clip (text, max) {
 }
 
 /**
- * @param {{ assetsRoot: string, userTask: string, maxChars?: number }} input
+ * @param {{ assetsRoot: string, userTask: string, cwd?: string, runtimeRoot?: string, maxChars?: number }} input
  */
 function composeDesignTask (input) {
   const assetsRoot = input.assetsRoot
@@ -35,21 +40,51 @@ function composeDesignTask (input) {
     throw new Error(`ShiyunDesign assets missing at ${assetsRoot}`)
   }
 
+  const cwd = input.cwd ? String(input.cwd) : ''
+  const runtimeRoot = input.runtimeRoot || join(assetsRoot, '..')
   const maxChars = input.maxChars ?? 48_000
+  const runtimeCaps = selectRuntimeCapabilities(userTask)
+  const useRuntime = shouldUseRuntimeExtensions(userTask)
+  const allowPreviewScripts = shouldAllowBundledPreviewScripts(userTask)
   const sections = []
 
-  sections.push([
+  const baseLines = [
     'You are ShiyunDesign — a headless OpenDesign design-and-build agent.',
     'Follow bundled craft rules, the default design system, task-selected method skills, and any matched brand reference.',
     'Deliver polished, production-ready artifacts (HTML/CSS/JS in the target cwd).',
     'Prefer self-contained index.html when building web prototypes unless the user asks otherwise.',
-    'After writing the HTML deliverable, stop. The runtime opens the primary page in the browser automatically.',
-    'Do NOT install puppeteer/playwright, start local HTTP servers, or chase screenshot/DOM verification loops.',
     'Use real typography, spacing, and color discipline; avoid generic AI-slop aesthetics.',
     'Write all deliverable files under the task working directory (cwd).',
     'Respond in Chinese when the user writes in Chinese.',
     'When naming deliverable files, wrap each filename in backticks (e.g. `index.html`).',
-  ].join('\n'))
+  ]
+
+  if (allowPreviewScripts) {
+    baseLines.push(
+      'For this task you MAY run bundled ShiyunDesign runtime scripts (under the runtime scripts/ dir) or existing web-clone scripts when explicitly needed for brand extract, UI kit, preview capture, or site clone.',
+      'Do not install puppeteer/playwright/npm packages; do not start local HTTP servers.',
+    )
+    if (runtimeCaps.previewIterate) {
+      baseLines.push(
+        'For pixel-level iteration: capture with preview-capture.mjs, compare with preview-compare.mjs, fix HTML, repeat until acceptable.',
+      )
+    } else {
+      baseLines.push('After the primary HTML deliverable is written, stop unless preview iteration is required.')
+    }
+  } else {
+    baseLines.push(
+      'After writing the HTML deliverable, stop. The runtime opens the primary page in the browser automatically.',
+      'Do NOT install puppeteer/playwright, start local HTTP servers, or chase screenshot/DOM verification loops.',
+    )
+  }
+
+  sections.push(baseLines.join('\n'))
+
+  if (cwd) {
+    const brief = loadDesignBrief(cwd)
+    const briefText = formatBriefForPrompt(brief)
+    if (briefText) sections.push(`## Session brief\n\n${clip(briefText, 1_800)}`)
+  }
 
   const workflow = readAssetText(assetsRoot, 'prompts/sections/workflow-html.md')
   if (workflow) sections.push(`## Workflow\n\n${clip(workflow, 1_200)}`)
@@ -103,6 +138,11 @@ function composeDesignTask (input) {
   if (shouldUseWebClone(userTask)) {
     const webCloneSkill = readAssetText(assetsRoot, 'skills/web-clone/SKILL.md')
     if (webCloneSkill) sections.push(`## Skill: web-clone\n\n${clip(webCloneSkill, 7_000)}`)
+  }
+
+  if (useRuntime) {
+    const runtimeSkill = formatRuntimeSkill(runtimeRoot, runtimeCaps)
+    if (runtimeSkill) sections.push(`## Skill: runtime extensions\n\n${clip(runtimeSkill, 5_500)}`)
   }
 
   for (const file of selectDesignSkillFiles(userTask)) {

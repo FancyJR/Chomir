@@ -139,6 +139,60 @@ function readAssetText (assetsRoot, rel) {
   return readFileSync(p, 'utf8').trim()
 }
 
+/**
+ * Optional open-codesign-style runtime extensions (CLI scripts under shiyundesign/scripts/).
+ * @param {string} task
+ */
+function selectRuntimeCapabilities (task) {
+  const t = String(task || '')
+  return {
+    imageGen: /generate.?image|ai.?image|出图|生成图|hero.?image|bitmap|插图|背景图|dall[- ]?e/i.test(t),
+    uiKit: /ui.?kit|decompose|拆解|交接|handoff|component.?bundle|coding.?agent|ui_kits/i.test(t),
+    brandExtract: /tailwind|dtcg|css.?var|design.?token|抽品牌|提取品牌|token.?json|tokens\.css/i.test(t),
+    previewIterate: (
+      /pixel|像素|screenshot|截图对比|visual.?diff|preview.?loop|还原设计|设计稿|mockup|figma/i.test(t) &&
+      !shouldUseWebClone(t)
+    ),
+    designBrief: /continue|续作|follow.?up|多轮|previous|继续|接着|上次/i.test(t) ||
+      /DESIGN\.md|多页|multi.?screen|多屏/i.test(t),
+  }
+}
+
+/** @param {string} task */
+function shouldAllowBundledPreviewScripts (task) {
+  const caps = selectRuntimeCapabilities(task)
+  return shouldUseWebClone(task) || caps.previewIterate || caps.uiKit || caps.brandExtract
+}
+
+/** @param {string} task */
+function shouldUseRuntimeExtensions (task) {
+  const caps = selectRuntimeCapabilities(task)
+  return caps.imageGen || caps.uiKit || caps.brandExtract || caps.previewIterate || caps.designBrief
+}
+
+/**
+ * @param {string} runtimeRoot
+ * @param {ReturnType<typeof selectRuntimeCapabilities>} caps
+ */
+function formatRuntimeSkill (runtimeRoot, caps) {
+  const { scriptPath } = require('./runtime-paths')
+  const scripts = scriptPath(runtimeRoot, '')
+  let body = readAssetText(join(runtimeRoot, 'assets'), 'skills/runtime/SKILL.md')
+  if (!body) return ''
+  body = body
+    .replace(/\{\{RUNTIME_ROOT\}\}/g, runtimeRoot)
+    .replace(/\{\{SCRIPTS\}\}/g, scripts.replace(/\/$/, ''))
+
+  const focus = []
+  if (caps.brandExtract) focus.push('brand-extract')
+  if (caps.imageGen) focus.push('generate-image')
+  if (caps.uiKit) focus.push('decompose-ui-kit + verify-ui-kit-parity')
+  if (caps.previewIterate) focus.push('preview-capture + preview-compare')
+  if (caps.designBrief) focus.push('design-brief')
+  if (!focus.length) return body
+  return `${body}\n\n## Focus for this task\n\nEnable: ${focus.join(', ')}. Ignore unrelated runtime tools.`
+}
+
 module.exports = {
   stripFrontmatter,
   loadBrandManifest,
@@ -148,4 +202,8 @@ module.exports = {
   selectDesignSkillFiles,
   formatBrandIndex,
   readAssetText,
+  selectRuntimeCapabilities,
+  shouldAllowBundledPreviewScripts,
+  shouldUseRuntimeExtensions,
+  formatRuntimeSkill,
 }

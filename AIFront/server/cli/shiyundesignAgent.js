@@ -13,6 +13,7 @@ const RUNTIME_ROOT = path.join(ROOT, 'shiyundesign')
 const MAX_PROMPT_CHARS = 48_000
 
 const { composeDesignTask } = require('../../shiyundesign/lib/compose-design-task')
+const { updateDesignBrief } = require('../../shiyundesign/lib/design-brief')
 const { openHtmlPreviewIfPresent } = require('../../shiyundesign/lib/open-html-preview')
 const { resolveBundledChomirCodeBin } = require('../../shiyundesign/lib/resolve-chomircode-bin')
 const {
@@ -112,7 +113,13 @@ async function main () {
 
   let composed
   try {
-    composed = composeDesignTask({ assetsRoot, userTask, maxChars: MAX_PROMPT_CHARS })
+    composed = composeDesignTask({
+      assetsRoot,
+      userTask,
+      cwd,
+      runtimeRoot: RUNTIME_ROOT,
+      maxChars: MAX_PROMPT_CHARS
+    })
   } catch (error) {
     emitResult({ ok: false, error: String(error instanceof Error ? error.message : error) })
     process.exit(2)
@@ -165,6 +172,10 @@ async function main () {
     const changed = parsed.changed && parsed.changed.length
       ? parsed.changed
       : discoverDeliverableFiles({ cwd, taskText: userTask })
+    try {
+      updateDesignBrief(cwd, { userTask, changed, finalAnswer: outcome.text })
+    } catch { /* optional */ }
+
     const opened = openHtmlPreviewIfPresent(cwd, changed)
     const finalAnswer = opened
       ? outcome.text + '\n\n已在浏览器打开预览：`' + path.basename(opened) + '`'
