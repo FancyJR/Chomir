@@ -49,6 +49,10 @@ import {
 } from '../common/onboardingTypes.js';
 import { IOnboardingService } from '../common/onboardingService.js';
 
+function isChomirProduct(): boolean {
+	return product.applicationName === 'chomir' || product.nameShort === 'Chomir';
+}
+
 type OnboardingStepViewClassification = {
 	owner: 'cwebster-99';
 	comment: 'Tracks which onboarding step is viewed.';
@@ -166,6 +170,11 @@ export class OnboardingVariationA extends Disposable implements IOnboardingServi
 	}
 
 	show(): void {
+		// Chomir ships ChomirCode + DeepSeek — never show GitHub Copilot sign-in onboarding.
+		if (isChomirProduct()) {
+			return;
+		}
+
 		if (this.overlay) {
 			return;
 		}
