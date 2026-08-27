@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
  * Sync curated n8n Instance-AI skills/docs/prompts into AIFront/shiyunn8n/assets.
- * Source: c/n8n-master 2 (or N8N_MASTER_ROOT). Enforces ≤3 MB on shiyunn8n/.
+ * Source: set N8N_MASTER_ROOT to an n8n checkout (skills already vendored in shiyunn8n/assets).
+ * Enforces ≤3 MB on shiyunn8n/.
  * Usage: node scripts/sync-n8n-into-shiyunn8n.mjs
  */
 import {
@@ -23,14 +24,15 @@ const destAssets = resolve(destRoot, 'assets')
 const MAX_BYTES = 3 * 1024 * 1024
 
 const candidates = [
-  resolve(root, '..', 'c', 'n8n-master 2'),
   resolve(process.env.N8N_MASTER_ROOT || ''),
-  resolve(process.env.HOME || '', 'workspace', 'Chomir', 'c', 'n8n-master 2'),
-]
+].filter(Boolean)
 
 const n8nRoot = candidates.find((p) => p && existsSync(join(p, 'packages', '@n8n')))
 if (!n8nRoot) {
-  console.error('sync-n8n: n8n-master not found. Set N8N_MASTER_ROOT.')
+  console.error(
+    'sync-n8n: set N8N_MASTER_ROOT to an n8n monorepo checkout.\n' +
+      'Curated assets already live under AIFront/shiyunn8n/assets — re-sync only when refreshing upstream.',
+  )
   process.exit(1)
 }
 
