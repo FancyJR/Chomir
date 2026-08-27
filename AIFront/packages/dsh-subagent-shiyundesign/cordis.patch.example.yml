@@ -1,0 +1,25 @@
+# Profile Bundle 片段：ShiyunDesign 子代理
+
+将下面插入 DSH / Kylin Desktop 的 agent preset（或 `cordis.yml` plugins 列表）。
+需能解析 `@aifront/dsh-subagent-shiyundesign`，且 `shiyundesign-agent` + `chomircode-agent` 可用。
+
+```yaml
+- insert:
+    - id: subagent-shiyundesign
+      name: '@aifront/dsh-subagent-shiyundesign'
+      config:
+        env:
+          DEEPSEEK_API_KEY: !!js process.env.DEEPSEEK_API_KEY
+          DEEPSEEK_BASE_URL: !!js process.env.DEEPSEEK_BASE_URL || ''
+          AIFRONT_PERMISSION_MODE: bypassPermissions
+          AIFRONT_MAX_ROUNDS: '1024'
+    - id: tool-subagent-shiyundesign
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: shiyundesign
+        toolName: subagent_shiyundesign
+        enableRunInBackground: false
+        maxDepth: provider-managed
+```
+
+父 Agent 将看到工具 `subagent_shiyundesign`（provider 名 `shiyundesign`）。

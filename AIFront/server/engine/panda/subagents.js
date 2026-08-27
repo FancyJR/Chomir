@@ -637,7 +637,74 @@ function normalizeSubagentType (type) {
   if (t === 'general' || t === 'general-purpose' || t === 'general_purpose') return 'general'
   if (t === 'implementer' || t === 'implement') return 'implementer'
   if (t === 'fork') return 'fork'
+  if (t === 'shiyundesign' || t === 'design' || t === 'opendesign') return 'shiyundesign'
   return t
+}
+
+/**
+ * ShiyunDesign：OpenDesign 资产 + ChomirCode 执行，产出 HTML/CSS 等设计交付物。
+ * @param {string} goal 用户设计任务（原文）
+ * @param {string} projectRoot
+ * @param {object} [options]
+ */
+async function runShiyunDesignAgent (goal, projectRoot, options = {}) {
+  const path = require('path')
+  const { composeDesignTask } = require('../../../shiyundesign/lib/compose-design-task')
+  const { openHtmlPreviewIfPresent } = require('../../../shiyundesign/lib/open-html-preview')
+  const { discoverDeliverableFiles } = require('../../../shiyundesign/agent-outcome')
+  const { extractTargetDirFromTask, ensureTargetDir } = require('../../../shiyundesign/subagent-task-cwd')
+  const { runPandaAgent } = require('./agent')
+
+  const userTask = String(goal || '').trim()
+  if (!userTask) return 'ShiyunDesign 失败：prompt 为空'
+
+  const assetsRoot = path.join(__dirname, '../../../shiyundesign/assets')
+  let composed
+  try {
+    composed = composeDesignTask({ assetsRoot, userTask })
+  } catch (e) {
+    return 'ShiyunDesign 失败：' + (e.message || e)
+  }
+
+  let cwd = projectRoot
+  const taskCwd = extractTargetDirFromTask(userTask)
+  if (taskCwd) {
+    try {
+      cwd = ensureTargetDir(taskCwd, 'shiyundesign')
+    } catch (e) {
+      return 'ShiyunDesign 失败：' + (e.message || e)
+    }
+  }
+
+  try {
+    const result = await runPandaAgent({
+      message: composed,
+      projectInfo: { root: cwd, name: path.basename(cwd) },
+      context: {
+        sessionId: options.sessionId || ('shiyundesign_' + Date.now().toString(16)),
+        permissionMode: options.permissionMode || 'bypassPermissions',
+        planMode: false,
+        model: options.model || process.env.DEEPSEEK_MODEL || ''
+      },
+      maxRounds: options.maxRounds ||
+        parseInt(process.env.AIFRONT_MAX_ROUNDS || process.env.PANDA_AGENT_MAX_ROUNDS || '1024', 10),
+      sendEvent: options.sendEvent
+    })
+
+    const changed = (result && result.changed || []).map((c) => c.file).filter(Boolean)
+    const fallbackChanged = discoverDeliverableFiles({ cwd, taskText: userTask })
+    const opened = openHtmlPreviewIfPresent(cwd, changed.length ? changed : fallbackChanged)
+    let text = (result && result.text) ? String(result.text) : ''
+    if (result && result.aborted) {
+      return text || 'ShiyunDesign 已中断'
+    }
+    if (opened) {
+      text += '\n\n已在浏览器打开预览：`' + path.basename(opened) + '`'
+    }
+    return text || 'ShiyunDesign 完成'
+  } catch (e) {
+    return 'ShiyunDesign 失败：' + (e.message || e)
+  }
 }
 
 /**
@@ -662,6 +729,9 @@ async function runAgent (type, prompt, projectRoot, options = {}) {
   }
   if (t === 'verify') {
     return runVerifyAgent(goal, projectRoot, options.changedFiles || [])
+  }
+  if (t === 'shiyundesign' || t === 'design') {
+    return runShiyunDesignAgent(goal, projectRoot, options)
   }
 
   // fork / general / implementer → sidechain fork
@@ -703,6 +773,7 @@ module.exports = {
   runExploreAgent,
   runPlanAgent,
   runVerifyAgent,
+  runShiyunDesignAgent,
   runAgent,
   normalizeSubagentType,
   isVerifyAgentCall,

@@ -9,7 +9,8 @@
   },
   "main": "electron/main.js",
   "bin": {
-    "chomircode-agent": "bin/chomircode-agent.js"
+    "chomircode-agent": "bin/chomircode-agent.js",
+    "shiyundesign-agent": "bin/shiyundesign-agent.js"
   },
   "scripts": {
     "setup": "node scripts/desktop-setup.mjs",
@@ -23,7 +24,11 @@
     "dist:linux": "node scripts/desktop-dist.mjs linux",
     "package:dir": "yarn build && electron-builder --config electron-builder.yml --dir",
     "chomircode-agent": "node bin/chomircode-agent.js",
-    "pack:dsh-subagent-aifront": "node scripts/pack-dsh-subagent-aifront.cjs"
+    "shiyundesign-agent": "node bin/shiyundesign-agent.js",
+    "pack:dsh-subagent-aifront": "node scripts/pack-dsh-subagent-aifront.cjs",
+    "pack:dsh-subagent-shiyundesign": "node scripts/pack-dsh-subagent-shiyundesign.cjs",
+    "sync:shiyundesign-assets": "node scripts/sync-shiyundesign-assets.mjs",
+    "sync:opencodesign-into-shiyundesign": "node scripts/sync-opencodesign-into-shiyundesign.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",

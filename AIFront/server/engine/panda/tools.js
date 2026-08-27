@@ -291,6 +291,7 @@ function getToolDefinitions (options = {}) {
           '统一子代理（对齐 panda-code AgentTool）。用 subagent_type 选择：' +
           'Explore=只读广搜映射文件；Plan=深度只读探索后出实施计划+Critical Files；' +
           'Verify=对抗式实测验收（须 Command run 证据）；' +
+          'shiyundesign=OpenDesign 设计交付（HTML/CSS/原型，自动打开预览）；' +
           'fork/general/implementer=继承上下文的 sidechain。' +
           '简单单关键词搜索请直接 glob/grep，不要滥用 Explore。',
         parameters: {
@@ -302,8 +303,8 @@ function getToolDefinitions (options = {}) {
             },
             subagent_type: {
               type: 'string',
-              description: 'Explore | Plan | Verify | fork | general | implementer',
-              enum: ['Explore', 'Plan', 'Verify', 'explore', 'plan', 'verify', 'fork', 'general', 'implementer']
+              description: 'Explore | Plan | Verify | shiyundesign | fork | general | implementer',
+              enum: ['Explore', 'Plan', 'Verify', 'explore', 'plan', 'verify', 'shiyundesign', 'design', 'fork', 'general', 'implementer']
             },
             thoroughness: {
               type: 'string',
