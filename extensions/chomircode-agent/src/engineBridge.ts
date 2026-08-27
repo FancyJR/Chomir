@@ -68,7 +68,8 @@ export function resolveEngineRoot(configured: string | undefined): string | unde
 	for (const root of candidates) {
 		const cli = path.join(root, 'bin', 'chomircode-agent.js');
 		const legacyCli = path.join(root, 'bin', 'shiyuncode-agent.js');
-		if (fs.existsSync(cli) || fs.existsSync(legacyCli)) {
+		const designCli = path.join(root, 'bin', 'shiyundesign-agent.js');
+		if (fs.existsSync(cli) || fs.existsSync(legacyCli) || fs.existsSync(designCli)) {
 			return root;
 		}
 	}

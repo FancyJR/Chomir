@@ -84,6 +84,27 @@
 						]
 					}
 				]
+			},
+			{
+				"id": "shiyundesign.agent",
+				"fullName": "%designParticipant.fullName%",
+				"name": "shiyundesign",
+				"description": "%designParticipant.description%",
+				"isDefault": false,
+				"modes": [
+					"ask"
+				],
+				"disambiguation": [
+					{
+						"category": "design_prototype",
+						"description": "Ask ShiyunDesign to create or refine HTML/CSS product prototypes (landing pages, dashboards, slides) for product and design review.",
+						"examples": [
+							"用 Linear 风格做一个中文 SaaS 首页原型",
+							"Design a mobile app settings screen mockup",
+							"把 pricing 区块改成三列套餐卡片"
+						]
+					}
+				]
 			}
 		],
 		"configuration": {
@@ -208,6 +229,29 @@
 					"markdownDescription": "%config.autocompactBuffer%",
 					"scope": "window",
 					"order": 18
+				},
+				"chomircode.prototypesDir": {
+					"type": "string",
+					"default": "prototypes",
+					"markdownDescription": "%config.prototypesDir%",
+					"scope": "window",
+					"order": 30
+				},
+				"chomircode.designMaxRounds": {
+					"type": "number",
+					"default": 80,
+					"minimum": 1,
+					"maximum": 256,
+					"markdownDescription": "%config.designMaxRounds%",
+					"scope": "window",
+					"order": 31
+				},
+				"chomircode.openDesignPreview": {
+					"type": "boolean",
+					"default": true,
+					"markdownDescription": "%config.openDesignPreview%",
+					"scope": "window",
+					"order": 32
 				}
 			}
 		},
@@ -296,6 +340,11 @@
 				"command": "chomircode.agent.showEngineDashboard",
 				"title": "%command.showEngineDashboard%",
 				"category": "ChomirCode"
+			},
+			{
+				"command": "shiyundesign.agent.openPrototypesFolder",
+				"title": "%command.openPrototypesFolder%",
+				"category": "ShiyunDesign"
 			}
 		]
 	},

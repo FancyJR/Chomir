@@ -4,6 +4,8 @@
 	"workspaceTrust.description": "ChomirCode Agent can read and modify files and run shell commands in this workspace.",
 	"chatParticipant.fullName": "ChomirCode",
 	"chatParticipant.description": "Write and edit code with the full ChomirCode panda engine (tools, MCP, permissions, slash, sessions).",
+	"designParticipant.fullName": "ShiyunDesign",
+	"designParticipant.description": "Product prototype agent — HTML/CSS landing pages, dashboards, and UI mockups. Outputs under prototypes/ and opens browser preview.",
 	"config.apiKey": "DeepSeek API Key. Use **Configure API Key / Manage Models…** in the Models picker.",
 	"config.baseUrl": "DeepSeek API base URL. Official default is `https://api.deepseek.com`.",
 	"config.model": "Chat model id.",
@@ -38,5 +40,9 @@
 	"command.newSession": "New Session",
 	"command.compactContext": "Show Auto-Compact Threshold",
 	"command.cyclePermissionMode": "Set Permission Mode (Auto-run / Ask / …)",
-	"command.showEngineDashboard": "Show Engine Dashboard"
+	"command.showEngineDashboard": "Show Engine Dashboard",
+	"command.openPrototypesFolder": "Open Prototypes Folder",
+	"config.prototypesDir": "Relative folder under the workspace where ShiyunDesign writes HTML prototypes (default `prototypes`). Each chat session gets its own subfolder.",
+	"config.designMaxRounds": "Maximum tool-loop rounds for ShiyunDesign prototype runs.",
+	"config.openDesignPreview": "After ShiyunDesign completes, open the primary HTML file in the system browser."
 }

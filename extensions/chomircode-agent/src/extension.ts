@@ -7,6 +7,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { DEEPSEEK_MODELS, DEEPSEEK_VENDOR, DeepSeekConfig, DeepSeekLanguageModelProvider, normalizeBaseUrl, OFFICIAL_BASE_URL } from './deepseekProvider';
+import { pickHtmlDeliverable, resolvePrototypeOutputDir, runShiyundesignAgent } from './designBridge';
 import { resolveEngineRoot, runChomircodeAgent } from './engineBridge';
 import { PandaEventMapper } from './eventMapper';
 import {
@@ -43,6 +44,7 @@ import { StreamMapper } from './streamMapper';
 import { formatWorkspaceMemoryMarkdown, loadWorkspaceMemoryPreview } from './workspaceMemory';
 
 const PARTICIPANT_ID = 'chomircode.agent';
+const DESIGN_PARTICIPANT_ID = 'shiyundesign.agent';
 const MODEL_CHOICES = DEEPSEEK_MODELS.map(m => ({
 	label: m.id,
 	description: m.detail,
@@ -139,6 +141,18 @@ export function activate(context: vscode.ExtensionContext): void {
 				`Auto-compact near ~${trigger} tokens (window ${win} − reserve ${reserve} − buffer ${buf}), same formula as Cursor/panda. Or send /compact in Chat.`,
 			);
 		}),
+		vscode.commands.registerCommand('shiyundesign.agent.openPrototypesFolder', async () => {
+			const folder = vscode.workspace.workspaceFolders?.[0];
+			if (!folder) {
+				vscode.window.showWarningMessage('Open a workspace folder first.');
+				return;
+			}
+			const cfg = vscode.workspace.getConfiguration('chomircode');
+			const prototypesDir = cfg.get<string>('prototypesDir') || 'prototypes';
+			const abs = path.join(folder.uri.fsPath, prototypesDir);
+			fs.mkdirSync(abs, { recursive: true });
+			await vscode.commands.executeCommand('revealInExplorer', vscode.Uri.file(abs));
+		}),
 	);
 
 	const participant = vscode.chat.createChatParticipant(PARTICIPANT_ID, async (request, chatContext, stream, token) => {
@@ -146,6 +160,12 @@ export function activate(context: vscode.ExtensionContext): void {
 	});
 	participant.iconPath = vscode.Uri.joinPath(context.extensionUri, 'media', 'icon.svg');
 	context.subscriptions.push(participant);
+
+	const designParticipant = vscode.chat.createChatParticipant(DESIGN_PARTICIPANT_ID, async (request, chatContext, stream, token) => {
+		return handleDesignChatRequest(request, chatContext, stream, token, context);
+	});
+	designParticipant.iconPath = vscode.Uri.joinPath(context.extensionUri, 'media', 'icon.svg');
+	context.subscriptions.push(designParticipant);
 
 	// Seed DeepSeek into the Models picker immediately so OSS / trial builds are
 	// not blocked behind "Sign in to use Copilot" when no Copilot account exists.
@@ -497,6 +517,167 @@ async function handleChatRequest(
 		sessionId,
 		openChanged,
 	});
+}
+
+async function handleDesignChatRequest(
+	request: vscode.ChatRequest,
+	chatContext: vscode.ChatContext,
+	stream: vscode.ChatResponseStream,
+	token: vscode.CancellationToken,
+	extContext: vscode.ExtensionContext,
+): Promise<vscode.ChatResult> {
+	const folder = vscode.workspace.workspaceFolders?.[0];
+	if (!folder) {
+		stream.markdown('Open a workspace folder first — prototypes are written under `prototypes/` in the workspace.');
+		return { errorDetails: { message: 'No workspace folder' } };
+	}
+
+	const cfg = vscode.workspace.getConfiguration('chomircode');
+	const engineRoot = resolveEngineRoot(cfg.get<string>('enginePath'));
+	if (!engineRoot) {
+		stream.markdown(
+			'Cannot find AIFront / ShiyunDesign engine.\n\nSet **chomircode.enginePath** to the repo root that contains `bin/shiyundesign-agent.js` (same layout as ChomirCode).\n',
+		);
+		return { errorDetails: { message: 'Engine root not found' } };
+	}
+
+	const apiKey = (cfg.get<string>('apiKey') || process.env.DEEPSEEK_API_KEY || '').trim();
+	if (!apiKey && !hasEnvLocalKey(engineRoot)) {
+		stream.markdown('DeepSeek API Key is not configured.\n\n');
+		stream.button({ command: 'chomircode.agent.manageModels', title: 'Configure Models' });
+		return { errorDetails: { message: 'Missing chomircode.apiKey' } };
+	}
+
+	const task = (request.prompt || '').trim();
+	if (!task) {
+		stream.markdown(
+			'描述你想做的产品原型，例如：\n\n' +
+			'- 用 Linear 风格做一个中文 SaaS landing page\n' +
+			'- 做一个三列 pricing + FAQ 的营销页\n' +
+			'- 把上一版 hero 区改成深色背景\n',
+		);
+		return {};
+	}
+
+	const workspaceRoot = folder.uri.fsPath;
+	const sessionId = resolveDesignSessionId(chatContext, workspaceRoot);
+	const prototypesDir = cfg.get<string>('prototypesDir') || 'prototypes';
+	const prototypeCwd = resolvePrototypeOutputDir(workspaceRoot, sessionId, prototypesDir);
+	const designMaxRounds = cfg.get<number>('designMaxRounds') ?? 80;
+	const openPreview = cfg.get<boolean>('openDesignPreview') !== false;
+	const permissionMode = cfg.get<string>('permissionMode') || 'bypassPermissions';
+
+	stream.markdown(
+		`_ShiyunDesign · prototype \`${path.relative(workspaceRoot, prototypeCwd) || prototypeCwd}\` · session \`${sessionId}\`_\n\n`,
+	);
+
+	rememberSession(workspaceRoot, sessionId, task);
+	appendLocalChatHistory(workspaceRoot, sessionId, { role: 'user', content: task });
+	syncBridgeToWorkspaceState(extContext, workspaceRoot);
+
+	const mapper = new StreamMapper(stream);
+	stream.progress('ShiyunDesign 正在生成原型…');
+
+	const result = await runShiyundesignAgent({
+		cwd: prototypeCwd,
+		task,
+		engineRoot,
+		permissionMode,
+		maxRounds: designMaxRounds,
+		token,
+		onEvent: (event, data) => mapper.handle(event, data),
+	});
+
+	const answer = (result.finalAnswer || '').trim();
+	if (answer) {
+		appendLocalChatHistory(workspaceRoot, sessionId, {
+			role: 'assistant',
+			content: answer.slice(0, 20000),
+		});
+	}
+	syncBridgeToWorkspaceState(extContext, workspaceRoot);
+
+	if (token.isCancellationRequested || result.aborted) {
+		stream.markdown('\n\n_已取消._\n');
+		return { metadata: { sessionId, via: 'shiyundesign' } };
+	}
+
+	if (!result.ok) {
+		stream.markdown(`\n\n**错误：** ${result.error || 'ShiyunDesign 失败'}\n`);
+		return { errorDetails: { message: result.error || 'ShiyunDesign failed' }, metadata: { sessionId } };
+	}
+
+	if (answer) {
+		stream.markdown(`\n\n${answer}\n`);
+	}
+
+	const changed = (result.changed || []).filter(Boolean);
+	if (changed.length) {
+		stream.markdown('\n\n**交付文件**\n\n');
+		for (const file of changed) {
+			const rel = path.isAbsolute(file) ? path.relative(prototypeCwd, file) : file;
+			stream.markdown(`- \`${rel}\`\n`);
+		}
+	}
+
+	if (openPreview && changed.length) {
+		const htmlRel = pickHtmlDeliverable(changed);
+		if (htmlRel) {
+			const htmlAbs = path.isAbsolute(htmlRel) ? htmlRel : path.join(prototypeCwd, htmlRel);
+			if (fs.existsSync(htmlAbs)) {
+				await vscode.env.openExternal(vscode.Uri.file(htmlAbs));
+			}
+		}
+	}
+
+	const htmlRel = pickHtmlDeliverable(changed);
+	if (htmlRel) {
+		stream.button({
+			command: 'vscode.open',
+			title: '在编辑器打开 HTML',
+			arguments: [vscode.Uri.file(path.join(prototypeCwd, htmlRel))],
+		});
+	}
+	stream.button({
+		command: 'revealInExplorer',
+		title: '打开原型文件夹',
+		arguments: [vscode.Uri.file(prototypeCwd)],
+	});
+
+	return {
+		metadata: {
+			sessionId,
+			changed,
+			prototypeCwd: path.relative(workspaceRoot, prototypeCwd),
+			via: 'shiyundesign',
+		},
+	};
+}
+
+function resolveDesignSessionId(chatContext: vscode.ChatContext, workspaceRoot: string): string {
+	for (let i = chatContext.history.length - 1; i >= 0; i--) {
+		const turn = chatContext.history[i] as any;
+		const meta = turn?.result?.metadata || turn?.metadata;
+		if (meta?.sessionId && typeof meta.sessionId === 'string' && meta.sessionId.startsWith('design_')) {
+			return meta.sessionId;
+		}
+	}
+	let firstPrompt: string | undefined;
+	for (const turn of chatContext.history) {
+		if (turn instanceof vscode.ChatRequestTurn) {
+			firstPrompt = turn.prompt;
+			break;
+		}
+	}
+	const resolved = resolvePersistedSessionId({
+		workspaceRoot,
+		historyEmpty: chatContext.history.length === 0,
+		historySessionId: undefined,
+		firstPrompt,
+		continueLast: false,
+	});
+	const base = resolved.sessionId.replace(/^chomircode_sub_/, '').replace(/^design_/, '');
+	return `design_${base}`;
 }
 
 async function handleViaSidecar(opts: {

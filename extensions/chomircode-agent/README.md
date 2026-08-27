@@ -2,6 +2,17 @@
 
 Default Chat participant for Code OSS. Starts the **ChomirCode Express sidecar** and talks to the full panda control plane (`/api/engine/execute` + `/api/panda/*`) — same surface as `PandaWorkbench.vue`.
 
+## ShiyunDesign (product prototypes)
+
+Second Chat participant **`@shiyundesign`** for product / PM HTML prototypes (landing pages, dashboards, mockups).
+
+- Writes deliverables under **`prototypes/<session>/`** in the workspace (config: `chomircode.prototypesDir`)
+- Runs `bin/shiyundesign-agent.js` (OpenDesign assets + ChomirCode executor)
+- Opens the primary HTML in the system browser when done (`chomircode.openDesignPreview`)
+- Command: **ShiyunDesign: Open Prototypes Folder**
+
+Same API key and `chomircode.enginePath` (AIFront repo root) as ChomirCode.
+
 ## Capabilities (via sidecar)
 
 - Multi-round tool loop (~54 tools): files, bash, web, todos, plan, …
