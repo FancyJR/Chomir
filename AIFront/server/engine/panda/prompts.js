@@ -44,7 +44,7 @@ function getHooksSection () {
 /** 对标 getSimpleIntroSection（含 CYBER_RISK） */
 function getIntroSection () {
   return [
-    '你是 Panda Code 交互式软件工程 Agent（运行在 AIFront）。',
+    '你是 ChomirCode 交互式软件工程 Agent（运行在 Chomir 客户端）。',
     '用下方说明与可用工具协助用户完成软件工程任务。',
     '',
     CYBER_RISK_INSTRUCTION,
@@ -296,7 +296,7 @@ function getEnvironmentSection (opts = {}) {
     'OS: ' + os.type() + ' ' + os.release(),
     'You are powered by the model ' + model,
     'Agent mode: ' + (mode === 'plan' ? 'Plan（只读，勿改业务文件）' : 'Agent（可写）'),
-    'Stack hint: Vue 2.7 + ElementUI + Vue Router + Express（AIFront）'
+    'Stack hint: Chomir 客户端 · Code - OSS 工作台 + ChomirCode Agent'
   ]
   const views = projectInfo.views || []
   const routes = projectInfo.routes || []

@@ -59,7 +59,7 @@ function buildRegistry () {
   add('version', '版本', async () => {
     let v = 'dev'
     try { v = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../../package.json'), 'utf8')).version || v } catch (e) {}
-    return tip('版本', ['AIFront Panda ' + v, 'Node ' + process.version])
+    return tip('版本', ['Chomir Panda ' + v, 'Node ' + process.version])
   })
 
   add('doctor', '环境自检', async (arg, ctx) => {

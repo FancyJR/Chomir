@@ -429,7 +429,7 @@ async function handleChatRequest(
 	const sessionId = resolved.sessionId;
 
 	stream.markdown(
-		`_ChomirCode · \`${model}\` · mode \`${permissionMode}\` · \`${path.basename(workspaceRoot)}\` · session \`${sessionId}\`${resolved.resumed ? ' (resumed)' : ''}_\n\n`,
+		`_ChomirCode · \`${model}\` · mode \`${permissionMode}\` · \`Chomir\` · session \`${sessionId}\`${resolved.resumed ? ' (resumed)' : ''}_\n\n`,
 	);
 	if (resolved.resumed && chatContext.history.length === 0) {
 		const prior = loadTranscriptTurns(workspaceRoot, sessionId, 24);
