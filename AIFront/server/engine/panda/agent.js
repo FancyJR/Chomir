@@ -163,7 +163,7 @@ async function runPandaAgent (params) {
   const signal = abortCtrl.signal
 
   const memory = createMemory(projectRoot)
-  const memoryText = await memory.loadForPrompt()
+  const memoryText = await memory.loadForPrompt({ excludeSessionId: sessionId, currentSessionId: sessionId })
   const skills = await loadSkills(projectRoot)
   const skillsBlock = skillsPromptBlock(skills)
   const focusFile = context.activeFile || context.preferredFile || ''
@@ -1411,6 +1411,11 @@ async function runPandaAgent (params) {
         content: 'Auto memory +' + ex.extracted + '：' + (ex.notes || []).join(' · ')
       })
     }
+  } catch (e) { /* ignore */ }
+
+  // 刷新工作区 rollup 缓存（供新 Chat / 客户端预览）
+  try {
+    await require('./workspaceMemory').buildWorkspaceMemorySection(projectRoot, { excludeSessionId: sessionId })
   } catch (e) { /* ignore */ }
 
   sendEvent('answer_done', {})

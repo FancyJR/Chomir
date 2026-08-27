@@ -40,6 +40,7 @@ import {
 	syncBridgeToWorkspaceState,
 } from './sessionStore';
 import { StreamMapper } from './streamMapper';
+import { formatWorkspaceMemoryMarkdown, loadWorkspaceMemoryPreview } from './workspaceMemory';
 
 const PARTICIPANT_ID = 'chomircode.agent';
 const MODEL_CHOICES = DEEPSEEK_MODELS.map(m => ({
@@ -431,6 +432,15 @@ async function handleChatRequest(
 	stream.markdown(
 		`_ChomirCode · \`${model}\` · mode \`${permissionMode}\` · \`Chomir\` · session \`${sessionId}\`${resolved.resumed ? ' (resumed)' : ''}_\n\n`,
 	);
+
+	// New Chat: inject project MEMORY + all past session summaries (engine also injects via loadForPrompt).
+	if (chatContext.history.length === 0 && resolved.isNew && !resolved.resumed) {
+		const memoryPreview = loadWorkspaceMemoryPreview(workspaceRoot, sessionId);
+		if (memoryPreview) {
+			stream.markdown(formatWorkspaceMemoryMarkdown(memoryPreview));
+		}
+	}
+
 	if (resolved.resumed && chatContext.history.length === 0) {
 		const prior = loadTranscriptTurns(workspaceRoot, sessionId, 24);
 		const replay = formatHistoryReplayMarkdown(prior);

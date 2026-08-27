@@ -266,8 +266,9 @@ function getMemoryMechanicsSection () {
   const items = [
     '项目约定层级（对齐 panda-code CLAUDE.md）：User(~/.claude|~/.panda) → 祖先目录 Project（CLAUDE.md/Panda.md/AGENTS.md + .claude|/.panda/rules 递归）→ Local（*.local.md）。越靠近 cwd / Local 优先级越高；冲突时 OVERRIDE 默认行为。',
     '约定文件支持 `@include`（如 `@./docs/style.md`、`@~/notes.md`）；代码块内不解析。可能与当前任务无关则忽略无关部分。',
-    '长期记忆是三层：L1=`MEMORY.md` 短索引（已在 system）；L2=项目约定文件；L3=会话 transcript/scratchpad（溢出会 compact）。主题全文在 `.panda/memory/topics/<id>.md`，用 memory_read(topic) 按需拉取，勿假设索引即全文。',
-    'compact 后摘要会写入会话 SessionMemory（`.panda/sessions/<id>/memory.md`），下一轮注入「Session long-term notes」——这就是「还记得你说过的话」的工程层，不是模型无限上下文。',
+    '长期记忆是三层：L1=`MEMORY.md` 索引 + **工作区 rollup**（topics 摘要 + 全部历史 Chat 要点，新 Chat 也会自动注入）；L2=项目约定文件；L3=当前会话 transcript（溢出会 compact）。主题全文在 `.panda/memory/topics/<id>.md`，用 memory_read(topic) 按需拉取。',
+    '工作区 rollup 超过约 12000 字符会压缩到 ~6000 再注入（可在 `.panda/config.json` 设 workspaceMemoryMaxChars / workspaceMemoryCompressThreshold，对标 Cursor Memories 体量）。压缩缓存：`topics/workspace-chats.md`。',
+    'compact 后摘要会写入会话 SessionMemory（`.panda/sessions/<id>/session-memory/summary.md`），下一轮注入「Session long-term notes」——这就是「还记得你说过的话」的工程层，不是模型无限上下文。',
     'memory_append 可写 topic（默认 general）。稳定约定/踩坑可写入；不要存密钥或一次性闲聊。',
     '没有预置 AST CodeGraph。Env 里有轻量 Project snapshot（顶层目录/scripts/菜单路由）；深入结构 = glob/grep/read 或并行 Agent(Explore)。'
   ]

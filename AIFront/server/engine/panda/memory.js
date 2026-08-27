@@ -368,24 +368,31 @@ function createMemory (projectRoot) {
       const id = await memoryIndex.appendTopic(projectRoot, topic || 'general', note)
       return id
     },
-    async loadForPrompt () {
+    async loadForPrompt (opts = {}) {
       const parts = []
       const instructions = await loadProjectInstructions(projectRoot)
       if (instructions) parts.push(instructions)
 
-      await memoryIndex.migrateIfNeeded(projectRoot)
-      let indexText = ''
-      try {
-        indexText = await fsp.readFile(memoryPath(projectRoot), 'utf8')
-      } catch (e) {
-        indexText = await memoryIndex.writeIndex(projectRoot, [])
+      const workspaceMemory = require('./workspaceMemory')
+      const rollup = await workspaceMemory.buildWorkspaceMemorySection(projectRoot, {
+        excludeSessionId: opts.excludeSessionId || opts.currentSessionId || ''
+      })
+      if (rollup.section) {
+        parts.push(rollup.section)
+      } else {
+        await memoryIndex.migrateIfNeeded(projectRoot)
+        let indexText = ''
+        try {
+          indexText = await fsp.readFile(memoryPath(projectRoot), 'utf8')
+        } catch (e) {
+          indexText = await memoryIndex.writeIndex(projectRoot, [])
+        }
+        parts.push(
+          '【MEMORY 索引 · L1】\n' +
+          indexText.trim().slice(0, 2200) +
+          '\n\n（详情不在上下文中。需要时调用 memory_read，参数 topic 为上表 id，如 preferences / architecture / auto / general。）'
+        )
       }
-      // L1：只注入短索引（目录），详情用 memory_read(topic)
-      parts.push(
-        '【MEMORY 索引 · L1】\n' +
-        indexText.trim().slice(0, 2200) +
-        '\n\n（详情不在上下文中。需要时调用 memory_read，参数 topic 为上表 id，如 preferences / architecture / auto / general。）'
-      )
       return parts.join('\n\n')
     }
   }

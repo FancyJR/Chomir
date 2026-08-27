@@ -2017,6 +2017,22 @@ app.get('/api/panda/bridge', (req, res) => {
   }
 })
 
+app.get('/api/panda/workspace-memory', async (req, res) => {
+  try {
+    let projectRoot = String(req.query.projectRoot || req.query.root || process.env.PANDA_PROJECT_ROOT || '').trim()
+    if (!projectRoot) {
+      const projectInfo = await engineAnalyzer.analyze()
+      projectRoot = projectInfo.root
+    }
+    const excludeSessionId = String(req.query.excludeSessionId || req.query.sessionId || '')
+    const workspaceMemory = require('./engine/panda/workspaceMemory')
+    const result = await workspaceMemory.buildWorkspaceMemorySection(projectRoot, { excludeSessionId })
+    res.json({ ok: true, ...result })
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message })
+  }
+})
+
 app.get('/api/panda/swarms', async (req, res) => {
   try {
     const projectInfo = await engineAnalyzer.analyze()
