@@ -1,0 +1,38 @@
+name: CodeQL
+
+# CodeQL on private repos requires GitHub Advanced Security (paid).
+# This workflow only runs once the repository becomes public, OR if
+# the org has Advanced Security enabled. Until then it is a no-op.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '23 4 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyze
+    if: github.event.repository.visibility == 'public'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [javascript-typescript]
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: github/codeql-action/init@458d36d7d4f47d0dd16ca424c1d3cda0060f1360 # v3
+        with:
+          languages: ${{ matrix.language }}
+      - uses: github/codeql-action/analyze@458d36d7d4f47d0dd16ca424c1d3cda0060f1360 # v3
+        with:
+          category: "/language:${{ matrix.language }}"
